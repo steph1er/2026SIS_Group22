@@ -5,7 +5,7 @@ mobile/
 │   ├── screens/
 │   │   ├── onboarding/     # Raizelle
 │   │   ├── profile/        # Priya
-│   │   ├── wardrobe/       # you
+│   │   ├── wardrobe/       # Nat
 │   │   ├── wishlist/       # Julia
 │   │   ├── search/         # Tamara
 │   │   ├── outfit-builder/ # Steph
