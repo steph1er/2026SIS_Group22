@@ -8,9 +8,31 @@ export class WardrobeController {
 
     @Get()
     getWardrobe(): string {
-        // TODO testing that code structure works
         return this.wardrobeService.getWardrobe();
     }
 
-    // use @Get('route') where 'route' can whatever you want in the route
+    @Get('create')
+    makeWardrobe(): string {
+        return this.wardrobeService.makeWardrobe();
+    }
+
+    @Get('add')
+    addItem(): string {
+        return this.wardrobeService.addItem();
+    }
+
+    @Get('update')
+    updateItemDetails(): string {
+        return this.wardrobeService.updateItemDetails();
+    }
+
+    @Get('search')
+    searchForItems(): string {
+        return this.wardrobeService.searchForItems();
+    }
+
+    @Get('delete')
+    deleteItem(): string {
+        return this.wardrobeService.deleteItem();
+    }
 }
