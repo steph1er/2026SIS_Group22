@@ -4,7 +4,8 @@ node_modules
 
 
 # compiled output
-/dist
+dist/
+*.tsbuildinfo
 /node_modules
 /build
 
