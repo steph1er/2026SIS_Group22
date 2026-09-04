@@ -20,7 +20,8 @@
         {
           "backgroundColor": "#208AEF"
         }
-      ]
+      ],
+      "expo-image"
     ],
     "experiments": {
       "typedRoutes": true,
