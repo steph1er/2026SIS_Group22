@@ -11,16 +11,13 @@ export class WardrobeController {
         return this.wardrobeService.getWardrobe();
     }
 
-    @Get('create')
-    makeWardrobe(): string {
-        return this.wardrobeService.makeWardrobe();
-    }
-
+    // change to post
     @Get('add')
     addItem(): string {
         return this.wardrobeService.addItem();
     }
 
+    // change to post
     @Get('update')
     updateItemDetails(): string {
         return this.wardrobeService.updateItemDetails();
@@ -31,6 +28,7 @@ export class WardrobeController {
         return this.wardrobeService.searchForItems();
     }
 
+    // change to delete
     @Get('delete')
     deleteItem(): string {
         return this.wardrobeService.deleteItem();
