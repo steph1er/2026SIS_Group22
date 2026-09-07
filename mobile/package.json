@@ -4,6 +4,7 @@
   "version": "1.0.0",
   "dependencies": {
     "@expo/ui": "~57.0.14",
+    "@react-native-community/slider": "5.2.0",
     "expo": "~57.0.18",
     "expo-constants": "~57.0.16",
     "expo-device": "~57.0.1",
