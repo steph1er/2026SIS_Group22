@@ -1,13 +1,19 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import {
-    SafeAreaView,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
+
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from 'react-native-reanimated';
 
 import Slider from '@react-native-community/slider';
 
@@ -27,6 +33,15 @@ export default function OnboardingQuiz() {
   const step = onboardingSteps[currentStep];
 
   const progress = (currentStep + 1) / onboardingSteps.length;
+  const progressAnim = useSharedValue(progress);
+
+  const progressBarStyle = useAnimatedStyle(() => ({
+    width: `${progressAnim.value * 100}%`,
+  }));
+
+  useEffect(() => {
+    progressAnim.value = withTiming(progress, { duration: 350 });
+  }, [progress, progressAnim]);
 
   const handleSelect = (
     sectionId: string,
@@ -81,11 +96,8 @@ export default function OnboardingQuiz() {
       {/* Overall progress */}
       <View style={styles.progressContainer}>
         <View style={styles.progressBackground}>
-          <View
-            style={[
-              styles.progressFill,
-              { width: `${progress * 100}%` },
-            ]}
+          <Animated.View
+            style={[styles.progressFill, progressBarStyle]}
           />
         </View>
       </View>
