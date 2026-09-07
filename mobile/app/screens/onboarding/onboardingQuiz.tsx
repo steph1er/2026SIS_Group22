@@ -17,8 +17,9 @@ import Animated, {
 
 import Slider from '@react-native-community/slider';
 
-import { useTheme } from '../../hooks/use-theme';
+import { useAccentColors, useTheme } from '../../hooks/use-theme';
 import { Fonts, Spacing } from '../../services/theme';
+
 import { onboardingSteps } from './onboardingData';
 import { OnboardingAnswers, QuestionSection } from './types';
 
@@ -26,9 +27,11 @@ export default function OnboardingQuiz() {
   const [currentStep, setCurrentStep] = useState(0);
   const [answers, setAnswers] = useState<OnboardingAnswers>({});
   const [showErrors, setShowErrors] = useState(false);
+  const [openSizeField, setOpenSizeField] = useState<string | null>(null);
 
   const theme = useTheme();
-  const styles = createStyles(theme);
+  const accentColors = useAccentColors();
+  const styles = createStyles(theme, accentColors);
 
   const scrollViewRef = useRef<ScrollView>(null);
   const step = onboardingSteps[currentStep];
@@ -47,6 +50,7 @@ export default function OnboardingQuiz() {
   useEffect(() => {
     scrollViewRef.current?.scrollTo({ y: 0, animated: false });
     setShowErrors(false);
+    setOpenSizeField(null);
   }, [currentStep]);
 
   const handleSelect = (
@@ -73,13 +77,27 @@ export default function OnboardingQuiz() {
     handleSelect(sectionId, newValues);
   };
 
+  const handleSelectSizeField = (
+    sectionId: string,
+    fieldId: string,
+    value: string
+  ) => {
+    handleSelect(`${sectionId}:${fieldId}`, value);
+    setOpenSizeField(null);
+  };
+
   const isSectionAnswered = (
     section: QuestionSection,
     answers: OnboardingAnswers
   ) => {
-    // Sliders always carry a value (default or user-set), so they're
-    // never considered "unanswered".
     if (section.type === 'slider') return true;
+
+    if (section.fields) {
+    return section.fields.every((field) => {
+      const value = answers[`${section.id}:${field.id}`];
+      return typeof value === 'string' && value !== '';
+    });
+  }
 
     const value = answers[section.id];
 
@@ -122,6 +140,7 @@ export default function OnboardingQuiz() {
     }
   };
 
+
   return (
     <SafeAreaView style={styles.container}>
       {/* Overall progress */}
@@ -132,7 +151,7 @@ export default function OnboardingQuiz() {
           />
         </View>
       </View>
-
+ 
       <ScrollView
         ref={scrollViewRef}
         showsVerticalScrollIndicator={false}
@@ -140,73 +159,88 @@ export default function OnboardingQuiz() {
       >
         {/* Header */}
         <View style={styles.header}>
-          {currentStep > 0 ? (
-            <TouchableOpacity onPress={handleBack}>
-              <Text style={styles.backButton}>Back</Text>
-            </TouchableOpacity>
-          ) : (
-            <View />
-          )}
-
-          {currentStep === 2 && (
-            <TouchableOpacity onPress={handleSkip}>
-              <Text style={styles.skipButton}>Skip</Text>
-            </TouchableOpacity>
-          )}
+          <View style={styles.stepLabelRow}>
+            {currentStep > 0 && (
+              <TouchableOpacity
+                onPress={handleBack}
+                style={styles.backChevron}
+              >
+                <Text style={styles.backChevronText}>‹</Text>
+              </TouchableOpacity>
+            )}
+ 
+            <Text style={styles.stepLabel}>
+              STEP {currentStep + 1} OF {onboardingSteps.length}
+            </Text>
+          </View>
+ 
+          <Text style={styles.percentLabel}>
+            {Math.round(progress * 100)}% COMPLETE
+          </Text>
         </View>
-
+ 
         {/* Page title */}
         <View style={styles.titleContainer}>
-          <Text style={styles.title}>{step.title}</Text>
-
+          <View style={styles.titleRow}>
+            <Text style={styles.title}>{step.title}</Text>
+ 
+            {currentStep === 2 && (
+              <TouchableOpacity onPress={handleSkip}>
+                <Text style={styles.skipButton}>Skip</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+ 
           {step.subtitle && (
             <Text style={styles.subtitle}>{step.subtitle}</Text>
           )}
         </View>
-
+ 
         {/* PAGE 1, 2 & 3 */}
         {step.type !== 'wardrobe' && (
           <View style={styles.content}>
-            {step.sections?.map((section) => {
+            {step.sections?.map((section, index) => {
               const currentAnswer = answers[section.id];
-
+ 
               const showError =
                 showErrors &&
                 !section.optional &&
                 !isSectionAnswered(section, answers);
-
+ 
               return (
                 <View key={section.id} style={styles.section}>
                   {/* Section heading */}
-                                    <View style={styles.sectionHeader}>
+                  <View style={styles.sectionHeader}>
                     <Text
                       style={[
                         styles.sectionTitle,
                         showError && styles.sectionTitleError,
                       ]}
                     >
-                      {section.title}
+                      {index + 1}. {section.title}
                     </Text>
-
+ 
                     {section.optional && (
-                      <Text style={styles.optional}>
-                        OPTIONAL
-                      </Text>
+                      <View style={styles.optionalBadge}>
+                        <Text style={styles.optionalBadgeText}>
+                          OPTIONAL
+                        </Text>
+                      </View>
                     )}
                   </View>
-
+ 
                   {section.subtitle && (
                     <Text style={styles.sectionSubtitle}>
                       {section.subtitle}
                     </Text>
                   )}
-
+ 
                   {showError && (
                     <Text style={styles.errorText}>
                       Please make a selection to continue
                     </Text>
                   )}
-
+ 
                   {/* HEIGHT SLIDER */}
                   {section.type === 'slider' && (
                     <View style={styles.sliderContainer}>
@@ -216,7 +250,7 @@ export default function OnboardingQuiz() {
                             : section.defaultValue ?? 168}{' '}
                         {section.unit}
                         </Text>
-
+ 
                         <Slider
                         style={styles.slider}
                         minimumValue={section.min ?? 140}
@@ -236,7 +270,109 @@ export default function OnboardingQuiz() {
                         />
                     </View>
                 )}
-
+ 
+                  {/* SIZE DROPDOWNS */}
+                  {section.type === 'size-select' && section.fields && (
+                    <View>
+                      <View style={styles.sizeFieldRow}>
+                        {section.fields.map((field) => {
+                          const fieldKey = `${section.id}:${field.id}`;
+                          const fieldValue = answers[fieldKey];
+                          const isOpen = openSizeField === fieldKey;
+ 
+                          return (
+                            <TouchableOpacity
+                              key={field.id}
+                              style={[
+                                styles.sizeFieldBox,
+                                isOpen && styles.sizeFieldBoxOpen,
+                              ]}
+                              onPress={() =>
+                                setOpenSizeField(isOpen ? null : fieldKey)
+                              }
+                            >
+                              <Text style={styles.sizeFieldLabel}>
+                                {field.label}
+                              </Text>
+ 
+                              <View style={styles.sizeFieldValueRow}>
+                                <Text style={styles.sizeFieldValue}>
+                                  {typeof fieldValue === 'string'
+                                    ? fieldValue
+                                    : 'Select'}
+                                </Text>
+ 
+                                <Text
+                                  style={[
+                                    styles.sizeFieldChevron,
+                                    isOpen &&
+                                      styles.sizeFieldChevronOpen,
+                                  ]}
+                                >
+                                  ▾
+                                </Text>
+                              </View>
+                            </TouchableOpacity>
+                          );
+                        })}
+                      </View>
+ 
+                      {section.fields.map((field) => {
+                        const fieldKey = `${section.id}:${field.id}`;
+ 
+                        if (openSizeField !== fieldKey) return null;
+ 
+                        const fieldValue = answers[fieldKey];
+ 
+                        return (
+                          <View
+                            key={field.id}
+                            style={styles.sizeDropdownPanel}
+                          >
+                            <Text style={styles.sizeDropdownLabel}>
+                              Select {field.label}
+                            </Text>
+ 
+                            <View style={styles.optionsGrid}>
+                              {field.options.map((optionValue) => {
+                                const isSelected =
+                                  fieldValue === optionValue;
+ 
+                                return (
+                                  <TouchableOpacity
+                                    key={optionValue}
+                                    style={[
+                                      styles.option,
+                                      isSelected &&
+                                        styles.selectedOption,
+                                    ]}
+                                    onPress={() =>
+                                      handleSelectSizeField(
+                                        section.id,
+                                        field.id,
+                                        optionValue
+                                      )
+                                    }
+                                  >
+                                    <Text
+                                      style={[
+                                        styles.optionText,
+                                        isSelected &&
+                                          styles.selectedOptionText,
+                                      ]}
+                                    >
+                                      {optionValue}
+                                    </Text>
+                                  </TouchableOpacity>
+                                );
+                              })}
+                            </View>
+                          </View>
+                        );
+                      })}
+                    </View>
+                  )}
+ 
                   {/* OPTIONS */}
                   {section.options && (
                     <View style={styles.optionsGrid}>
@@ -244,7 +380,7 @@ export default function OnboardingQuiz() {
                         const isSelected = Array.isArray(currentAnswer)
                           ? currentAnswer.includes(option.id)
                           : currentAnswer === option.id;
-
+ 
                         return (
                           <TouchableOpacity
                             key={option.id}
@@ -278,7 +414,7 @@ export default function OnboardingQuiz() {
                                 ]}
                               />
                             )}
-
+ 
                             <Text
                               style={[
                                 styles.optionText,
@@ -288,7 +424,7 @@ export default function OnboardingQuiz() {
                             >
                               {option.label}
                             </Text>
-
+ 
                             {option.description && (
                               <Text
                                 style={[
@@ -310,32 +446,32 @@ export default function OnboardingQuiz() {
             })}
           </View>
         )}
-
+ 
         {/* PAGE 4 — WARDROBE */}
         {step.type === 'wardrobe' && (
           <View style={styles.wardrobeContent}>
             <TouchableOpacity style={styles.wardrobeCard}>
               <Text style={styles.wardrobeIcon}>⌕</Text>
-
+ 
               <View style={styles.wardrobeTextContainer}>
                 <Text style={styles.wardrobeTitle}>
                   Search for an item
                 </Text>
-
+ 
                 <Text style={styles.wardrobeSubtitle}>
                   Find exact brands or styles online
                 </Text>
               </View>
             </TouchableOpacity>
-
+ 
             <TouchableOpacity style={styles.wardrobeCard}>
               <Text style={styles.wardrobeIcon}>▣</Text>
-
+ 
               <View style={styles.wardrobeTextContainer}>
                 <Text style={styles.wardrobeTitle}>
                   Upload or take a photo
                 </Text>
-
+ 
                 <Text style={styles.wardrobeSubtitle}>
                   We'll auto-crop background instantly
                 </Text>
@@ -344,7 +480,7 @@ export default function OnboardingQuiz() {
           </View>
         )}
       </ScrollView>
-
+ 
       {/* Bottom actions */}
       <View style={styles.footer}>
         {showErrors && missingRequiredSections.length > 0 && (
@@ -354,7 +490,7 @@ export default function OnboardingQuiz() {
               : 'Please answer all required questions above.'}
           </Text>
         )}
-
+ 
         <TouchableOpacity
           style={styles.continueButton}
           onPress={handleContinue}
@@ -366,7 +502,7 @@ export default function OnboardingQuiz() {
             {currentStep === 3 && 'Finish Onboarding'}
           </Text>
         </TouchableOpacity>
-
+ 
         {currentStep === 3 && (
           <TouchableOpacity onPress={handleContinue}>
             <Text style={styles.skipForNow}>
@@ -378,75 +514,78 @@ export default function OnboardingQuiz() {
     </SafeAreaView>
   );
 }
-
+ 
 function getColourStyle(colourId: string) {
   switch (colourId) {
     case 'neutrals':
       return {
         backgroundColor: '#D6D0C4',
       };
-
+ 
     case 'pastels':
       return {
         backgroundColor: '#E8D7E8',
       };
-
+ 
     case 'earth':
       return {
         backgroundColor: '#9A7355',
       };
-
+ 
     case 'bold':
       return {
         backgroundColor: '#E53935',
       };
-
+ 
     case 'mono':
       return {
         backgroundColor: '#222222',
       };
-
+ 
     case 'jewel':
       return {
         backgroundColor: '#5E3A7D',
       };
-
+ 
     default:
       return {
         backgroundColor: '#CCCCCC',
       };
   }
 }
-
-const createStyles = (theme: ReturnType<typeof useTheme>) =>
+ 
+const createStyles = (
+  theme: ReturnType<typeof useTheme>,
+  accentColors: ReturnType<typeof useAccentColors>
+) =>
   StyleSheet.create({
     container: {
       flex: 1,
       backgroundColor: theme.background,
     },
-
+ 
     progressContainer: {
       paddingHorizontal: Spacing.four,
       paddingTop: Spacing.two,
     },
-
+ 
     progressBackground: {
       height: 4,
-      backgroundColor: theme.backgroundElement,
+      backgroundColor: accentColors.track,
       borderRadius: 4,
       overflow: 'hidden',
     },
-
+ 
     progressFill: {
       height: 4,
-      backgroundColor: theme.text,
+      backgroundColor: accentColors.primary,
       borderRadius: 4,
     },
-
+ 
     scrollContent: {
       paddingBottom: Spacing.four,
     },
-
+ 
     header: {
       flexDirection: 'row',
       justifyContent: 'space-between',
@@ -454,32 +593,65 @@ const createStyles = (theme: ReturnType<typeof useTheme>) =>
       paddingHorizontal: Spacing.four,
       paddingTop: Spacing.three,
     },
-
-    backButton: {
-      fontFamily: Fonts.sans,
-      fontSize: 15,
-      color: theme.textSecondary,
+ 
+    stepLabelRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
     },
-
+ 
+    backChevron: {
+      paddingRight: Spacing.one,
+    },
+ 
+    backChevronText: {
+      fontSize: 20,
+      color: theme.textSecondary,
+      lineHeight: 20,
+    },
+ 
+    stepLabel: {
+      fontFamily: Fonts.sans,
+      fontSize: 11,
+      fontWeight: '600',
+      color: theme.textSecondary,
+      letterSpacing: 0.5,
+      textTransform: 'uppercase',
+    },
+ 
+    percentLabel: {
+      fontFamily: Fonts.sans,
+      fontSize: 11,
+      fontWeight: '700',
+      color: theme.text,
+      letterSpacing: 0.5,
+      textTransform: 'uppercase',
+    },
+ 
     skipButton: {
       fontFamily: Fonts.sans,
       fontSize: 15,
       color: theme.textSecondary,
     },
-
+ 
     titleContainer: {
       paddingHorizontal: Spacing.four,
       paddingTop: Spacing.five,
       paddingBottom: Spacing.four,
     },
-
+ 
+    titleRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'flex-start',
+    },
+ 
     title: {
       fontFamily: Fonts.sans,
       fontSize: 30,
       fontWeight: '700',
       color: theme.text,
     },
-
+ 
     subtitle: {
       fontFamily: Fonts.sans,
       fontSize: 15,
@@ -487,92 +659,98 @@ const createStyles = (theme: ReturnType<typeof useTheme>) =>
       marginTop: Spacing.two,
       lineHeight: 22,
     },
-
+ 
     content: {
       paddingHorizontal: Spacing.four,
     },
-
+ 
     section: {
       marginBottom: Spacing.five,
     },
-
+ 
     sectionHeader: {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
       marginBottom: Spacing.one,
     },
-
+ 
     sectionTitle: {
       fontFamily: Fonts.sans,
       fontSize: 19,
       fontWeight: '600',
       color: theme.text,
     },
-
-    optional: {
+ 
+    optionalBadge: {
+      backgroundColor: accentColors.badgeBg,
+      borderRadius: 20,
+      paddingHorizontal: Spacing.two,
+      paddingVertical: 3,
+    },
+ 
+    optionalBadgeText: {
       fontFamily: Fonts.sans,
-      fontSize: 11,
+      fontSize: 10,
       fontWeight: '600',
-      color: theme.textSecondary,
+      color: accentColors.badgeText,
       letterSpacing: 0.5,
     },
-
+ 
     sectionTitleError: {
-      color: '#E53935',
+      color: accentColors.errorRed,
     },
-
+ 
     errorText: {
       fontFamily: Fonts.sans,
       fontSize: 12,
-      color: '#E53935',
+      color: accentColors.errorRed,
       marginBottom: Spacing.two,
     },
-
+ 
     sectionSubtitle: {
       fontFamily: Fonts.sans,
       fontSize: 14,
       color: theme.textSecondary,
       marginBottom: Spacing.two,
     },
-
+ 
     optionsGrid: {
       flexDirection: 'row',
       flexWrap: 'wrap',
       gap: Spacing.two,
     },
-
+ 
     option: {
-      width: '31.5%',
-      minHeight: 48,
-      paddingHorizontal: Spacing.two,
+      minHeight: 40,
+      paddingHorizontal: Spacing.three,
       paddingVertical: Spacing.two,
-      borderRadius: Spacing.two,
-      backgroundColor: theme.backgroundElement,
+      borderRadius: 24,
+      backgroundColor: '#FFFFFF',
       borderWidth: 1,
-      borderColor: theme.backgroundElement,
+      borderColor:  accentColors.border,
       justifyContent: 'center',
       alignItems: 'center',
     },
-
+ 
     selectedOption: {
-      backgroundColor: theme.backgroundSelected,
-      borderColor: theme.text,
+      backgroundColor: accentColors.chipSelectedBg,
+      borderColor: accentColors.primary,
     },
-
+ 
     optionText: {
       fontFamily: Fonts.sans,
       fontSize: 14,
       fontWeight: '500',
-      color: theme.text,
+      color: theme.textSecondary,
       textAlign: 'center',
     },
-
+ 
     selectedOptionText: {
       color: theme.text,
-      fontWeight: '600',
+      fontWeight: '700',
     },
-
+ 
     optionDescription: {
       fontFamily: Fonts.sans,
       fontSize: 11,
@@ -580,22 +758,22 @@ const createStyles = (theme: ReturnType<typeof useTheme>) =>
       textAlign: 'center',
       marginTop: Spacing.one,
     },
-
+ 
     selectedOptionDescription: {
       color: theme.textSecondary,
     },
-
+ 
     colourCircle: {
       width: 22,
       height: 22,
       borderRadius: 11,
       marginBottom: Spacing.one,
     },
-
+ 
     sliderContainer: {
       marginTop: Spacing.one,
     },
-
+ 
     sliderValue: {
       fontFamily: Fonts.sans,
       fontSize: 28,
@@ -603,17 +781,81 @@ const createStyles = (theme: ReturnType<typeof useTheme>) =>
       color: theme.text,
       marginBottom: Spacing.one,
     },
-
+ 
     slider: {
       width: '100%',
       height: 40,
     },
-
+ 
+    sizeFieldRow: {
+      flexDirection: 'row',
+      gap: Spacing.two,
+    },
+ 
+    sizeFieldBox: {
+      flex: 1,
+      backgroundColor: theme.backgroundElement,
+      borderRadius: Spacing.two,
+      borderWidth: 1,
+      borderColor: theme.backgroundElement,
+      paddingHorizontal: Spacing.two,
+      paddingVertical: Spacing.two,
+    },
+ 
+    sizeFieldBoxOpen: {
+      borderColor: accentColors.primary,
+      backgroundColor: accentColors.chipSelectedBg,
+    },
+ 
+    sizeFieldLabel: {
+      fontFamily: Fonts.sans,
+      fontSize: 11,
+      color: theme.textSecondary,
+      marginBottom: 2,
+    },
+ 
+    sizeFieldValueRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+    },
+ 
+    sizeFieldValue: {
+      fontFamily: Fonts.sans,
+      fontSize: 15,
+      fontWeight: '600',
+      color: theme.text,
+    },
+ 
+    sizeFieldChevron: {
+      fontSize: 14,
+      color: theme.textSecondary,
+    },
+ 
+    sizeFieldChevronOpen: {
+      color: accentColors.primary,
+    },
+ 
+    sizeDropdownPanel: {
+      marginTop: Spacing.two,
+      padding: Spacing.two,
+      backgroundColor: theme.backgroundElement,
+      borderRadius: Spacing.two,
+    },
+ 
+    sizeDropdownLabel: {
+      fontFamily: Fonts.sans,
+      fontSize: 12,
+      fontWeight: '600',
+      color: theme.textSecondary,
+      marginBottom: Spacing.two,
+    },
+ 
     wardrobeContent: {
       paddingHorizontal: Spacing.four,
       gap: Spacing.three,
     },
-
+ 
     wardrobeCard: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -622,62 +864,62 @@ const createStyles = (theme: ReturnType<typeof useTheme>) =>
       padding: Spacing.three,
       minHeight: 80,
     },
-
+ 
     wardrobeIcon: {
       fontSize: 28,
       color: theme.text,
       width: 48,
       textAlign: 'center',
     },
-
+ 
     wardrobeTextContainer: {
       flex: 1,
       marginLeft: Spacing.two,
     },
-
+ 
     wardrobeTitle: {
       fontFamily: Fonts.sans,
       fontSize: 16,
       fontWeight: '600',
       color: theme.text,
     },
-
+ 
     wardrobeSubtitle: {
       fontFamily: Fonts.sans,
       fontSize: 13,
       color: theme.textSecondary,
       marginTop: Spacing.one,
     },
-
+ 
     footer: {
       paddingHorizontal: Spacing.four,
       paddingTop: Spacing.two,
       paddingBottom: Spacing.three,
       backgroundColor: theme.background,
     },
-
+ 
     footerErrorText: {
       fontFamily: Fonts.sans,
       fontSize: 13,
-      color: '#E53935',
+      color: accentColors.errorRed,
       textAlign: 'center',
       marginBottom: Spacing.two,
     },
-
+ 
     continueButton: {
-      backgroundColor: theme.text,
+      backgroundColor: accentColors.primary,
       paddingVertical: Spacing.three,
-      borderRadius: Spacing.two,
+      borderRadius: 24,
       alignItems: 'center',
     },
-
+ 
     continueText: {
       fontFamily: Fonts.sans,
-      color: theme.background,
+      color: accentColors.buttonText,
       fontSize: 16,
-      fontWeight: '600',
+      fontWeight: '700',
     },
-
+ 
     skipForNow: {
       fontFamily: Fonts.sans,
       color: theme.textSecondary,
@@ -685,7 +927,7 @@ const createStyles = (theme: ReturnType<typeof useTheme>) =>
       textAlign: 'center',
       marginTop: Spacing.two,
     },
-
+ 
     placeholderText: {
       fontFamily: Fonts.sans,
       fontSize: 16,

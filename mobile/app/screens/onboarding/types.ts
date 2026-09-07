@@ -5,6 +5,12 @@ export type Option = {
   description?: string;
 };
 
+export type SizeField = {
+  id: string;
+  label: string;
+  options: string[];
+};
+
 export type QuestionSection = {
   id: string;
   title: string;
@@ -17,6 +23,7 @@ export type QuestionSection = {
     | 'size-select';
   optional?: boolean;
   options?: Option[];
+  fields?: SizeField[];
   min?: number;
   max?: number;
   defaultValue?: number;
