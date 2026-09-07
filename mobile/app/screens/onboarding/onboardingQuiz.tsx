@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import {
   SafeAreaView,
@@ -17,19 +17,20 @@ import Animated, {
 
 import Slider from '@react-native-community/slider';
 
-import { onboardingSteps } from './onboardingData';
-import { OnboardingAnswers } from './types';
-
 import { useTheme } from '../../hooks/use-theme';
 import { Fonts, Spacing } from '../../services/theme';
+import { onboardingSteps } from './onboardingData';
+import { OnboardingAnswers, QuestionSection } from './types';
 
 export default function OnboardingQuiz() {
   const [currentStep, setCurrentStep] = useState(0);
   const [answers, setAnswers] = useState<OnboardingAnswers>({});
+  const [showErrors, setShowErrors] = useState(false);
 
   const theme = useTheme();
   const styles = createStyles(theme);
 
+  const scrollViewRef = useRef<ScrollView>(null);
   const step = onboardingSteps[currentStep];
 
   const progress = (currentStep + 1) / onboardingSteps.length;
@@ -42,6 +43,11 @@ export default function OnboardingQuiz() {
   useEffect(() => {
     progressAnim.value = withTiming(progress, { duration: 350 });
   }, [progress, progressAnim]);
+  
+  useEffect(() => {
+    scrollViewRef.current?.scrollTo({ y: 0, animated: false });
+    setShowErrors(false);
+  }, [currentStep]);
 
   const handleSelect = (
     sectionId: string,
@@ -67,7 +73,32 @@ export default function OnboardingQuiz() {
     handleSelect(sectionId, newValues);
   };
 
+  const isSectionAnswered = (
+    section: QuestionSection,
+    answers: OnboardingAnswers
+  ) => {
+    // Sliders always carry a value (default or user-set), so they're
+    // never considered "unanswered".
+    if (section.type === 'slider') return true;
+
+    const value = answers[section.id];
+
+    if (Array.isArray(value)) return value.length > 0;
+
+    return value !== undefined && value !== '';
+  };
+
+  const missingRequiredSections =
+  step.sections?.filter(
+    (section) => !section.optional && !isSectionAnswered(section, answers)
+  ) ?? [];
+
   const handleContinue = () => {
+    if (missingRequiredSections.length > 0) {
+      setShowErrors(true);
+      return;
+    }
+    
     if (currentStep < onboardingSteps.length - 1) {
       setCurrentStep((prev) => prev + 1);
     } else {
@@ -103,6 +134,7 @@ export default function OnboardingQuiz() {
       </View>
 
       <ScrollView
+        ref={scrollViewRef}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
@@ -138,11 +170,21 @@ export default function OnboardingQuiz() {
             {step.sections?.map((section) => {
               const currentAnswer = answers[section.id];
 
+              const showError =
+                showErrors &&
+                !section.optional &&
+                !isSectionAnswered(section, answers);
+
               return (
                 <View key={section.id} style={styles.section}>
                   {/* Section heading */}
-                  <View style={styles.sectionHeader}>
-                    <Text style={styles.sectionTitle}>
+                                    <View style={styles.sectionHeader}>
+                    <Text
+                      style={[
+                        styles.sectionTitle,
+                        showError && styles.sectionTitleError,
+                      ]}
+                    >
                       {section.title}
                     </Text>
 
@@ -156,6 +198,12 @@ export default function OnboardingQuiz() {
                   {section.subtitle && (
                     <Text style={styles.sectionSubtitle}>
                       {section.subtitle}
+                    </Text>
+                  )}
+
+                  {showError && (
+                    <Text style={styles.errorText}>
+                      Please make a selection to continue
                     </Text>
                   )}
 
@@ -299,6 +347,14 @@ export default function OnboardingQuiz() {
 
       {/* Bottom actions */}
       <View style={styles.footer}>
+        {showErrors && missingRequiredSections.length > 0 && (
+          <Text style={styles.footerErrorText}>
+            {missingRequiredSections.length === 1
+              ? 'Please answer the required question above.'
+              : 'Please answer all required questions above.'}
+          </Text>
+        )}
+
         <TouchableOpacity
           style={styles.continueButton}
           onPress={handleContinue}
@@ -462,6 +518,17 @@ const createStyles = (theme: ReturnType<typeof useTheme>) =>
       letterSpacing: 0.5,
     },
 
+    sectionTitleError: {
+      color: '#E53935',
+    },
+
+    errorText: {
+      fontFamily: Fonts.sans,
+      fontSize: 12,
+      color: '#E53935',
+      marginBottom: Spacing.two,
+    },
+
     sectionSubtitle: {
       fontFamily: Fonts.sans,
       fontSize: 14,
@@ -587,6 +654,14 @@ const createStyles = (theme: ReturnType<typeof useTheme>) =>
       paddingTop: Spacing.two,
       paddingBottom: Spacing.three,
       backgroundColor: theme.background,
+    },
+
+    footerErrorText: {
+      fontFamily: Fonts.sans,
+      fontSize: 13,
+      color: '#E53935',
+      textAlign: 'center',
+      marginBottom: Spacing.two,
     },
 
     continueButton: {
