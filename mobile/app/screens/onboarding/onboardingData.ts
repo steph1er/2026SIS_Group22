@@ -1,9 +1,6 @@
 import { OnboardingStep } from './types';
 
 export const onboardingSteps: OnboardingStep[] = [
-  // --------------------------------------------------
-  // STEP 1 — STYLE
-  // --------------------------------------------------
   {
     id: 'style',
     title: 'Select Your Style',
@@ -96,9 +93,6 @@ export const onboardingSteps: OnboardingStep[] = [
     ],
   },
 
-  // --------------------------------------------------
-  // STEP 2 — CLOTHING PREFERENCES
-  // --------------------------------------------------
   {
     id: 'clothing-preferences',
     title: 'Clothing Preferences',
@@ -224,9 +218,6 @@ export const onboardingSteps: OnboardingStep[] = [
     ],
   },
 
-  // --------------------------------------------------
-  // STEP 3 — PERSONAL FIT
-  // --------------------------------------------------
   {
     id: 'personal-fit',
     title: 'Personal Fit',
@@ -333,9 +324,6 @@ export const onboardingSteps: OnboardingStep[] = [
     ],
   },
 
-  // --------------------------------------------------
-  // STEP 4 — DIGITALISE CLOSET
-  // --------------------------------------------------
   {
     id: 'digitalise-closet',
     title: 'Get Started!',
