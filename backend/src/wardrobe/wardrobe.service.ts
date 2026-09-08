@@ -1,6 +1,6 @@
 import { HttpException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
-import { WardrobeItem } from './interfaces/wardrobe-item.interface';
 import { SupabaseService } from '../supabase/supabase.service';
+import { UpdateWardrobeItemDto } from './dto/update-wardrobe-item.dto';
 
 @Injectable()
 export class WardrobeService {
@@ -9,12 +9,13 @@ export class WardrobeService {
     async getWardrobe(): Promise<any[]>{
         const supabase = this.supabaseService.client;
 
-        // get logged in user 
-        //const currentUser = 'id'
+        // check how to authenticate user
+        const user_id = "testing"
 
-        // get all wardrobe items for db that match that user TODO - change to logged in user
-        //const { data, error } = await supabase.from('wardrobe_items').select('*').eq('user_id', currentUser);
-        const { data, error } = await supabase.from('wardrobe_items').select('*');
+        // get all items for logged in user
+        const { data, error } = await supabase.from('wardrobe_items')
+                                              .select('*')
+                                              .eq('user_id', user_id);
 
         // if error return error message
         if(error){
@@ -30,6 +31,32 @@ export class WardrobeService {
         return data;
     }
 
+    async getWardrobeItem(id: string): Promise<any[]>{
+        const supabase = this.supabaseService.client;
+
+        // check how to authenticate user
+        const user_id = "testing"
+        
+        // get item by id and check it belongs to logged in user
+        const { data, error } = await supabase.from('wardrobe_items')
+                                              .select('*')
+                                              .eq('id', id)
+                                              .eq('user_id', user_id);
+
+        // if error return error message
+        if(error){
+            throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+
+        // if no item throw not found exception
+        if(data.length === 0){
+            throw new NotFoundException('No item found for user with provided item id');
+        }
+
+        // otherwise item
+        return data;
+    }
+
     addItem(): string{
         // get logged in user 
 
@@ -40,16 +67,38 @@ export class WardrobeService {
         return 'This will add an uploaded item to users wardrobe';
     }
 
-    updateItemDetails(): string{
-        // get logged in user 
+    async updateItemDetails(updateWardrobeItemDto: UpdateWardrobeItemDto){
+        const supabase = this.supabaseService.client;
+
+        const {id, user_id, image_url, clothing_category, style, brand, size, colour, material, tags, modified_at} = updateWardrobeItemDto
+
+        // check how to authenticate user
 
         // check requested item exists
+        await this.check_item_belongs_to_user(user_id, id);
 
         // update details
+        const { data: updateddata, error: updateerror } = await supabase.from('wardrobe_items')
+                                                                        .update({  
+                                                                            image_url: image_url,
+                                                                            clothing_category: clothing_category,
+                                                                            style: style,
+                                                                            brand: brand,
+                                                                            size: size,
+                                                                            colour: colour,
+                                                                            material: material,
+                                                                            tags: tags,
+                                                                            modified_at: modified_at
+                                                                        })
+                                                                        .eq('id', id)
+                                                                        .select()
+
+        if(updateerror){
+            throw new HttpException(updateerror.message, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
 
         // return success response
-
-        return 'This will update the details of an item';
+        return updateddata;
     }
 
     searchForItems(): string{
@@ -66,16 +115,39 @@ export class WardrobeService {
         return 'This will return items matching provided criteria like colour, category etc.';
     }
 
-    deleteItem(): string{
-        // get logged in user 
+    async deleteItem(id: string){
+        const supabase = this.supabaseService.client;
 
+        // check how to authenticate user
+        const user_id = "user"
+        
         // check requested item exists
+        await this.check_item_belongs_to_user(user_id, id);
 
         // remove item from db
+        const response = await supabase.from('wardrobe_items')
+                                       .delete()
+                                       .eq('id', id);
 
-        // return success response
+        return response;
+    }
 
-        return 'This will delete an item from a wardrobe';
+    private async check_item_belongs_to_user(user_id: string, item_id: string) {
+        const supabase = this.supabaseService.client;
+
+        const { data, error } = await supabase.from('wardrobe_items')
+                                              .select('*')
+                                              .eq('id', item_id)
+                                              .eq('user_id', user_id);
+        
+        if(error){
+            throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+
+        // if no item throw not found exception
+        if(data.length === 0){
+            throw new NotFoundException('No item found for user with provided item id');
+        }
     }
 
 }

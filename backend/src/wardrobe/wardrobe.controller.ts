@@ -1,5 +1,6 @@
-import { Controller, Get } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post } from '@nestjs/common';
 import { WardrobeService } from './wardrobe.service';
+import { UpdateWardrobeItemDto } from './dto/update-wardrobe-item.dto';
 
 @Controller('wardrobes')
 export class WardrobeController {
@@ -11,16 +12,20 @@ export class WardrobeController {
         return this.wardrobeService.getWardrobe();
     }
 
+    @Get(':id')
+    getWardrobeItem(@Param('id') id: string): Promise<any[]> {
+        return this.wardrobeService.getWardrobeItem(id);
+    }
+
     // change to post
     @Get('add')
     addItem(): string {
         return this.wardrobeService.addItem();
     }
 
-    // change to post
-    @Get('update')
-    updateItemDetails(): string {
-        return this.wardrobeService.updateItemDetails();
+    @Post('update')
+    updateItemDetails(@Body() updateWardrobeItemDto: UpdateWardrobeItemDto) {
+        return this.wardrobeService.updateItemDetails(updateWardrobeItemDto);
     }
 
     @Get('search')
@@ -29,8 +34,8 @@ export class WardrobeController {
     }
 
     // change to delete
-    @Get('delete')
-    deleteItem(): string {
-        return this.wardrobeService.deleteItem();
+    @Delete('delete/:id')
+    deleteItem(@Param('id') id: string) {
+        return this.wardrobeService.deleteItem(id);
     }
 }
