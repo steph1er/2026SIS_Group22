@@ -3,6 +3,7 @@ export type Option = {
   id: string;
   label: string;
   description?: string;
+  image?: string;
 };
 
 export type SizeField = {

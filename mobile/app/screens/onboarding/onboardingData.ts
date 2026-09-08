@@ -15,10 +15,12 @@ export const onboardingSteps: OnboardingStep[] = [
           {
             id: 'y2k',
             label: 'Y2K',
+            image: 'https://picsum.photos/seed/onboarding-y2k/400/600',
           },
           {
             id: 'classy',
             label: 'Classy',
+            image: 'https://picsum.photos/seed/onboarding-y2k/400/600',
           },
           {
             id: 'casual',
@@ -274,26 +276,21 @@ export const onboardingSteps: OnboardingStep[] = [
         title: 'Typical Sizing',
         type: 'size-select',
         optional: true,
-        options: [
+        fields: [
           {
-            id: 'xs',
-            label: 'XS',
+            id: 'tops',
+            label: 'Tops',
+            options: ['XS', 'S', 'M', 'L', 'XL', 'XXL'],
           },
           {
-            id: 's',
-            label: 'S',
+            id: 'bottoms',
+            label: 'Bottoms',
+            options: ['6', '8', '10', '12', '14', '16'],
           },
           {
-            id: 'm',
-            label: 'M',
-          },
-          {
-            id: 'l',
-            label: 'L',
-          },
-          {
-            id: 'xl',
-            label: 'XL',
+            id: 'dresses',
+            label: 'Dresses',
+            options: ['XS', 'S', 'M', 'L', 'XL'],
           },
         ],
       },

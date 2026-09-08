@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 
 import {
+  Image,
   SafeAreaView,
   ScrollView,
   StyleSheet,
@@ -448,21 +449,88 @@ export default function OnboardingQuiz() {
                     </View>
                   )}
  
-                  {/* OPTIONS */}
+                                    {/* OPTIONS */}
                   {section.options && (
                     <View style={styles.optionsGrid}>
                       {section.options.map((option) => {
                         const isSelected = Array.isArray(currentAnswer)
                           ? currentAnswer.includes(option.id)
                           : currentAnswer === option.id;
- 
+
+                                                const isColour = section.id === 'colour';
+                        const isNoGo = section.id === 'style-no-gos';
+                        const isBodyType = section.id === 'body-type';
+                        const isAesthetic = section.id === 'aesthetic';
+
+                        if (isAesthetic) {
+                          return (
+                            <TouchableOpacity
+                              key={option.id}
+                              style={[
+                                styles.aestheticCard,
+                                isSelected &&
+                                  styles.aestheticCardSelected,
+                              ]}
+                              onPress={() =>
+                                handleSingleSelect(section.id, option.id)
+                              }
+                            >
+                              {option.image && (
+                                <Image
+                                  source={{ uri: option.image }}
+                                  style={styles.aestheticImage}
+                                  resizeMode="cover"
+                                />
+                              )}
+
+                              <View style={styles.aestheticBadge}>
+                                <Text style={styles.aestheticBadgeText}>
+                                  {option.label}
+                                </Text>
+                              </View>
+                            </TouchableOpacity>
+                          );
+                        }
+
+                        if (isBodyType) {
+                          return (
+                            <TouchableOpacity
+                              key={option.id}
+                              style={[
+                                styles.bodyTypeCard,
+                                isSelected &&
+                                  styles.bodyTypeCardSelected,
+                              ]}
+                              onPress={() =>
+                                handleSingleSelect(section.id, option.id)
+                              }
+                            >
+                              <Text style={styles.bodyTypeIcon}>
+                                {getBodyTypeIcon(option.id)}
+                              </Text>
+
+                              <Text style={styles.bodyTypeTitle}>
+                                {option.label}
+                              </Text>
+
+                              {option.description && (
+                                <Text style={styles.bodyTypeDescription}>
+                                  {option.description}
+                                </Text>
+                              )}
+                            </TouchableOpacity>
+                          );
+                        }
+
                         return (
                           <TouchableOpacity
                             key={option.id}
                             style={[
-                              styles.option,
-                              isSelected &&
+                              isColour ? styles.colourItem : styles.option,
+                              !isColour &&
+                                isSelected &&
                                 styles.selectedOption,
+                              isNoGo && styles.noGoOption,
                             ]}
                             onPress={() => {
                               if (
@@ -481,25 +549,34 @@ export default function OnboardingQuiz() {
                             }}
                           >
                             {/* Colour circles */}
-                            {section.id === 'colour' && (
+                            {isColour && (
                               <View
                                 style={[
                                   styles.colourCircle,
                                   getColourStyle(option.id),
+                                  isSelected &&
+                                    styles.colourCircleSelected,
                                 ]}
                               />
                             )}
- 
+
                             <Text
                               style={[
-                                styles.optionText,
-                                isSelected &&
+                                isColour
+                                  ? styles.colourLabel
+                                  : styles.optionText,
+                                !isColour &&
+                                  isSelected &&
                                   styles.selectedOptionText,
                               ]}
                             >
                               {option.label}
                             </Text>
- 
+
+                            {isNoGo && isSelected && (
+                              <Text style={styles.noGoRemove}>✕</Text>
+                            )}
+
                             {option.description && (
                               <Text
                                 style={[
@@ -526,7 +603,9 @@ export default function OnboardingQuiz() {
         {step.type === 'wardrobe' && (
           <View style={styles.wardrobeContent}>
             <TouchableOpacity style={styles.wardrobeCard}>
-              <Text style={styles.wardrobeIcon}>⌕</Text>
+              <View style={styles.wardrobeIconBox}>
+                <Text style={styles.wardrobeIcon}>⌕</Text>
+              </View>
  
               <View style={styles.wardrobeTextContainer}>
                 <Text style={styles.wardrobeTitle}>
@@ -540,7 +619,9 @@ export default function OnboardingQuiz() {
             </TouchableOpacity>
  
             <TouchableOpacity style={styles.wardrobeCard}>
-              <Text style={styles.wardrobeIcon}>▣</Text>
+              <View style={styles.wardrobeIconBox}>
+                <Text style={styles.wardrobeIcon}>▣</Text>
+              </View>
  
               <View style={styles.wardrobeTextContainer}>
                 <Text style={styles.wardrobeTitle}>
@@ -626,6 +707,23 @@ function getColourStyle(colourId: string) {
       return {
         backgroundColor: '#CCCCCC',
       };
+  }
+}
+
+function getBodyTypeIcon(bodyTypeId: string) {
+  switch (bodyTypeId) {
+    case 'hourglass':
+      return '⏳';
+    case 'rectangle':
+      return '▭';
+    case 'pear':
+      return '🍐';
+    case 'apple':
+      return '🍎';
+    case 'inverted-triangle':
+      return '▽';
+    default:
+      return '●';
   }
 }
  
@@ -838,11 +936,114 @@ const createStyles = (
       color: theme.textSecondary,
     },
  
+    colourItem: {
+      alignItems: 'center',
+      width: 64,
+    },
+
     colourCircle: {
-      width: 22,
-      height: 22,
-      borderRadius: 11,
+      width: 40,
+      height: 40,
+      borderRadius: 20,
       marginBottom: Spacing.one,
+      borderWidth: 2,
+      borderColor: 'transparent',
+    },
+
+    colourCircleSelected: {
+      borderColor: accentColors.primary,
+    },
+
+    colourLabel: {
+      fontFamily: Fonts.sans,
+      fontSize: 12,
+      color: theme.textSecondary,
+      textAlign: 'center',
+    },
+
+    noGoOption: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+    },
+
+    noGoRemove: {
+      fontSize: 12,
+      fontWeight: '700',
+      color: accentColors.errorRed,
+    },
+
+        bodyTypeCard: {
+      width: '31%',
+      minHeight: 92,
+      paddingHorizontal: Spacing.two,
+      paddingVertical: Spacing.two,
+      borderRadius: Spacing.two,
+      backgroundColor: theme.backgroundElement,
+      borderWidth: 1,
+      borderColor: theme.backgroundElement,
+      alignItems: 'flex-start',
+    },
+
+    bodyTypeCardSelected: {
+      backgroundColor:  accentColors.chipSelectedBg,
+      borderColor: accentColors.primary,
+    },
+
+    bodyTypeIcon: {
+      fontSize: 20,
+      marginBottom: Spacing.one,
+    },
+
+    bodyTypeTitle: {
+      fontFamily: Fonts.sans,
+      fontSize: 14,
+      fontWeight: '600',
+      color: theme.text,
+      marginBottom: 2,
+    },
+
+    bodyTypeDescription: {
+      fontFamily: Fonts.sans,
+      fontSize: 11,
+      color: theme.textSecondary,
+    },
+
+        aestheticCard: {
+      width: '31%',
+      aspectRatio: 0.75,
+      borderRadius: Spacing.two,
+      overflow: 'hidden',
+      borderWidth: 2,
+      borderColor: 'transparent',
+      backgroundColor: theme.backgroundElement,
+      position: 'relative',
+    },
+
+    aestheticCardSelected: {
+      borderColor: accentColors.primary,
+    },
+
+    aestheticImage: {
+      width: '100%',
+      height: '100%',
+    },
+
+    aestheticBadge: {
+      position: 'absolute',
+      top: Spacing.one,
+      left: Spacing.one,
+      backgroundColor: '#FFFFFF',
+      borderRadius: 20,
+      paddingHorizontal: Spacing.two,
+      paddingVertical: 3,
+    },
+
+    aestheticBadgeText: {
+      fontFamily: Fonts.sans,
+      fontSize: 11,
+      fontWeight: '700',
+      color: '#1A1A1A',
     },
 
     sliderContainer: {
@@ -979,10 +1180,18 @@ const createStyles = (
       minHeight: 80,
     },
  
-    wardrobeIcon: {
-      fontSize: 28,
-      color: theme.text,
+    wardrobeIconBox: {
       width: 48,
+      height: 48,
+      borderRadius: Spacing.two,
+      backgroundColor: accentColors.chipSelectedBg,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+
+    wardrobeIcon: {
+      fontSize: 22,
+      color: accentColors.primary,
       textAlign: 'center',
     },
  
