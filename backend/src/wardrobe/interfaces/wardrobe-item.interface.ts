@@ -5,10 +5,11 @@ export interface WardrobeItem {
     clothingCategory: string;
     style: string;
     colour: string[];
-    created: Date;
-    modified: Date;
+    createdAt: Date;
+    modifiedAt: Date;
     brand: string;
     size: string;
     material: string[];
+    tags: string[];
     // TODO - check with group (could add season, occasion, wear count, cost etc.)
 }
