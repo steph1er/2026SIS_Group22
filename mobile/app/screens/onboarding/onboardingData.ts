@@ -192,6 +192,7 @@ export const onboardingSteps: OnboardingStep[] = [
         title: 'Style No-Gos',
         subtitle: "We'll filter out items containing these",
         type: 'multi-select',
+        optional: true,
         options: [
           {
             id: 'animal-print',

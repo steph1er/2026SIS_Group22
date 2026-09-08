@@ -77,6 +77,18 @@ export default function OnboardingQuiz() {
     handleSelect(sectionId, newValues);
   };
 
+  const handleSingleSelect = (sectionId: string, optionId: string) => {
+    setAnswers((prev) => {
+      if (prev[sectionId] === optionId) {
+        const next = { ...prev };
+        delete next[sectionId];
+        return next;
+      }
+
+      return { ...prev, [sectionId]: optionId };
+    });
+  };
+
   const handleSelectSizeField = (
     sectionId: string,
     fieldId: string,
@@ -84,6 +96,21 @@ export default function OnboardingQuiz() {
   ) => {
     handleSelect(`${sectionId}:${fieldId}`, value);
     setOpenSizeField(null);
+  };
+
+  const handleToggleSkipSlider = (sectionId: string) => {
+    setAnswers((prev) => {
+      const skipKey = `${sectionId}:skip`;
+      const isSkipped = !prev[skipKey];
+
+      const next = { ...prev, [skipKey]: isSkipped };
+
+      if (isSkipped) {
+        delete next[sectionId];
+      }
+
+      return next;
+    });
   };
 
   const isSectionAnswered = (
@@ -140,7 +167,6 @@ export default function OnboardingQuiz() {
     }
   };
 
-
   return (
     <SafeAreaView style={styles.container}>
       {/* Overall progress */}
@@ -183,12 +209,6 @@ export default function OnboardingQuiz() {
         <View style={styles.titleContainer}>
           <View style={styles.titleRow}>
             <Text style={styles.title}>{step.title}</Text>
- 
-            {currentStep === 2 && (
-              <TouchableOpacity onPress={handleSkip}>
-                <Text style={styles.skipButton}>Skip</Text>
-              </TouchableOpacity>
-            )}
           </View>
  
           {step.subtitle && (
@@ -244,30 +264,85 @@ export default function OnboardingQuiz() {
                   {/* HEIGHT SLIDER */}
                   {section.type === 'slider' && (
                     <View style={styles.sliderContainer}>
-                        <Text style={styles.sliderValue}>
-                        {typeof answers[section.id] === 'number'
-                            ? answers[section.id]
-                            : section.defaultValue ?? 168}{' '}
-                        {section.unit}
-                        </Text>
- 
-                        <Slider
-                        style={styles.slider}
-                        minimumValue={section.min ?? 140}
-                        maximumValue={section.max ?? 210}
-                        value={
-                            typeof answers[section.id] === 'number'
-                            ? answers[section.id] as number
-                            : section.defaultValue ?? 168
-                        }
-                        step={1}
-                        minimumTrackTintColor={theme.text}
-                        maximumTrackTintColor={theme.backgroundSelected}
-                        thumbTintColor={theme.text}
-                        onValueChange={(value) =>
-                            handleSelect(section.id, value)
-                        }
-                        />
+                      {(() => {
+                        const isSkipped = Boolean(
+                          answers[`${section.id}:skip`]
+                        );
+
+                        return (
+                          <>
+                            <TouchableOpacity
+                              style={styles.skipCheckboxRow}
+                              onPress={() =>
+                                handleToggleSkipSlider(section.id)
+                              }
+                            >
+                              <View
+                                style={[
+                                  styles.checkbox,
+                                  isSkipped && styles.checkboxChecked,
+                                ]}
+                              >
+                                {isSkipped && (
+                                  <Text style={styles.checkboxMark}>
+                                    ✓
+                                  </Text>
+                                )}
+                              </View>
+
+                              <Text style={styles.skipCheckboxLabel}>
+                                Prefer not to say
+                              </Text>
+                            </TouchableOpacity>
+
+                            <View
+                              style={
+                                isSkipped && styles.sliderDisabled
+                              }
+                            >
+                              <Text style={styles.sliderValue}>
+                                {isSkipped
+                                  ? 'Prefer not to say'
+                                  : `${
+                                      typeof answers[section.id] ===
+                                      'number'
+                                        ? answers[section.id]
+                                        : section.defaultValue ?? 168
+                                    } ${section.unit ?? ''}`}
+                              </Text>
+
+                              <Slider
+                                style={styles.slider}
+                                disabled={isSkipped}
+                                minimumValue={section.min ?? 140}
+                                maximumValue={section.max ?? 210}
+                                value={
+                                  typeof answers[section.id] === 'number'
+                                    ? (answers[section.id] as number)
+                                    : section.defaultValue ?? 168
+                                }
+                                step={1}
+                                minimumTrackTintColor={
+                                  isSkipped
+                                    ? theme.backgroundSelected
+                                    : theme.text
+                                }
+                                maximumTrackTintColor={
+                                  theme.backgroundSelected
+                                }
+                                thumbTintColor={
+                                  isSkipped
+                                    ? theme.backgroundSelected
+                                    : theme.text
+                                }
+                                onValueChange={(value) =>
+                                  handleSelect(section.id, value)
+                                }
+                              />
+                            </View>
+                          </>
+                        );
+                      })()}
                     </View>
                 )}
  
@@ -398,7 +473,7 @@ export default function OnboardingQuiz() {
                                   option.id
                                 );
                               } else {
-                                handleSelect(
+                                handleSingleSelect(
                                   section.id,
                                   option.id
                                 );
@@ -769,11 +844,50 @@ const createStyles = (
       borderRadius: 11,
       marginBottom: Spacing.one,
     },
- 
+
     sliderContainer: {
       marginTop: Spacing.one,
     },
- 
+
+    skipCheckboxRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginBottom: Spacing.two,
+    },
+
+    checkbox: {
+      width: 20,
+      height: 20,
+      borderRadius: 5,
+      borderWidth: 1.5,
+      borderColor: theme.textSecondary,
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginRight: Spacing.two,
+    },
+
+    checkboxChecked: {
+      backgroundColor: accentColors.primary,
+      borderColor: accentColors.primary,
+    },
+
+    checkboxMark: {
+      color: accentColors.buttonText,
+      fontSize: 13,
+      fontWeight: '700',
+      lineHeight: 13,
+    },
+
+    skipCheckboxLabel: {
+      fontFamily: Fonts.sans,
+      fontSize: 14,
+      color: theme.textSecondary,
+    },
+
+    sliderDisabled: {
+      opacity: 0.4,
+    },
+
     sliderValue: {
       fontFamily: Fonts.sans,
       fontSize: 28,

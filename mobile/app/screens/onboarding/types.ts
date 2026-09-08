@@ -40,5 +40,5 @@ export type OnboardingStep = {
 
 export type OnboardingAnswers = Record<
   string,
-  string[] | string | number
+  string[] | string | number | boolean
 >;
