@@ -1,4 +1,4 @@
-import { requireSupabase } from './supabase';
+import { requireSupabase } from '../auth/supabase-client';
 
 const apiUrl = process.env.EXPO_PUBLIC_API_URL;
 

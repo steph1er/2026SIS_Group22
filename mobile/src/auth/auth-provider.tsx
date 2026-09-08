@@ -2,7 +2,7 @@ import type { Session, User } from '@supabase/supabase-js';
 import { createContext, type PropsWithChildren, useContext, useEffect, useMemo, useState } from 'react';
 import { AppState, Platform } from 'react-native';
 
-import { supabase, supabaseConfigurationError } from '../services/supabase';
+import { supabase, supabaseConfigurationError } from './supabase-client';
 
 type AuthContextValue = {
   configurationError: string | null;

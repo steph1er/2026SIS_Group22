@@ -1,6 +1,6 @@
 import type { AuthResponse, AuthTokenResponsePassword, UserAttributes } from '@supabase/supabase-js';
 
-import { requireSupabase } from './supabase';
+import { requireSupabase } from './supabase-client';
 
 export type SignUpDetails = {
   email: string;
