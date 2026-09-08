@@ -1,27 +1,33 @@
-import { Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
 import { WardrobeItem } from './interfaces/wardrobe-item.interface';
+import { SupabaseService } from '../supabase/supabase.service';
 
 @Injectable()
 export class WardrobeService {
-    //constructor(private readonly supabaseService: SupabaseService)
+    constructor(private readonly supabaseService: SupabaseService) {}
 
-    private readonly wardrobe: WardrobeItem[] = [];
-
-    getWardrobe(): string{
-        //const supabase = this.supabaseService.getSupabase();
+    async getWardrobe(): Promise<any[]>{
+        const supabase = this.supabaseService.client;
 
         // get logged in user 
         //const currentUser = 'id'
 
-        // get all wardrobe items for db that match that user 
+        // get all wardrobe items for db that match that user TODO - change to logged in user
         //const { data, error } = await supabase.from('wardrobe_items').select('*').eq('user_id', currentUser);
+        const { data, error } = await supabase.from('wardrobe_items').select('*');
 
-        // if no items return message
+        // if error return error message
+        if(error){
+            throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+
+        // if no items throw not found exception
+        if(data.length === 0){
+            throw new NotFoundException('No wardrobe items found for current user');
+        }
         
-
-        // format and return
-
-        return 'This will return all items in a users wardrobe';
+        // otherwise return all matching wardrobe items
+        return data;
     }
 
     addItem(): string{

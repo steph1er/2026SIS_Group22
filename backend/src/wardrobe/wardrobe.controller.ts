@@ -7,7 +7,7 @@ export class WardrobeController {
     constructor(private wardrobeService: WardrobeService) {}
 
     @Get()
-    getWardrobe(): string {
+    getWardrobe(): Promise<any[]> {
         return this.wardrobeService.getWardrobe();
     }
 
