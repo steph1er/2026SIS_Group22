@@ -36,6 +36,14 @@ This is an [Expo](https://expo.dev) project created with [`create-expo-app`](htt
    npx expo start
    ```
 
+### Supabase authentication
+
+Copy `.env.example` to `.env.local`, then add the Supabase project URL and publishable key from the project's API settings. Never use a secret or service-role key in the mobile app.
+
+The reusable authentication API is in `src/auth/auth-service.ts`. Screens can call `signUp`, `signIn`, `signOut`, `resetPassword`, and `updateUser`. Use `useAuth()` from `src/auth/auth-provider.tsx` to read the current session, user, loading state, or a missing-configuration error.
+
+Use `authenticatedApiRequest()` from `src/api/authenticated-api-client.ts` for protected NestJS endpoints. It automatically adds the signed-in user's Supabase access token to the request.
+
 In the output, you'll find options to open the app in a
 
 - [development build](https://docs.expo.dev/develop/development-builds/introduction/)
