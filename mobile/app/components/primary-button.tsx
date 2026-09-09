@@ -1,13 +1,16 @@
 import { Pressable, StyleSheet, Text } from 'react-native';
+import type { GestureResponderEvent } from 'react-native';
 
 import { StyleUTokens } from '../services/styleu-theme';
 
-type PrimaryButtonProps = { label: string };
+type PrimaryButtonProps = {
+  label: string;
+  onPress?: (event: GestureResponderEvent) => void;
+};
 
-/** Shared CTA styling; add an onPress callback when onboarding has behaviour. */
-export function PrimaryButton({ label }: PrimaryButtonProps) {
+export function PrimaryButton({ label, onPress }: PrimaryButtonProps) {
   return (
-    <Pressable accessibilityRole="button" style={({ pressed }) => [styles.button, pressed && styles.pressed]}>
+    <Pressable accessibilityRole="button" onPress={onPress} style={({ pressed }) => [styles.button, pressed && styles.pressed]}>
       <Text style={styles.label}>{label}</Text>
     </Pressable>
   );
