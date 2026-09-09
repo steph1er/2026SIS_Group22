@@ -20,7 +20,9 @@
         {
           "backgroundColor": "#208AEF"
         }
-      ]
+      ],
+      "expo-image",
+      "expo-sqlite"
     ],
     "experiments": {
       "typedRoutes": true,
