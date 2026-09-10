@@ -20,15 +20,15 @@ export default function WelcomeScreen() {
         </View>
 
         <View style={styles.footer}>
-          <Link href="/sign-up" asChild>
+          <Link href="./sign-up" asChild>
             <PrimaryButton label="Sign Up" />
           </Link>
-          <Link href="/login" asChild>
+          <Link href="./login" asChild>
             <PrimaryButton label="Log In" />
           </Link>
           <Text style={styles.terms}>By signing up, you agree to our Terms and Conditions</Text>
         </View>
-      </View>
+      </View> 
     </SafeAreaView>
   );
 }
@@ -42,4 +42,4 @@ const styles = StyleSheet.create({
   subtitle: { color: StyleUTokens.colors.mutedText, fontSize: 20, lineHeight: 30, textAlign: 'center' },
   footer: { gap: 16 },
   terms: { color: StyleUTokens.colors.placeholder, fontSize: 14, lineHeight: 20, textAlign: 'center', marginTop: 8 },
-});
+}); 

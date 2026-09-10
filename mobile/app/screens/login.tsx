@@ -5,8 +5,10 @@ import { BackButton } from '../components/back-button';
 import { OnboardingFormField } from '../components/onboarding-form-field';
 import { PrimaryButton } from '../components/primary-button';
 import { StyleUTokens } from '../services/styleu-theme';
+import { Link } from 'expo-router';
 
 /** UI-only login screen. Forgot password link is visual only — no Supabase wiring yet. */
+// Log in button goes straight to home dashboard for now, since we don't have a Supabase auth flow yet.
 export default function LoginScreen() {
   return (
     <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
@@ -21,7 +23,9 @@ export default function LoginScreen() {
         </View>
 
         <View style={styles.footer}>
-          <PrimaryButton label="Log In" />
+          <Link href="./home-dashboard" asChild>
+            <PrimaryButton label="Log In" />
+          </Link>
         </View>
       </KeyboardAvoidingView>
     </SafeAreaView>
