@@ -1,3 +1,6 @@
+// data for the onboarding quiz
+// organised by the onboarding step
+
 import { OnboardingStep } from './types';
 
 export const onboardingSteps: OnboardingStep[] = [
@@ -20,12 +23,36 @@ export const onboardingSteps: OnboardingStep[] = [
           {
             id: 'classy',
             label: 'Classy',
-            image: 'https://picsum.photos/seed/onboarding-y2k/400/600',
+            image: require('../../../assets/onboarding/outfit.jpg'),
           },
           {
             id: 'casual',
             label: 'Casual',
           },
+          {
+            id: 'streetwear',
+            label: 'Streetwear',
+          },
+          {
+            id: 'bohemian',
+            label: 'Bohemian',
+          },
+          {
+            id: 'minimalist',
+            label: 'Minimalist',
+          },
+          {
+            id: 'preppy',
+            label: 'Preppy',
+          },
+          {
+            id: 'active',
+            label: 'Active',
+          },
+          {
+            id: 'vintage',
+            label: 'Vintage',
+          }
         ],
       },
 

@@ -1,9 +1,8 @@
-// define type
 export type Option = {
   id: string;
   label: string;
   description?: string;
-  image?: string;
+  image?: string | number;
 };
 
 export type SizeField = {

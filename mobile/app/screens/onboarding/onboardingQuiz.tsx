@@ -477,7 +477,11 @@ export default function OnboardingQuiz() {
                             >
                               {option.image && (
                                 <Image
-                                  source={{ uri: option.image }}
+                                  source={
+                                    typeof option.image === 'number'
+                                      ? option.image
+                                      : { uri: option.image }
+                                  }
                                   style={styles.aestheticImage}
                                   resizeMode="cover"
                                 />
