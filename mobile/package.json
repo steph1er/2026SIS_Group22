@@ -3,6 +3,7 @@
   "main": "expo-router/entry",
   "version": "1.0.0",
   "dependencies": {
+    "@supabase/supabase-js": "^2.116.0",
     "@expo/metro-runtime": "~57.0.15",
     "@expo/ui": "~57.0.17",
     "@react-native-community/slider": "5.2.0",
@@ -15,6 +16,7 @@
     "expo-linking": "~57.0.9",
     "expo-router": "~57.0.20",
     "expo-splash-screen": "~57.0.8",
+    "expo-sqlite": "~57.0.2",
     "expo-status-bar": "~57.0.1",
     "expo-symbols": "~57.0.2",
     "expo-system-ui": "~57.0.3",
