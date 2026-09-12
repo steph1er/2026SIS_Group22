@@ -1,16 +1,14 @@
 
 import { StyleSheet } from 'react-native';
-import { useAccentColors, useTheme } from '../hooks/use-theme';
+import { StyleUTokens } from './styleu-theme';
 import { Fonts, Spacing } from './theme';
 
-export const createStyles = (
-  theme: ReturnType<typeof useTheme>,
-  accentColors: ReturnType<typeof useAccentColors>
-) =>
-  StyleSheet.create({
+const { colors } = StyleUTokens;
+
+export const styles =  StyleSheet.create({
     container: {
       flex: 1,
-      backgroundColor: theme.background,
+      backgroundColor: colors.background,
     },
  
     progressContainer: {
@@ -20,14 +18,14 @@ export const createStyles = (
  
     progressBackground: {
       height: 4,
-      backgroundColor: accentColors.track,
+      backgroundColor: colors.track,
       borderRadius: 4,
       overflow: 'hidden',
     },
  
     progressFill: {
       height: 4,
-      backgroundColor: accentColors.primary,
+      backgroundColor: colors.accent,
       borderRadius: 4,
     },
  
@@ -54,7 +52,7 @@ export const createStyles = (
  
     backChevronText: {
       fontSize: 20,
-      color: theme.textSecondary,
+      color: colors.mutedText,
       lineHeight: 20,
     },
  
@@ -62,7 +60,7 @@ export const createStyles = (
       fontFamily: Fonts.sans,
       fontSize: 11,
       fontWeight: '600',
-      color: theme.textSecondary,
+      color: colors.mutedText,
       letterSpacing: 0.5,
       textTransform: 'uppercase',
     },
@@ -71,7 +69,7 @@ export const createStyles = (
       fontFamily: Fonts.sans,
       fontSize: 11,
       fontWeight: '700',
-      color: theme.text,
+      color: colors.text,
       letterSpacing: 0.5,
       textTransform: 'uppercase',
     },
@@ -79,7 +77,7 @@ export const createStyles = (
     skipButton: {
       fontFamily: Fonts.sans,
       fontSize: 15,
-      color: theme.textSecondary,
+      color: colors.mutedText,
     },
  
     titleContainer: {
@@ -98,13 +96,13 @@ export const createStyles = (
       fontFamily: Fonts.sans,
       fontSize: 30,
       fontWeight: '700',
-      color: theme.text,
+      color: colors.text,
     },
  
     subtitle: {
       fontFamily: Fonts.sans,
       fontSize: 15,
-      color: theme.textSecondary,
+      color: colors.mutedText,
       marginTop: Spacing.two,
       lineHeight: 22,
     },
@@ -128,11 +126,11 @@ export const createStyles = (
       fontFamily: Fonts.sans,
       fontSize: 19,
       fontWeight: '600',
-      color: theme.text,
+      color: colors.text,
     },
  
     optionalBadge: {
-      backgroundColor: accentColors.badgeBg,
+      backgroundColor: colors.badgeBg,
       borderRadius: 20,
       paddingHorizontal: Spacing.two,
       paddingVertical: 3,
@@ -142,25 +140,25 @@ export const createStyles = (
       fontFamily: Fonts.sans,
       fontSize: 10,
       fontWeight: '600',
-      color: accentColors.badgeText,
+      color: colors.badgeText,
       letterSpacing: 0.5,
     },
  
     sectionTitleError: {
-      color: accentColors.errorRed,
+      color: colors.errorRed,
     },
  
     errorText: {
       fontFamily: Fonts.sans,
       fontSize: 12,
-      color: accentColors.errorRed,
+      color: colors.errorRed,
       marginBottom: Spacing.two,
     },
  
     sectionSubtitle: {
       fontFamily: Fonts.sans,
       fontSize: 14,
-      color: theme.textSecondary,
+      color: colors.mutedText,
       marginBottom: Spacing.two,
     },
  
@@ -177,39 +175,39 @@ export const createStyles = (
       borderRadius: 24,
       backgroundColor: '#FFFFFF',
       borderWidth: 1,
-      borderColor:  accentColors.border,
+      borderColor:  colors.border,
       justifyContent: 'center',
       alignItems: 'center',
     },
  
     selectedOption: {
-      backgroundColor: accentColors.chipSelectedBg,
-      borderColor: accentColors.primary,
+      backgroundColor: colors.chipSelectedBg,
+      borderColor: colors.accent,
     },
  
     optionText: {
       fontFamily: Fonts.sans,
       fontSize: 14,
       fontWeight: '500',
-      color: theme.textSecondary,
+      color: colors.mutedText,
       textAlign: 'center',
     },
  
     selectedOptionText: {
-      color: theme.text,
+      color: colors.text,
       fontWeight: '700',
     },
  
     optionDescription: {
       fontFamily: Fonts.sans,
       fontSize: 11,
-      color: theme.textSecondary,
+      color: colors.mutedText,
       textAlign: 'center',
       marginTop: Spacing.one,
     },
  
     selectedOptionDescription: {
-      color: theme.textSecondary,
+      color: colors.mutedText,
     },
  
     colourItem: {
@@ -227,13 +225,13 @@ export const createStyles = (
     },
 
     colourCircleSelected: {
-      borderColor: accentColors.primary,
+      borderColor: colors.accent,
     },
 
     colourLabel: {
       fontFamily: Fonts.sans,
       fontSize: 12,
-      color: theme.textSecondary,
+      color: colors.mutedText,
       textAlign: 'center',
     },
 
@@ -246,24 +244,24 @@ export const createStyles = (
     noGoRemove: {
       fontSize: 12,
       fontWeight: '700',
-      color: accentColors.errorRed,
+      color: colors.errorRed,
     },
 
-        bodyTypeCard: {
+    bodyTypeCard: {
       width: '31%',
       minHeight: 92,
       paddingHorizontal: Spacing.two,
       paddingVertical: Spacing.two,
       borderRadius: Spacing.two,
-      backgroundColor: theme.backgroundElement,
+      backgroundColor: colors.backgroundElement,
       borderWidth: 1,
-      borderColor: theme.backgroundElement,
+      borderColor: colors.backgroundElement,
       alignItems: 'flex-start',
     },
 
     bodyTypeCardSelected: {
-      backgroundColor:  accentColors.chipSelectedBg,
-      borderColor: accentColors.primary,
+      backgroundColor:  colors.chipSelectedBg,
+      borderColor: colors.accent,
     },
 
     bodyTypeIcon: {
@@ -275,14 +273,14 @@ export const createStyles = (
       fontFamily: Fonts.sans,
       fontSize: 14,
       fontWeight: '600',
-      color: theme.text,
+      color: colors.text,
       marginBottom: 2,
     },
 
     bodyTypeDescription: {
       fontFamily: Fonts.sans,
       fontSize: 11,
-      color: theme.textSecondary,
+      color: colors.mutedText,
     },
 
         aestheticCard: {
@@ -292,12 +290,12 @@ export const createStyles = (
       overflow: 'hidden',
       borderWidth: 2,
       borderColor: 'transparent',
-      backgroundColor: theme.backgroundElement,
+      backgroundColor: colors.backgroundElement,
       position: 'relative',
     },
 
     aestheticCardSelected: {
-      borderColor: accentColors.primary,
+      borderColor: colors.accent,
     },
 
     aestheticImage: {
@@ -337,19 +335,19 @@ export const createStyles = (
       height: 20,
       borderRadius: 5,
       borderWidth: 1.5,
-      borderColor: theme.textSecondary,
+      borderColor: colors.mutedText,
       justifyContent: 'center',
       alignItems: 'center',
       marginRight: Spacing.two,
     },
 
     checkboxChecked: {
-      backgroundColor: accentColors.primary,
-      borderColor: accentColors.primary,
+      backgroundColor: colors.accent,
+      borderColor: colors.accent,
     },
 
     checkboxMark: {
-      color: accentColors.buttonText,
+      color: colors.buttonText,
       fontSize: 13,
       fontWeight: '700',
       lineHeight: 13,
@@ -358,7 +356,7 @@ export const createStyles = (
     skipCheckboxLabel: {
       fontFamily: Fonts.sans,
       fontSize: 14,
-      color: theme.textSecondary,
+      color: colors.mutedText,
     },
 
     sliderDisabled: {
@@ -369,7 +367,7 @@ export const createStyles = (
       fontFamily: Fonts.sans,
       fontSize: 28,
       fontWeight: '600',
-      color: theme.text,
+      color: colors.text,
       marginBottom: Spacing.one,
     },
  
@@ -385,23 +383,23 @@ export const createStyles = (
  
     sizeFieldBox: {
       flex: 1,
-      backgroundColor: theme.backgroundElement,
+      backgroundColor: colors.backgroundElement,
       borderRadius: Spacing.two,
       borderWidth: 1,
-      borderColor: theme.backgroundElement,
+      borderColor: colors.backgroundElement,
       paddingHorizontal: Spacing.two,
       paddingVertical: Spacing.two,
     },
  
     sizeFieldBoxOpen: {
-      borderColor: accentColors.primary,
-      backgroundColor: accentColors.chipSelectedBg,
+      borderColor: colors.accent,
+      backgroundColor: colors.chipSelectedBg,
     },
  
     sizeFieldLabel: {
       fontFamily: Fonts.sans,
       fontSize: 11,
-      color: theme.textSecondary,
+      color: colors.mutedText,
       marginBottom: 2,
     },
  
@@ -415,22 +413,22 @@ export const createStyles = (
       fontFamily: Fonts.sans,
       fontSize: 15,
       fontWeight: '600',
-      color: theme.text,
+      color: colors.text,
     },
  
     sizeFieldChevron: {
       fontSize: 14,
-      color: theme.textSecondary,
+      color: colors.mutedText,
     },
  
     sizeFieldChevronOpen: {
-      color: accentColors.primary,
+      color: colors.accent,
     },
  
     sizeDropdownPanel: {
       marginTop: Spacing.two,
       padding: Spacing.two,
-      backgroundColor: theme.backgroundElement,
+      backgroundColor: colors.backgroundElement,
       borderRadius: Spacing.two,
     },
  
@@ -438,7 +436,7 @@ export const createStyles = (
       fontFamily: Fonts.sans,
       fontSize: 12,
       fontWeight: '600',
-      color: theme.textSecondary,
+      color: colors.mutedText,
       marginBottom: Spacing.two,
     },
  
@@ -450,7 +448,7 @@ export const createStyles = (
     wardrobeCard: {
       flexDirection: 'row',
       alignItems: 'center',
-      backgroundColor: theme.backgroundElement,
+      backgroundColor: colors.backgroundElement,
       borderRadius: Spacing.two,
       padding: Spacing.three,
       minHeight: 80,
@@ -460,14 +458,14 @@ export const createStyles = (
       width: 48,
       height: 48,
       borderRadius: Spacing.two,
-      backgroundColor: accentColors.chipSelectedBg,
+      backgroundColor: colors.chipSelectedBg,
       justifyContent: 'center',
       alignItems: 'center',
     },
 
     wardrobeIcon: {
       fontSize: 22,
-      color: accentColors.primary,
+      color: colors.accent,
       textAlign: 'center',
     },
  
@@ -480,13 +478,13 @@ export const createStyles = (
       fontFamily: Fonts.sans,
       fontSize: 16,
       fontWeight: '600',
-      color: theme.text,
+      color: colors.text,
     },
  
     wardrobeSubtitle: {
       fontFamily: Fonts.sans,
       fontSize: 13,
-      color: theme.textSecondary,
+      color: colors.mutedText,
       marginTop: Spacing.one,
     },
  
@@ -494,19 +492,19 @@ export const createStyles = (
       paddingHorizontal: Spacing.four,
       paddingTop: Spacing.two,
       paddingBottom: Spacing.three,
-      backgroundColor: theme.background,
+      backgroundColor: colors.background,
     },
  
     footerErrorText: {
       fontFamily: Fonts.sans,
       fontSize: 13,
-      color: accentColors.errorRed,
+      color: colors.errorRed,
       textAlign: 'center',
       marginBottom: Spacing.two,
     },
  
     continueButton: {
-      backgroundColor: accentColors.primary,
+      backgroundColor: colors.accent,
       paddingVertical: Spacing.three,
       borderRadius: 24,
       alignItems: 'center',
@@ -514,14 +512,14 @@ export const createStyles = (
  
     continueText: {
       fontFamily: Fonts.sans,
-      color: accentColors.buttonText,
+      color: colors.buttonText,
       fontSize: 16,
       fontWeight: '700',
     },
  
     skipForNow: {
       fontFamily: Fonts.sans,
-      color: theme.textSecondary,
+      color: colors.mutedText,
       fontSize: 14,
       textAlign: 'center',
       marginTop: Spacing.two,
@@ -530,6 +528,6 @@ export const createStyles = (
     placeholderText: {
       fontFamily: Fonts.sans,
       fontSize: 16,
-      color: theme.textSecondary,
+      color: colors.mutedText,
     },
   });

@@ -17,18 +17,14 @@ import Animated, {
 
 import Slider from '@react-native-community/slider';
 
-import { useAccentColors, useTheme } from '../../hooks/use-theme';
-import { createStyles } from '../../services/onboarding-theme';
-
 import { onboardingSteps } from './onboardingData';
 import { OnboardingAnswers, QuestionSection } from './types';
 
+import { styles } from '../../services/onboarding-theme';
+import { StyleUTokens } from '../../services/styleu-theme';
+
 
 export default function OnboardingQuiz() {
-
-  const theme = useTheme();
-  const accentColors = useAccentColors();
-  const styles = createStyles(theme, accentColors);
 
   const [currentStep, setCurrentStep] = useState(0);
   const [answers, setAnswers] = useState<OnboardingAnswers>({});
@@ -327,16 +323,16 @@ export default function OnboardingQuiz() {
                                   step={1}
                                   minimumTrackTintColor={
                                     isSkipped
-                                      ? theme.backgroundSelected
-                                      : theme.text
+                                      ? StyleUTokens.colors.placeholder
+                                      : StyleUTokens.colors.text
                                   }
                                   maximumTrackTintColor={
-                                    theme.backgroundSelected
+                                    StyleUTokens.colors.placeholder
                                   }
                                   thumbTintColor={
                                     isSkipped
-                                      ? theme.backgroundSelected
-                                      : theme.text
+                                      ? StyleUTokens.colors.placeholder
+                                      : StyleUTokens.colors.text
                                   }
                                   onValueChange={(value) =>
                                     handleSelect(section.id, value)
