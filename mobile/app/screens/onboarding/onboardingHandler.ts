@@ -3,7 +3,7 @@ import { ScrollView } from 'react-native';
 import { useAnimatedStyle, useSharedValue, withTiming, } from 'react-native-reanimated';
 
 import { onboardingSteps } from './onboardingData';
-import { OnboardingAnswers, QuestionSection } from './types';
+import { OnboardingAnswers, QuestionSection } from './onboardingTypes';
 
 export function useOnboardingHandler() {
   const [currentStep, setCurrentStep] = useState(0);

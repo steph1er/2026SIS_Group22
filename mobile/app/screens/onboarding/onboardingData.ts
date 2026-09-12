@@ -1,7 +1,7 @@
 // data for the onboarding quiz
 // organised by the onboarding step
 
-import { OnboardingStep } from './types';
+import { OnboardingStep } from './onboardingTypes';
 
 export const onboardingSteps: OnboardingStep[] = [
 
