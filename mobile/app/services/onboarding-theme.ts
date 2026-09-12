@@ -1,7 +1,7 @@
 
 import { StyleSheet } from 'react-native';
 import { useAccentColors, useTheme } from '../hooks/use-theme';
-import { Fonts, Spacing } from '../services/theme';
+import { Fonts, Spacing } from './theme';
 
 export const createStyles = (
   theme: ReturnType<typeof useTheme>,

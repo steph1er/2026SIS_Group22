@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { Link } from 'expo-router';
 import { BackButton } from '../components/back-button';
 import { OnboardingFormField } from '../components/onboarding-form-field';
 import { PrimaryButton } from '../components/primary-button';
@@ -44,7 +45,9 @@ export default function SignUpScreen() {
           </View>
 
           <View style={styles.footer}>
-            <PrimaryButton label="Start Onboarding Quiz" />
+            <Link href="/onboarding" asChild>
+              <PrimaryButton label="Start Onboarding Quiz" />
+            </Link>
             <Text style={styles.terms}>By signing up, you agree to our Terms and Conditions</Text>
           </View>
         </ScrollView>

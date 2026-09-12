@@ -1,6 +1,6 @@
+import { Link } from 'expo-router';
 import { StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Link } from 'expo-router';
 
 import { PrimaryButton } from '../components/primary-button';
 import { StyleUTokens } from '../services/styleu-theme';
