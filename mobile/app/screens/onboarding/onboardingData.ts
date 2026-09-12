@@ -3,10 +3,13 @@
 
 import { OnboardingStep } from './types';
 
+// replace with actual images for each style option
 const placeholder = 'https://picsum.photos/seed/onboarding-y2k/400/600';
 
 export const onboardingSteps: OnboardingStep[] = [
+
   // STEP 1 - select ur style
+
   {
     id: 'style',
     title: 'Select Your Style',
@@ -72,7 +75,6 @@ export const onboardingSteps: OnboardingStep[] = [
           { id: 'earth', label: 'Earth', colour: '#9A7355' },
           { id: 'bold', label: 'Bold', colour: '#E53935' },
           { id: 'mono', label: 'Mono', colour: '#222222' },
-          { id: 'jewel', label: 'Jewel', colour: '#5E3A7D' },
         ],
       },
 
@@ -130,10 +132,9 @@ export const onboardingSteps: OnboardingStep[] = [
         id: 'height',
         title: 'Your Height',
         type: 'slider',
-        optional: true,
         min: 100,
         max: 250,
-        defaultValue: 165,
+        defaultValue: 100,
         unit: 'cm',
       },
 

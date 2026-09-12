@@ -1,181 +1,62 @@
 import Slider from '@react-native-community/slider';
-import { useEffect, useRef, useState } from 'react';
 import { Image, ScrollView, Text, TouchableOpacity, View } from 'react-native';
-import Animated, { useAnimatedStyle, useSharedValue, withTiming, } from 'react-native-reanimated';
+import Animated from 'react-native-reanimated';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 
 import { onboardingSteps } from './onboardingData';
-import { OnboardingAnswers, QuestionSection } from './types';
 
-import { styles } from '../../services/onboarding-theme';
+import { inputStyles } from '../../services/onboarding/onboarding-inputs';
+import { optionStyles } from '../../services/onboarding/onboarding-options';
+import { layoutStyles } from '../../services/onboarding/onboarding-theme';
+import { wardrobeStyles } from '../../services/onboarding/onboarding-wardrobe';
 import { StyleUTokens } from '../../services/styleu-theme';
+import { useOnboardingHandler } from './onboardingHandler';
+
+const styles = { ...layoutStyles, ...optionStyles, ...inputStyles, ...wardrobeStyles };
 
 export default function OnboardingQuiz() {
-
-  const [currentStep, setCurrentStep] = useState(0);
-  const [answers, setAnswers] = useState<OnboardingAnswers>({});
-  const [showErrors, setShowErrors] = useState(false);
-  const [openSizeField, setOpenSizeField] = useState<string | null>(null);
-
-  const scrollViewRef = useRef<ScrollView>(null);
-  const step = onboardingSteps[currentStep];
-
-  const progress = (currentStep + 1) / onboardingSteps.length;
-  const progressAnim = useSharedValue(progress);
-
-  const progressBarStyle = useAnimatedStyle(() => ({
-    width: `${progressAnim.value * 100}%`,
-  }));
-
-  useEffect(() => {
-    progressAnim.value = withTiming(progress, { duration: 350 });
-  }, [progress, progressAnim]);
-  
-  useEffect(() => {
-    scrollViewRef.current?.scrollTo({ y: 0, animated: false });
-    setShowErrors(false);
-    setOpenSizeField(null);
-  }, [currentStep]);
-
-  const handleSelect = (
-    sectionId: string,
-    value: string | string[] | number
-  ) => {
-    setAnswers((prev) => ({
-      ...prev,
-      [sectionId]: value,
-    }));
-  };
-
-  const handleMultiSelect = (sectionId: string, optionId: string) => {
-    const currentAnswer = answers[sectionId];
-
-    const currentValues = Array.isArray(currentAnswer)
-      ? currentAnswer
-      : [];
-
-    const newValues = currentValues.includes(optionId)
-      ? currentValues.filter((id) => id !== optionId)
-      : [...currentValues, optionId];
-
-    handleSelect(sectionId, newValues);
-  };
-
-  const handleSingleSelect = (sectionId: string, optionId: string) => {
-    setAnswers((prev) => {
-      if (prev[sectionId] === optionId) {
-        const next = { ...prev };
-        delete next[sectionId];
-        return next;
-      }
-
-      return { ...prev, [sectionId]: optionId };
-    });
-  };
-
-  const handleSelectSizeField = (
-    sectionId: string,
-    fieldId: string,
-    value: string
-  ) => {
-    handleSelect(`${sectionId}:${fieldId}`, value);
-    setOpenSizeField(null);
-  };
-
-  const handleToggleSkipSlider = (sectionId: string) => {
-    setAnswers((prev) => {
-      const skipKey = `${sectionId}:skip`;
-      const isSkipped = !prev[skipKey];
-
-      const next = { ...prev, [skipKey]: isSkipped };
-
-      if (isSkipped) {
-        delete next[sectionId];
-      }
-
-      return next;
-    });
-  };
-
-  const isSectionAnswered = (
-    section: QuestionSection,
-    answers: OnboardingAnswers
-  ) => {
-    if (section.type === 'slider') return true;
-
-    if (section.fields) {
-    return section.fields.every((field) => {
-      const value = answers[`${section.id}:${field.id}`];
-      return typeof value === 'string' && value !== '';
-    });
-  }
-
-    const value = answers[section.id];
-
-    if (Array.isArray(value)) return value.length > 0;
-
-    return value !== undefined && value !== '';
-  };
-
-  const missingRequiredSections =
-  step.sections?.filter(
-    (section) => !section.optional && !isSectionAnswered(section, answers)
-  ) ?? [];
-
-  const handleContinue = () => {
-    if (missingRequiredSections.length > 0) {
-      setShowErrors(true);
-      return;
-    }
-    
-    if (currentStep < onboardingSteps.length - 1) {
-      setCurrentStep((prev) => prev + 1);
-    } else {
-      console.log('Onboarding complete:', answers);
-
-      // TODO:
-      // Save onboarding answers
-      // Navigate to the main app
-    }
-  };
-
-  const handleBack = () => {
-    if (currentStep > 0) {
-      setCurrentStep((prev) => prev - 1);
-    }
-  };
-
-  const handleSkip = () => {
-    if (currentStep < onboardingSteps.length - 1) {
-      setCurrentStep((prev) => prev + 1);
-    }
-  };
+  const {
+    currentStep,
+    answers,
+    showErrors,
+    openSizeField,
+    setOpenSizeField,
+    scrollViewRef,
+    step,
+    progress,
+    progressBarStyle,
+    missingRequiredSections,
+    handleSelect,
+    handleMultiSelect,
+    handleSingleSelect,
+    handleSelectSizeField,
+    handleToggleSkipSlider,
+    isSectionAnswered,
+    handleContinue,
+    handleBack,
+  } = useOnboardingHandler();
 
   return (
     <SafeAreaProvider>
       <SafeAreaView style={styles.container}>
-        {/* Overall progress */}
+
+        {/* header */}
+
         <View style={styles.progressContainer}>
           <View style={styles.progressBackground}>
-            <Animated.View
-              style={[styles.progressFill, progressBarStyle]}
-            />
+            <Animated.View style={[styles.progressFill, progressBarStyle]} />
           </View>
         </View>
-  
+
         <ScrollView
           ref={scrollViewRef}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.scrollContent}
         >
-          {/* Header */}
           <View style={styles.header}>
             <View style={styles.stepLabelRow}>
               {currentStep > 0 && (
-                <TouchableOpacity
-                  onPress={handleBack}
-                  style={styles.backChevron}
-                >
+                <TouchableOpacity onPress={handleBack} style={styles.backChevron}>
                   <Text style={styles.backChevronText}>‹</Text>
                 </TouchableOpacity>
               )}
@@ -189,24 +70,20 @@ export default function OnboardingQuiz() {
               {Math.round(progress * 100)}% COMPLETE
             </Text>
           </View>
-  
-          {/* Page title */}
+
+          {/* step */}
+
           <View style={styles.titleContainer}>
             <View style={styles.titleRow}>
               <Text style={styles.title}>{step.title}</Text>
             </View>
-  
-            {step.subtitle && (
-              <Text style={styles.subtitle}>{step.subtitle}</Text>
-            )}
+            {step.subtitle && (<Text style={styles.subtitle}>{step.subtitle}</Text>)}
           </View>
-  
-          {/* PAGE 1, 2 & 3 */}
+
           {step.type !== 'wardrobe' && (
             <View style={styles.content}>
               {step.sections?.map((section, index) => {
                 const currentAnswer = answers[section.id];
-  
                 const showError =
                   showErrors &&
                   !section.optional &&
@@ -214,17 +91,14 @@ export default function OnboardingQuiz() {
   
                 return (
                   <View key={section.id} style={styles.section}>
-                    {/* Section heading */}
                     <View style={styles.sectionHeader}>
                       <Text
-                        style={[
-                          styles.sectionTitle,
-                          showError && styles.sectionTitleError,
-                        ]}
-                      >
-                        {index + 1}. {section.title}
+                        style={[styles.sectionTitle, showError && styles.sectionTitleError]}>
+                        {section.title}
                       </Text>
   
+                      {/* optional */}
+
                       {section.optional && (
                         <View style={styles.optionalBadge}>
                           <Text style={styles.optionalBadgeText}>
@@ -245,29 +119,21 @@ export default function OnboardingQuiz() {
                         Please make a selection to continue
                       </Text>
                     )}
-  
-                    {/* HEIGHT SLIDER */}
+
+                    {/* height */}
+
                     {section.type === 'slider' && (
                       <View style={styles.sliderContainer}>
                         {(() => {
-                          const isSkipped = Boolean(
-                            answers[`${section.id}:skip`]
-                          );
+                          const isSkipped = Boolean( answers[`${section.id}:skip`] );
 
                           return (
                             <>
                               <TouchableOpacity
                                 style={styles.skipCheckboxRow}
-                                onPress={() =>
-                                  handleToggleSkipSlider(section.id)
-                                }
+                                onPress={() => handleToggleSkipSlider(section.id) }
                               >
-                                <View
-                                  style={[
-                                    styles.checkbox,
-                                    isSkipped && styles.checkboxChecked,
-                                  ]}
-                                >
+                                <View style={[  styles.checkbox, isSkipped && styles.checkboxChecked ]} >
                                   {isSkipped && (
                                     <Text style={styles.checkboxMark}>
                                       ✓
@@ -280,31 +146,24 @@ export default function OnboardingQuiz() {
                                 </Text>
                               </TouchableOpacity>
 
-                              <View
-                                style={
-                                  isSkipped && styles.sliderDisabled
-                                }
-                              >
+                              <View style={ isSkipped && styles.sliderDisabled }>
                                 <Text style={styles.sliderValue}>
-                                  {isSkipped
-                                    ? 'Prefer not to say'
-                                    : `${
-                                        typeof answers[section.id] ===
-                                        'number'
-                                          ? answers[section.id]
-                                          : section.defaultValue ?? 168
-                                      } ${section.unit ?? ''}`}
+                                  {typeof answers[section.id] ===
+                                      'number'
+                                        ? answers[section.id]
+                                        : section.defaultValue
+                                  } {section.unit}
                                 </Text>
 
                                 <Slider
                                   style={styles.slider}
                                   disabled={isSkipped}
-                                  minimumValue={section.min ?? 140}
-                                  maximumValue={section.max ?? 210}
+                                  minimumValue={section.min}
+                                  maximumValue={section.max}
                                   value={
                                     typeof answers[section.id] === 'number'
                                       ? (answers[section.id] as number)
-                                      : section.defaultValue ?? 168
+                                      : section.defaultValue
                                   }
                                   step={1}
                                   minimumTrackTintColor={
@@ -330,8 +189,9 @@ export default function OnboardingQuiz() {
                         })()}
                       </View>
                   )}
-  
-                    {/* SIZE DROPDOWNS */}
+
+                  {/* size selection */}
+
                     {section.type === 'size-select' && section.fields && (
                       <View>
                         <View style={styles.sizeFieldRow}>
@@ -433,7 +293,8 @@ export default function OnboardingQuiz() {
                       </View>
                     )}
   
-                                      {/* OPTIONS */}
+                    {/* options */}
+
                     {section.options && (
                       <View style={styles.optionsGrid}>
                         {section.options.map((option) => {
@@ -441,10 +302,11 @@ export default function OnboardingQuiz() {
                             ? currentAnswer.includes(option.id)
                             : currentAnswer === option.id;
 
-                                                  const isColour = section.id === 'colour';
-                          const isNoGo = section.id === 'style-no-gos';
+                          const isColour = section.id === 'colour';
                           const isBodyType = section.id === 'body-type';
                           const isAesthetic = section.id === 'aesthetic';
+
+                          // aesthetic cards
 
                           if (isAesthetic) {
                             return (
@@ -480,6 +342,8 @@ export default function OnboardingQuiz() {
                             );
                           }
 
+                          // body type cards
+
                           if (isBodyType) {
                             return (
                               <TouchableOpacity
@@ -512,10 +376,8 @@ export default function OnboardingQuiz() {
                               key={option.id}
                               style={[
                                 isColour ? styles.colourItem : styles.option,
-                                !isColour &&
-                                  isSelected &&
-                                  styles.selectedOption,
-                                isNoGo && styles.noGoOption,
+                                !isColour && isSelected && styles.selectedOption,
+                                section.type === 'multi-select' && !isColour && styles.multiSelectOption,
                               ]}
                               onPress={() => {
                                 if (
@@ -533,7 +395,7 @@ export default function OnboardingQuiz() {
                                 }
                               }}
                             >
-                              {/* Colour circles */}
+                              
                               {isColour && (
                                 <View
                                   style={[
@@ -558,8 +420,8 @@ export default function OnboardingQuiz() {
                                 {option.label}
                               </Text>
 
-                              {isNoGo && isSelected && (
-                                <Text style={styles.noGoRemove}>✕</Text>
+                              { section.type === 'multi-select' && !isColour && isSelected && (
+                                <Text style={styles.removeIcon}>✕</Text>
                               )}
 
                               {option.description && (
@@ -583,8 +445,9 @@ export default function OnboardingQuiz() {
               })}
             </View>
           )}
-  
-          {/* PAGE 4 — WARDROBE */}
+
+          {/* final step */}
+
           {step.type === 'wardrobe' && (
             <View style={styles.wardrobeContent}>
               <TouchableOpacity style={styles.wardrobeCard}>
@@ -614,7 +477,7 @@ export default function OnboardingQuiz() {
                   </Text>
   
                   <Text style={styles.wardrobeSubtitle}>
-                    We'll auto-crop background instantly
+                    Begin building your digital wardrobe with your own items!
                   </Text>
                 </View>
               </TouchableOpacity>
@@ -622,13 +485,12 @@ export default function OnboardingQuiz() {
           )}
         </ScrollView>
   
-        {/* Bottom actions */}
+        {/* footer */}
+        
         <View style={styles.footer}>
           {showErrors && missingRequiredSections.length > 0 && (
             <Text style={styles.footerErrorText}>
-              {missingRequiredSections.length === 1
-                ? 'Please answer the required question above.'
-                : 'Please answer all required questions above.'}
+                Please answer all the required questions above.
             </Text>
           )}
   
