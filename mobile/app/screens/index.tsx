@@ -1,6 +1,6 @@
+import { Link } from 'expo-router';
 import { StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Link } from 'expo-router';
 
 import { PrimaryButton } from '../components/primary-button';
 import { StyleUTokens } from '../services/styleu-theme';
@@ -10,6 +10,13 @@ export default function WelcomeScreen() {
   return (
     <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
       <View style={styles.content}>
+
+
+        <Link href="/create-outfits" asChild>
+            <PrimaryButton label="Create Outfits UI Test" />
+          </Link>
+
+
         <View style={styles.hero}>
           <Text accessibilityRole="header" style={styles.logo}>
             Style<Text style={styles.logoAccent}>U</Text>
