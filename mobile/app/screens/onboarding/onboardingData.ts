@@ -3,9 +3,6 @@
 
 import { OnboardingStep } from './types';
 
-// replace with actual images for each style option
-const placeholder = 'https://picsum.photos/seed/onboarding-y2k/400/600';
-
 export const onboardingSteps: OnboardingStep[] = [
 
   // STEP 1 - select ur style
@@ -21,15 +18,15 @@ export const onboardingSteps: OnboardingStep[] = [
         subtitle: 'Choose the core vibe you align with most',
         type: 'image-select',
         options: [
-          { id: 'y2k', label: 'Y2K', image: placeholder },
-          { id: 'classy', label: 'Classy', image: require('../../../assets/onboarding/outfit.jpg') },
-          { id: 'casual', label: 'Casual', image: placeholder },
-          { id: 'streetwear', label: 'Streetwear', image: placeholder },
-          { id: 'bohemian', label: 'Bohemian', image: placeholder },
-          { id: 'minimalist', label: 'Minimalist', image: placeholder },
-          { id: 'preppy', label: 'Preppy', image: placeholder },
-          { id: 'active', label: 'Active', image: placeholder },
-          { id: 'vintage', label: 'Vintage', image: placeholder }
+          { id: 'y2k', label: 'Y2K', image: require('../../../assets/onboarding/y2k.jpg')  },
+          { id: 'classy', label: 'Classy', image: require('../../../assets/onboarding/classy.jpg') },
+          { id: 'casual', label: 'Casual', image: require('../../../assets/onboarding/casual.jpg')  },
+          { id: 'streetwear', label: 'Streetwear', image: require('../../../assets/onboarding/streetwear.jpg')  },
+          { id: 'bohemian', label: 'Bohemian', image: require('../../../assets/onboarding/bohemian.jpg')  },
+          { id: 'minimalist', label: 'Minimalist', image: require('../../../assets/onboarding/minimalist.jpg')  },
+          { id: 'preppy', label: 'Preppy', image: require('../../../assets/onboarding/preppy.jpg') },
+          { id: 'active', label: 'Active', image: require('../../../assets/onboarding/active.jpg')  },
+          { id: 'vintage', label: 'Vintage', image: require('../../../assets/onboarding/vintage.jpg')  }
         ],
       },
 

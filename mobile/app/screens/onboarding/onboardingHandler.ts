@@ -129,8 +129,6 @@ export function useOnboardingHandler() {
     if (currentStep < onboardingSteps.length - 1) {
       setCurrentStep((prev) => prev + 1);
     } else {
-      console.log('Onboarding complete:', answers);
-
         // TODO:
         // Save onboarding answers
         // Navigate to the main app
