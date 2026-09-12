@@ -1,8 +1,17 @@
+export type OnboardingStep = {
+  id: string;
+  title: string;
+  subtitle?: string;
+  sections?: QuestionSection[];
+  type?: 'questions' | 'wardrobe';
+};
+
 export type Option = {
   id: string;
   label: string;
   description?: string;
   image?: string | number;
+  colour?: string;
 };
 
 export type SizeField = {
@@ -28,14 +37,6 @@ export type QuestionSection = {
   max?: number;
   defaultValue?: number;
   unit?: string;
-};
-
-export type OnboardingStep = {
-  id: string;
-  title: string;
-  subtitle?: string;
-  sections?: QuestionSection[];
-  type?: 'questions' | 'wardrobe';
 };
 
 export type OnboardingAnswers = Record<

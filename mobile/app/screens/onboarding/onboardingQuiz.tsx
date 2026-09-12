@@ -1,28 +1,14 @@
-import { useEffect, useRef, useState } from 'react';
-import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
-
-import {
-  Image,
-  ScrollView,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
-
-import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withTiming,
-} from 'react-native-reanimated';
-
 import Slider from '@react-native-community/slider';
+import { useEffect, useRef, useState } from 'react';
+import { Image, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import Animated, { useAnimatedStyle, useSharedValue, withTiming, } from 'react-native-reanimated';
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 
 import { onboardingSteps } from './onboardingData';
 import { OnboardingAnswers, QuestionSection } from './types';
 
 import { styles } from '../../services/onboarding-theme';
 import { StyleUTokens } from '../../services/styleu-theme';
-
 
 export default function OnboardingQuiz() {
 
@@ -507,9 +493,6 @@ export default function OnboardingQuiz() {
                                   handleSingleSelect(section.id, option.id)
                                 }
                               >
-                                <Text style={styles.bodyTypeIcon}>
-                                  {getBodyTypeIcon(option.id)}
-                                </Text>
 
                                 <Text style={styles.bodyTypeTitle}>
                                   {option.label}
@@ -555,7 +538,7 @@ export default function OnboardingQuiz() {
                                 <View
                                   style={[
                                     styles.colourCircle,
-                                    getColourStyle(option.id),
+                                    { backgroundColor: option.colour },
                                     isSelected &&
                                       styles.colourCircleSelected,
                                   ]}
@@ -673,60 +656,4 @@ export default function OnboardingQuiz() {
         </SafeAreaView>
       </SafeAreaProvider>
   );
-}
- 
-function getColourStyle(colourId: string) {
-  switch (colourId) {
-    case 'neutrals':
-      return {
-        backgroundColor: '#D6D0C4',
-      };
- 
-    case 'pastels':
-      return {
-        backgroundColor: '#E8D7E8',
-      };
- 
-    case 'earth':
-      return {
-        backgroundColor: '#9A7355',
-      };
- 
-    case 'bold':
-      return {
-        backgroundColor: '#E53935',
-      };
- 
-    case 'mono':
-      return {
-        backgroundColor: '#222222',
-      };
- 
-    case 'jewel':
-      return {
-        backgroundColor: '#5E3A7D',
-      };
- 
-    default:
-      return {
-        backgroundColor: '#CCCCCC',
-      };
-  }
-}
-
-function getBodyTypeIcon(bodyTypeId: string) {
-  switch (bodyTypeId) {
-    case 'hourglass':
-      return '⏳';
-    case 'rectangle':
-      return '▭';
-    case 'pear':
-      return '🍐';
-    case 'apple':
-      return '🍎';
-    case 'inverted-triangle':
-      return '▽';
-    default:
-      return '●';
-  }
 }
