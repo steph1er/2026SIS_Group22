@@ -3,7 +3,7 @@ export interface WardrobeItem {
     userID: string;
     imageURL: string;
     clothingCategory: string;
-    style: string;
+    style: string[];
     colour: string[];
     createdAt: Date;
     modifiedAt: Date;
@@ -11,5 +11,5 @@ export interface WardrobeItem {
     size: string;
     material: string[];
     tags: string[];
-    // TODO - check with group (could add season, occasion, wear count, cost etc.)
+    price: number;
 }

@@ -1,4 +1,4 @@
-import { IsArray, IsDate, IsDateString, IsNotEmpty, IsOptional, IsString } from "class-validator";
+import { IsArray, IsDate, IsDateString, IsNotEmpty, IsNumber, IsOptional, IsString, Min } from "class-validator";
 
 export class UpdateWardrobeItemDto {
     @IsString()
@@ -44,4 +44,9 @@ export class UpdateWardrobeItemDto {
     @IsDateString()
     @IsNotEmpty()
     modified_at: Date;
+
+    @IsNumber()
+    @IsOptional()
+    @Min(0)
+    price: number;
 }
