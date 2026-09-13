@@ -1,9 +1,11 @@
-import { Body, Controller, Delete, Get, Param, Post, Query } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Query, UseGuards } from '@nestjs/common';
+import { SupabaseAuthGuard } from '../auth/supabase-auth.guard';
 import { WardrobeService } from './wardrobe.service';
 import { UpdateWardrobeItemDto } from './dto/update-wardrobe-item.dto';
 import { SearchWardrobeItemDto } from './dto/search-wardrobe-item.dto';
 
 @Controller('wardrobes')
+@UseGuards(SupabaseAuthGuard)
 export class WardrobeController {
 
     constructor(private wardrobeService: WardrobeService) {}

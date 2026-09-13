@@ -25,6 +25,12 @@ backend/
 $ npm install
 ```
 
+Copy `.env.example` to `.env` and provide the Supabase values. The publishable key is enough for validating user sessions; keep `SUPABASE_SECRET_KEY` server-only if database administration requires it.
+
+## Authentication
+
+`SupabaseAuthGuard` protects private controllers by validating the mobile app's Bearer access token with Supabase. Apply `@UseGuards(SupabaseAuthGuard)` to a controller or route. Use the `@AuthenticatedUser()` parameter decorator when a route needs the verified user's ID. The wardrobe controller is already protected as an example.
+
 ## Compile and run the project
 
 ```bash
