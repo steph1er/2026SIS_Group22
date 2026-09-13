@@ -4,10 +4,14 @@ import { StyleUTokens } from '../services/styleu-theme';
 
 type PrimaryButtonProps = Pick<PressableProps, 'onPress' | 'disabled'> & { label: string };
 
-/** Shared submit button. */
 export function PrimaryButton({ label, onPress, disabled }: PrimaryButtonProps) {
   return (
-    <Pressable accessibilityRole="button" accessibilityState={{ disabled: Boolean(disabled) }} onPress={onPress} disabled={disabled} style={({ pressed }) => [styles.button, (pressed || disabled) && styles.pressed]}>
+    <Pressable
+      accessibilityRole="button"
+      accessibilityState={{ disabled: Boolean(disabled) }}
+      disabled={disabled}
+      onPress={onPress}
+      style={({ pressed }) => [styles.button, (pressed || disabled) && styles.pressed]}>
       <Text style={styles.label}>{label}</Text>
     </Pressable>
   );
