@@ -1,13 +1,13 @@
-import { Pressable, StyleSheet, Text } from 'react-native';
+import { Pressable, StyleSheet, Text, type PressableProps } from 'react-native';
 
 import { StyleUTokens } from '../services/styleu-theme';
 
-type PrimaryButtonProps = { label: string };
+type PrimaryButtonProps = Pick<PressableProps, 'onPress' | 'disabled'> & { label: string };
 
-/** Shared CTA styling; add an onPress callback when onboarding has behaviour. */
-export function PrimaryButton({ label }: PrimaryButtonProps) {
+/** Shared submit button. */
+export function PrimaryButton({ label, onPress, disabled }: PrimaryButtonProps) {
   return (
-    <Pressable accessibilityRole="button" style={({ pressed }) => [styles.button, pressed && styles.pressed]}>
+    <Pressable accessibilityRole="button" accessibilityState={{ disabled: Boolean(disabled) }} onPress={onPress} disabled={disabled} style={({ pressed }) => [styles.button, (pressed || disabled) && styles.pressed]}>
       <Text style={styles.label}>{label}</Text>
     </Pressable>
   );

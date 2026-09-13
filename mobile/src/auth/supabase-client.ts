@@ -1,4 +1,4 @@
-import 'expo-sqlite/localStorage/install';
+import './storage';
 
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 

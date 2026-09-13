@@ -1,16 +1,10 @@
-import { StyleSheet, Text, TextInput, View } from 'react-native';
+import { StyleSheet, Text, TextInput, View, type TextInputProps } from 'react-native';
 
 import { StyleUTokens } from '../services/styleu-theme';
 
-type OnboardingFormFieldProps = {
-  label: string;
-  placeholder: string;
-  keyboardType?: 'default' | 'email-address' | 'phone-pad';
-  textContentType?: 'name' | 'emailAddress' | 'telephoneNumber';
-};
+type OnboardingFormFieldProps = TextInputProps & { label: string };
 
-/** Presentational field that can later be controlled by a form/auth layer. */
-export function OnboardingFormField({ label, placeholder, keyboardType = 'default', textContentType }: OnboardingFormFieldProps) {
+export function OnboardingFormField({ label, keyboardType = 'default', ...props }: OnboardingFormFieldProps) {
   return (
     <View style={styles.field}>
       <Text style={styles.label}>{label}</Text>
@@ -18,10 +12,9 @@ export function OnboardingFormField({ label, placeholder, keyboardType = 'defaul
         accessibilityLabel={label}
         autoCapitalize={keyboardType === 'email-address' ? 'none' : 'words'}
         keyboardType={keyboardType}
-        placeholder={placeholder}
         placeholderTextColor={StyleUTokens.colors.placeholder}
         style={styles.input}
-        textContentType={textContentType}
+        {...props}
       />
     </View>
   );
