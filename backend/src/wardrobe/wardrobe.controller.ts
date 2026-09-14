@@ -1,7 +1,9 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, UseGuards } from '@nestjs/common';
+import { SupabaseAuthGuard } from '../auth/supabase-auth.guard';
 import { WardrobeService } from './wardrobe.service';
 
 @Controller('wardrobes')
+@UseGuards(SupabaseAuthGuard)
 export class WardrobeController {
 
     constructor(private wardrobeService: WardrobeService) {}

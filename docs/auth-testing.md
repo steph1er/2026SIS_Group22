@@ -1,0 +1,79 @@
+# Authentication handoff and testing
+
+## Setup
+
+1. Configure `mobile/.env.local` and `backend/.env` using their `.env.example`
+   files. Both must use the same Supabase project. Use the publishable key for
+   these tests, never a secret/service-role key as a user bearer token.
+2. Apply the checked-in migrations to a development Supabase project using
+   `npx supabase db push` from the repository root after linking that project.
+   Review the target before running: this changes the linked database.
+3. Start the mobile app (`npm run web` in `mobile`). Create a test account using
+   an email you control. If email confirmation is enabled, confirm the email,
+   then return to the app and log in. Configure a reachable Supabase Site URL
+   for the confirmation link. Successful login shows your email and Sign out.
+
+The profile migration preserves `profiles.id` and adds unique `profiles.user_id`
+referencing `auth.users.id`. New signups receive a profile automatically; existing
+auth accounts are backfilled. Unlinked legacy profiles are retained but hidden by
+ownership policies. Map them explicitly only when ownership is known; do not infer
+ownership from display names. Auth user IDs and profile IDs are distinct.
+
+## Obtain a token without the UI (Postman)
+
+Create a POST request to `{{supabase_url}}/auth/v1/token?grant_type=password`.
+Set Authorization to **No Auth**, and add headers:
+
+```text
+apikey: {{supabase_publishable_key}}
+Content-Type: application/json
+```
+
+Use a raw JSON body with your confirmed test account:
+
+```json
+{
+  "email": "{{test_email}}",
+  "password": "{{test_password}}"
+}
+```
+
+On success, the response contains `access_token`, `expires_in`, and `user.id`.
+Copy `access_token` into a local/private Postman variable. Do not commit or share
+tokens/passwords or export them in a collection. Sign in again when it expires.
+
+Start the backend (`npm install`, then `npm run start:dev` in `backend`). Send
+`GET http://localhost:3000/wardrobes` with Authorization → Bearer Token set to
+the access token. The current wardrobe response is a placeholder, so success
+proves token acceptance, not database ownership filtering.
+
+## Passing the authenticated identity to wardrobe
+
+The guard validates the token and attaches the Supabase user. In a guarded
+controller, import `AuthenticatedUser` and Supabase's `User` type and use:
+
+```ts
+getWardrobe(@AuthenticatedUser() user: User) {
+  // Pass user.id to the wardrobe service and scope all queries to that owner.
+}
+```
+
+The auth contract is the verified `user.id`. Wardrobe owns how that ID is used in
+its service and database queries. If it needs a profile, it can look one up using
+`profiles.user_id = user.id`. It should not accept a request-body user ID as proof
+of identity. Mobile requests can use the existing
+`authenticatedApiRequest('/wardrobes')` helper after login.
+
+## Verification checklist
+
+- Signup with confirmation enabled does not show a signed-in state prematurely.
+- Wrong passwords show an error; correct login shows the account email.
+- Reload restores the session; sign out returns to the form.
+- A valid token reaches `/wardrobes`; missing/invalid tokens return 401.
+- In Supabase, the account has one profile with matching `user_id`.
+- Using two users' tokens against Supabase's REST `profiles` endpoint (with the
+  publishable `apikey` header), each user sees only their own profile and cannot
+  insert/update a row owned by the other user.
+
+Local type checking does not verify remote credentials, migrations, or RLS. Run
+this checklist against the development project before reporting live auth ready.
