@@ -1,3 +1,5 @@
+import { router } from 'expo-router';
+
 import { useEffect, useRef, useState } from 'react';
 import { ScrollView } from 'react-native';
 import { useAnimatedStyle, useSharedValue, withTiming, } from 'react-native-reanimated';
@@ -131,7 +133,7 @@ export function useOnboardingHandler() {
     } else {
         // TODO:
         // Save onboarding answers
-        // Navigate to the main app
+        router.replace('/');
     }
   };
 
