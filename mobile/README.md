@@ -44,6 +44,10 @@ The reusable authentication API is in `src/auth/auth-service.ts`. Screens can ca
 
 Use `authenticatedApiRequest()` from `src/api/authenticated-api-client.ts` for protected NestJS endpoints. It automatically adds the signed-in user's Supabase access token to the request.
 
+The welcome screen now supports email/password signup, login, confirmation
+messaging, and sign-out. See [authentication testing](../docs/auth-testing.md)
+for Postman token instructions, profile ownership, and the integration checklist.
+
 In the output, you'll find options to open the app in a
 
 - [development build](https://docs.expo.dev/develop/development-builds/introduction/)
