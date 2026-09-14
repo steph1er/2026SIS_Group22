@@ -1,16 +1,17 @@
-import { Pressable, StyleSheet, Text } from 'react-native';
-import type { GestureResponderEvent } from 'react-native';
+import { Pressable, StyleSheet, Text, type PressableProps } from 'react-native';
 
 import { StyleUTokens } from '../services/styleu-theme';
 
-type PrimaryButtonProps = {
-  label: string;
-  onPress?: (event: GestureResponderEvent) => void;
-};
+type PrimaryButtonProps = Pick<PressableProps, 'onPress' | 'disabled'> & { label: string };
 
-export function PrimaryButton({ label, onPress }: PrimaryButtonProps) {
+export function PrimaryButton({ label, onPress, disabled }: PrimaryButtonProps) {
   return (
-    <Pressable accessibilityRole="button" onPress={onPress} style={({ pressed }) => [styles.button, pressed && styles.pressed]}>
+    <Pressable
+      accessibilityRole="button"
+      accessibilityState={{ disabled: Boolean(disabled) }}
+      disabled={disabled}
+      onPress={onPress}
+      style={({ pressed }) => [styles.button, (pressed || disabled) && styles.pressed]}>
       <Text style={styles.label}>{label}</Text>
     </Pressable>
   );
