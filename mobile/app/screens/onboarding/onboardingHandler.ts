@@ -60,9 +60,9 @@ export function useOnboardingHandler() {
   const handleSingleSelect = (sectionId: string, optionId: string) => {
     setAnswers((prev) => {
       if (prev[sectionId] === optionId) {
-      const next = { ...prev };
-      delete next[sectionId];
-      return next;
+        const next = { ...prev };
+        delete next[sectionId];
+        return next;
       }
 
       return { ...prev, [sectionId]: optionId };
@@ -74,11 +74,25 @@ export function useOnboardingHandler() {
       fieldId: string,
       value: string
     ) => {
-      handleSelect(`${sectionId}:${fieldId}`, value);
+      const key = `${sectionId}:${fieldId}`;
+
+      setAnswers((prev) => {
+        if (prev[key] === value) {
+          const next = { ...prev };
+          delete next[key];
+          return next;
+        }
+
+        return {
+          ...prev,
+          [key]: value,
+        };
+      });
+      
       setOpenSizeField(null);
     };
 
-    const handleToggleSkipSlider = (sectionId: string) => {
+  const handleToggleSkipSlider = (sectionId: string) => {
     setAnswers((prev) => {
       const skipKey = `${sectionId}:skip`;
       const isSkipped = !prev[skipKey];
@@ -86,7 +100,7 @@ export function useOnboardingHandler() {
       const next = { ...prev, [skipKey]: isSkipped };
 
       if (isSkipped) {
-      delete next[sectionId];
+        delete next[sectionId];
       }
 
       return next;
