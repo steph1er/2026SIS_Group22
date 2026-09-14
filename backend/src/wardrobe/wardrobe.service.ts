@@ -9,7 +9,7 @@ export class WardrobeService {
     async getWardrobe(id: string): Promise<any[]>{
         const supabase = this.supabaseService.client;
 
-        const user_id = this.get_profile_id(id);
+        const user_id = await this.get_profile_id(id);
 
         // get all items for logged in user
         const { data, error } = await supabase.from('wardrobe_items')
@@ -25,13 +25,15 @@ export class WardrobeService {
         if(data.length === 0){
             throw new NotFoundException('No wardrobe items found for current user');
         }
-        
+
         // otherwise return all matching wardrobe items
         return data;
     }
 
-    async getWardrobeItem(id: string, user_id: string): Promise<any[]>{
+    async getWardrobeItem(id: string, auth_id: string): Promise<any[]>{
         const supabase = this.supabaseService.client;
+
+        const user_id = await this.get_profile_id(auth_id);
         
         // get item by id and check it belongs to logged in user
         const { data, error } = await supabase.from('wardrobe_items')
@@ -63,8 +65,10 @@ export class WardrobeService {
         return 'This will add an uploaded item to users wardrobe';
     }
 
-    async updateItemDetails(updateWardrobeItemDto: UpdateWardrobeItemDto, user_id: string){
+    async updateItemDetails(updateWardrobeItemDto: UpdateWardrobeItemDto, auth_id: string){
         const supabase = this.supabaseService.client;
+
+        const user_id = await this.get_profile_id(auth_id);
 
         const {id, image_url, clothing_category, style, brand, size, colour, material, tags, modified_at, price} = updateWardrobeItemDto
 
@@ -99,7 +103,7 @@ export class WardrobeService {
     }
 
     async searchForItems(
-        user_id: string,
+        id: string,
         clothing_category? : string[],
         style? : string[],
         brand? : string[],
@@ -110,6 +114,8 @@ export class WardrobeService {
         price? : number
     ){
         const supabase = this.supabaseService.client;
+
+        const user_id = await this.get_profile_id(id);
 
         // check which category user is searching by
         let query = supabase.from('wardrobe_items')
@@ -177,8 +183,10 @@ export class WardrobeService {
         return data;
     }
 
-    async deleteItem(id: string, user_id: string){
+    async deleteItem(id: string, auth_id: string){
         const supabase = this.supabaseService.client;
+
+        const user_id = await this.get_profile_id(auth_id);
         
         // check requested item exists
         await this.check_item_belongs_to_user(user_id, id);
@@ -225,6 +233,6 @@ export class WardrobeService {
             throw new NotFoundException('No user found');
         }
 
-        return data;
+        return data[0].id;
     }
 }

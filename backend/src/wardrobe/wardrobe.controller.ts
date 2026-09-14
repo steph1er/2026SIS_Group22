@@ -3,7 +3,8 @@ import { SupabaseAuthGuard } from '../auth/supabase-auth.guard';
 import { WardrobeService } from './wardrobe.service';
 import { UpdateWardrobeItemDto } from './dto/update-wardrobe-item.dto';
 import { SearchWardrobeItemDto } from './dto/search-wardrobe-item.dto';
-import type { AuthenticatedRequest } from '../auth/authenticated-request.interface';
+import { AuthenticatedUser } from '../auth/authenticated-user.decorator';
+import type { User } from '@supabase/supabase-js';
 
 @Controller('wardrobes')
 @UseGuards(SupabaseAuthGuard)
@@ -12,8 +13,8 @@ export class WardrobeController {
     constructor(private wardrobeService: WardrobeService) {}
 
     @Get()
-    getWardrobe(@Req() req: AuthenticatedRequest): Promise<any[]> {
-        return this.wardrobeService.getWardrobe(req.user.id);
+    getWardrobe(@AuthenticatedUser() user: User): Promise<any[]> {
+        return this.wardrobeService.getWardrobe(user.id);
     }
 
     // change to post
@@ -23,12 +24,12 @@ export class WardrobeController {
     }
 
     @Post('update')
-    updateItemDetails(@Body() updateWardrobeItemDto: UpdateWardrobeItemDto, @Req() req: AuthenticatedRequest) {
-        return this.wardrobeService.updateItemDetails(updateWardrobeItemDto, req.user.id);
+    updateItemDetails(@Body() updateWardrobeItemDto: UpdateWardrobeItemDto, @AuthenticatedUser() user: User) {
+        return this.wardrobeService.updateItemDetails(updateWardrobeItemDto, user.id);
     }
 
     @Get('search')
-    searchForItems(@Query() query: SearchWardrobeItemDto, @Req() req: AuthenticatedRequest) {
+    searchForItems(@Query() query: SearchWardrobeItemDto, @AuthenticatedUser() user: User) {
         const { clothingcategory,
                 style,
                 brand,
@@ -40,7 +41,7 @@ export class WardrobeController {
             } = query;
 
         return this.wardrobeService.searchForItems(
-            req.user.id,
+            user.id,
             clothingcategory, 
             style,
             brand,
@@ -53,12 +54,12 @@ export class WardrobeController {
     }
 
     @Get(':id')
-    getWardrobeItem(@Param('id') id: string, @Req() req: AuthenticatedRequest): Promise<any[]> {
-        return this.wardrobeService.getWardrobeItem(id, req.user.id);
+    getWardrobeItem(@Param('id') id: string, @AuthenticatedUser() user: User): Promise<any[]> {
+        return this.wardrobeService.getWardrobeItem(id, user.id);
     }
 
     @Delete('delete/:id')
-    deleteItem(@Param('id') id: string, @Req() req: AuthenticatedRequest) {
-        return this.wardrobeService.deleteItem(id, req.user.id);
+    deleteItem(@Param('id') id: string, @AuthenticatedUser() user: User) {
+        return this.wardrobeService.deleteItem(id, user.id);
     }
 }

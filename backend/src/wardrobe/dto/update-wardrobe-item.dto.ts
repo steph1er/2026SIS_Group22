@@ -13,7 +13,7 @@ export class UpdateWardrobeItemDto {
     @IsNotEmpty()
     clothing_category: string;
 
-    @IsString()
+    @IsArray()
     @IsOptional()
     style: string;
 
@@ -37,7 +37,7 @@ export class UpdateWardrobeItemDto {
     @IsOptional()
     tags: string[];
 
-    @IsDateString()
+    @IsDate()
     @IsNotEmpty()
     modified_at: Date;
 
