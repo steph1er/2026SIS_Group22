@@ -7,10 +7,6 @@ export class UpdateWardrobeItemDto {
 
     @IsString()
     @IsNotEmpty()
-    user_id: string;
-
-    @IsString()
-    @IsNotEmpty()
     image_url: string;
 
     @IsString()

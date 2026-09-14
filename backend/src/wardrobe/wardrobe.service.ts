@@ -6,11 +6,10 @@ import { UpdateWardrobeItemDto } from './dto/update-wardrobe-item.dto';
 export class WardrobeService {
     constructor(private readonly supabaseService: SupabaseService) {}
 
-    async getWardrobe(): Promise<any[]>{
+    async getWardrobe(id: string): Promise<any[]>{
         const supabase = this.supabaseService.client;
 
-        // check how to authenticate user
-        const user_id = "2cc61374-9c22-46a0-a253-353e09c0d6a1"
+        const user_id = this.get_profile_id(id);
 
         // get all items for logged in user
         const { data, error } = await supabase.from('wardrobe_items')
@@ -31,11 +30,8 @@ export class WardrobeService {
         return data;
     }
 
-    async getWardrobeItem(id: string): Promise<any[]>{
+    async getWardrobeItem(id: string, user_id: string): Promise<any[]>{
         const supabase = this.supabaseService.client;
-
-        // check how to authenticate user
-        const user_id = "2cc61374-9c22-46a0-a253-353e09c0d6a1"
         
         // get item by id and check it belongs to logged in user
         const { data, error } = await supabase.from('wardrobe_items')
@@ -67,10 +63,10 @@ export class WardrobeService {
         return 'This will add an uploaded item to users wardrobe';
     }
 
-    async updateItemDetails(updateWardrobeItemDto: UpdateWardrobeItemDto){
+    async updateItemDetails(updateWardrobeItemDto: UpdateWardrobeItemDto, user_id: string){
         const supabase = this.supabaseService.client;
 
-        const {id, user_id, image_url, clothing_category, style, brand, size, colour, material, tags, modified_at, price} = updateWardrobeItemDto
+        const {id, image_url, clothing_category, style, brand, size, colour, material, tags, modified_at, price} = updateWardrobeItemDto
 
         // check how to authenticate user
 
@@ -103,6 +99,7 @@ export class WardrobeService {
     }
 
     async searchForItems(
+        user_id: string,
         clothing_category? : string[],
         style? : string[],
         brand? : string[],
@@ -113,9 +110,6 @@ export class WardrobeService {
         price? : number
     ){
         const supabase = this.supabaseService.client;
-
-        // check how to authenticate user
-        const user_id = "2cc61374-9c22-46a0-a253-353e09c0d6a1";
 
         // check which category user is searching by
         let query = supabase.from('wardrobe_items')
@@ -183,11 +177,8 @@ export class WardrobeService {
         return data;
     }
 
-    async deleteItem(id: string){
+    async deleteItem(id: string, user_id: string){
         const supabase = this.supabaseService.client;
-
-        // check how to authenticate user
-        const user_id = "2cc61374-9c22-46a0-a253-353e09c0d6a1"
         
         // check requested item exists
         await this.check_item_belongs_to_user(user_id, id);
@@ -218,4 +209,22 @@ export class WardrobeService {
         }
     }
 
+    private async get_profile_id(user_id: string){
+        const supabase = this.supabaseService.client;
+
+        const { data, error } = await supabase.from('profiles')
+                                              .select('id')
+                                              .eq('user_id', user_id);
+
+        if(error){
+            throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+
+        // if no user throw not found exception
+        if(data.length === 0){
+            throw new NotFoundException('No user found');
+        }
+
+        return data;
+    }
 }

@@ -15,8 +15,6 @@ create table if not exists wardrobe_items (
 
 alter table wardrobe_items enable row level security;
 
---TODO -> change below to proper authentication once set up
-
 create policy "TEMPORARY OPEN ACCESS FOR TESTING"
 on wardrobe_items for all
 using (true)
