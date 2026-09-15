@@ -20,6 +20,14 @@ export type SizeField = {
   options: string[];
 };
 
+export type PriceField = {
+  id: string;
+  label: string;
+  min: number;
+  max: number;
+  step?: number;
+};
+
 export type QuestionSection = {
   id: string;
   title: string;
@@ -29,10 +37,12 @@ export type QuestionSection = {
     | 'single-select'
     | 'image-select'
     | 'slider'
-    | 'size-select';
+    | 'size-select'
+    | 'price-select';
   optional?: boolean;
   options?: Option[];
   fields?: SizeField[];
+  priceFields?: PriceField[];
   min?: number;
   max?: number;
   defaultValue?: number;

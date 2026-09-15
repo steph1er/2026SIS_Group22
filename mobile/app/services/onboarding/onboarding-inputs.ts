@@ -120,4 +120,37 @@ export const inputStyles = StyleSheet.create({
     color: colors.mutedText,
     marginBottom: 8,
   },
+
+  priceFieldsList: {
+    gap: 12,
+  },
+  
+  priceCard: {
+    padding: 12,
+    backgroundColor: colors.backgroundElement,
+    borderRadius: 8,
+  },
+  
+  priceCardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 12,
+  },
+  
+  priceCardTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.text,
+  },
+  
+  priceCardSkipRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  
+  priceSliderContainer: {
+    alignItems: 'center',
+    paddingVertical: 4,
+  }
 });

@@ -1,5 +1,7 @@
 import Slider from '@react-native-community/slider';
+import { useState } from 'react';
 import { Image, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import RangeSlider from 'react-native-fast-range-slider';
 import Animated from 'react-native-reanimated';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 
@@ -31,10 +33,14 @@ export default function OnboardingQuiz() {
     handleSingleSelect,
     handleSelectSizeField,
     handleToggleSkipSlider,
+    handleChangePriceRange,
+    handleTogglePriceSkip,
     isSectionAnswered,
     handleContinue,
     handleBack,
   } = useOnboardingHandler();
+
+  const [priceSliderWidth, setPriceSliderWidth] = useState(280);
 
   return (
     <SafeAreaProvider>
@@ -292,7 +298,64 @@ export default function OnboardingQuiz() {
                         })}
                       </View>
                     )}
-  
+
+                    {/* price range */}
+
+                    {section.type === 'price-select' && section.priceFields && (
+                      <View style={styles.priceFieldsList}>
+                        {section.priceFields.map((field) => {
+                          const fieldKey = `${section.id}:${field.id}`;
+                          const isSkipped = Boolean(answers[`${fieldKey}:skip`]);
+                          const storedMin = answers[`${fieldKey}:min`];
+                          const storedMax = answers[`${fieldKey}:max`];
+                          const minVal = typeof storedMin === 'number' ? storedMin : field.min;
+                          const maxVal = typeof storedMax === 'number' ? storedMax : field.max;
+
+                          return (
+                            <View key={field.id} style={styles.priceCard}>
+                              <View style={styles.priceCardHeader}>
+                                <Text style={styles.priceCardTitle}>{field.label}</Text>
+
+                                <TouchableOpacity
+                                  style={styles.priceCardSkipRow}
+                                  onPress={() => handleTogglePriceSkip(section.id, field.id)}
+                                >
+                                  <View style={[styles.checkbox, isSkipped && styles.checkboxChecked]}>
+                                    {isSkipped && <Text style={styles.checkboxMark}>✓</Text>}
+                                  </View>
+                                  <Text style={styles.skipCheckboxLabel}>Skip</Text>
+                                </TouchableOpacity>
+                              </View>
+
+                              <View style={isSkipped && styles.sliderDisabled}>
+                                <View
+                                  style={styles.priceSliderContainer}
+                                  onLayout={(e) =>
+                                    setPriceSliderWidth(Math.max(e.nativeEvent.layout.width - 4, 120))
+                                  }
+                                >
+                                  <RangeSlider
+                                    key={`${fieldKey}-${priceSliderWidth}`}
+                                    min={field.min}
+                                    max={field.max}
+                                    step={field.step ?? 1}
+                                    initialMinValue={minVal}
+                                    initialMaxValue={maxVal}
+                                    width={priceSliderWidth}
+                                    enabled={!isSkipped}
+                                    selectedTrackColor={StyleUTokens.colors.text}
+                                    onValuesChangeFinish={([low, high]) =>
+                                      handleChangePriceRange(section.id, field.id, low, high)
+                                    }
+                                  />
+                                </View>
+                              </View>
+                            </View>
+                          );
+                        })}
+                      </View>
+                    )}
+
                     {/* options */}
 
                     {section.options && (
@@ -499,14 +562,13 @@ export default function OnboardingQuiz() {
             onPress={handleContinue}
           >
             <Text style={styles.continueText}>
-              {currentStep === 0 && 'Next Step'}
-              {currentStep === 1 && 'Next Step'}
-              {currentStep === 2 && 'Save & Next'}
-              {currentStep === 3 && 'Finish Onboarding'}
+              {currentStep < onboardingSteps.length - 2 && 'Next Step'}
+              {currentStep === onboardingSteps.length - 2 && 'Save & Next'}
+              {currentStep === onboardingSteps.length - 1 && 'Finish Onboarding'}
             </Text>
           </TouchableOpacity>
   
-          {currentStep === 3 && (
+          {currentStep === onboardingSteps.length - 1 && (
             <TouchableOpacity onPress={handleContinue}>
               <Text style={styles.skipForNow}>
                 Skip for now

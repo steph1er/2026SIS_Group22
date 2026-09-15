@@ -18,10 +18,7 @@ export function useOnboardingHandler() {
 
   const progress = (currentStep + 1) / onboardingSteps.length;
   const progressAnim = useSharedValue(progress);
-
-  const progressBarStyle = useAnimatedStyle(() => ({
-    width: `${progressAnim.value * 100}%`,
-  }));
+  const progressBarStyle = useAnimatedStyle(() => ({ width: `${progressAnim.value * 100}%` }));
 
   useEffect(() => {
     progressAnim.value = withTiming(progress, { duration: 350 });
@@ -33,26 +30,14 @@ export function useOnboardingHandler() {
     setOpenSizeField(null);
   }, [currentStep]);
 
-  const handleSelect = (
-    sectionId: string,
-    value: string | string[] | number
-  ) => {
-    setAnswers((prev) => ({
-      ...prev,
-      [sectionId]: value,
-    }));
+  const handleSelect = ( sectionId: string, value: string | string[] | number ) => {
+    setAnswers((prev) => ({ ...prev, [sectionId]: value }));
   };
 
   const handleMultiSelect = (sectionId: string, optionId: string) => {
     const currentAnswer = answers[sectionId];
-
-    const currentValues = Array.isArray(currentAnswer)
-      ? currentAnswer
-      : [];
-
-    const newValues = currentValues.includes(optionId)
-      ? currentValues.filter((id) => id !== optionId)
-      : [...currentValues, optionId];
+    const currentValues = Array.isArray(currentAnswer) ? currentAnswer : [];
+    const newValues = currentValues.includes(optionId) ? currentValues.filter((id) => id !== optionId) : [...currentValues, optionId];
 
     handleSelect(sectionId, newValues);
   };
@@ -69,13 +54,8 @@ export function useOnboardingHandler() {
     });
   };
 
-  const handleSelectSizeField = (
-      sectionId: string,
-      fieldId: string,
-      value: string
-    ) => {
+  const handleSelectSizeField = ( sectionId: string, fieldId: string, value: string ) => {
       const key = `${sectionId}:${fieldId}`;
-
       setAnswers((prev) => {
         if (prev[key] === value) {
           const next = { ...prev };
@@ -83,12 +63,8 @@ export function useOnboardingHandler() {
           return next;
         }
 
-        return {
-          ...prev,
-          [key]: value,
-        };
+        return { ...prev, [key]: value };
       });
-      
       setOpenSizeField(null);
     };
 
@@ -96,7 +72,6 @@ export function useOnboardingHandler() {
     setAnswers((prev) => {
       const skipKey = `${sectionId}:skip`;
       const isSkipped = !prev[skipKey];
-
       const next = { ...prev, [skipKey]: isSkipped };
 
       if (isSkipped) {
@@ -107,14 +82,44 @@ export function useOnboardingHandler() {
     });
   };
 
-  const isSectionAnswered = (
-    section: QuestionSection,
-    answers: OnboardingAnswers
-  ) => {
+  const handleChangePriceRange = ( sectionId: string, fieldId: string, min: number, max: number ) => {
+    const key = `${sectionId}:${fieldId}`;
+    setAnswers((prev) => ({ ...prev, [`${key}:min`]: min, [`${key}:max`]: max }));
+  };
+
+  const handleTogglePriceSkip = (sectionId: string, fieldId: string) => {
+    const key = `${sectionId}:${fieldId}`;
+    setAnswers((prev) => {
+      const skipKey = `${key}:skip`;
+      const isSkipped = !prev[skipKey];
+      const next = { ...prev, [skipKey]: isSkipped };
+
+      if (isSkipped) {
+        delete next[`${key}:min`];
+        delete next[`${key}:max`];
+      }
+
+      return next;
+    });
+  };
+
+  const isSectionAnswered = ( section: QuestionSection, answers: OnboardingAnswers ) => {
     if (section.type === 'slider') {
       const hasValue = typeof answers[section.id] === 'number';
       const isSkipped = Boolean(answers[`${section.id}:skip`]);
       return hasValue || isSkipped;
+    }
+
+    if (section.type === 'price-select' && section.priceFields) {
+      return section.priceFields.every((field) => {
+        const key = `${section.id}:${field.id}`;
+        const isSkipped = Boolean(answers[`${key}:skip`]);
+        if (isSkipped) return true;
+
+        const minVal = answers[`${key}:min`];
+        const maxVal = answers[`${key}:max`];
+        return typeof minVal === 'number' && typeof maxVal === 'number';
+      });
     }
 
     if (section.fields) {
@@ -125,16 +130,12 @@ export function useOnboardingHandler() {
     }
 
     const value = answers[section.id];
-
     if (Array.isArray(value)) return value.length > 0;
 
     return value !== undefined && value !== '';
   };
 
-  const missingRequiredSections =
-    step.sections?.filter(
-      (section) => !section.optional && !isSectionAnswered(section, answers)
-    ) ?? [];
+  const missingRequiredSections = step.sections?.filter((section) => !section.optional && !isSectionAnswered(section, answers)) ?? [];
 
   const handleContinue = () => {
     if (missingRequiredSections.length > 0) {
@@ -173,6 +174,8 @@ export function useOnboardingHandler() {
     handleSingleSelect,
     handleSelectSizeField,
     handleToggleSkipSlider,
+    handleChangePriceRange,
+    handleTogglePriceSkip,
     isSectionAnswered,
     handleContinue,
     handleBack,

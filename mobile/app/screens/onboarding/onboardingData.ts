@@ -176,7 +176,29 @@ export const onboardingSteps: OnboardingStep[] = [
     ],
   },
 
-  // STEP 4 - final
+  // STEP 4 - pricing
+
+  {
+    id: 'price-range',
+    title: 'Preferred Price Range',
+    subtitle: 'Set a budget for each category.',
+    sections: [
+      {
+        id: 'price-range',
+        title: 'By Category',
+        type: 'price-select',
+        priceFields: [
+          { id: 'tops', label: 'Tops', min: 0, max: 300, step: 5 },
+          { id: 'bottoms', label: 'Bottoms', min: 0, max: 300, step: 5 },
+          { id: 'dresses', label: 'Dresses', min: 0, max: 500, step: 5 },
+          { id: 'outerwear', label: 'Outerwear', min: 0, max: 800, step: 10 },
+          { id: 'accessories', label: 'Accessories', min: 0, max: 300, step: 5 },
+        ],
+      },
+    ],
+  },
+
+  // STEP 5 - final
 
   {
     id: 'digitalise-closet',
