@@ -15,6 +15,11 @@ import { StyleUTokens } from '../../services/styleu-theme';
 import { useOnboardingHandler } from './onboardingHandler';
 
 const styles = { ...layoutStyles, ...optionStyles, ...inputStyles, ...wardrobeStyles };
+const defaultPriceSliderWidth = 280;
+const minPriceSliderWidth = 120;
+const priceSliderLayoutPadding = 40;
+const priceThumbSize = 18;
+const priceLabelWidth = 40;
 
 export default function OnboardingQuiz() {
   const {
@@ -42,7 +47,8 @@ export default function OnboardingQuiz() {
     handleBack,
   } = useOnboardingHandler();
 
-  const [priceSliderWidth, setPriceSliderWidth] = useState(280);
+  const [priceSliderWidth, setPriceSliderWidth] = useState(defaultPriceSliderWidth);
+  const [livePriceValues, setLivePriceValues] = useState<Record<string, [number, number]>>({});
 
   return (
     <SafeAreaProvider>
@@ -56,11 +62,7 @@ export default function OnboardingQuiz() {
           </View>
         </View>
 
-        <ScrollView
-          ref={scrollViewRef}
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.scrollContent}
-        >
+        <ScrollView ref={scrollViewRef} showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
           <View style={styles.header}>
             <View style={styles.stepLabelRow}>
               {currentStep > 0 && (
@@ -88,19 +90,15 @@ export default function OnboardingQuiz() {
             {step.subtitle && (<Text style={styles.subtitle}>{step.subtitle}</Text>)}
           </View>
 
+          {/* steps exc. final */}
+
           {step.type !== 'wardrobe' && (
             <View style={styles.content}>
               {step.sections?.map((section, index) => {
                 const currentAnswer = answers[section.id];
-                const showError =
-                  showErrors &&
-                  !section.optional &&
-                  !isSectionAnswered(section, answers);
-                
-                const isAnyPrice =
-                  section.type === 'price-select' &&
-                  Boolean(answers[`${section.id}:anyPrice`]);
+                const showError = showErrors && !section.optional && !isSectionAnswered(section, answers);
 
+                const isAnyPrice = (section.type === 'price-select' && Boolean(answers[`${section.id}:anyPrice`]));
                 const isSkipAll =
                   section.type === 'price-select' &&
                   section.priceFields?.every((field) => {
@@ -111,12 +109,11 @@ export default function OnboardingQuiz() {
                 return (
                   <View key={section.id} style={styles.section}>
                     <View style={styles.sectionHeader}>
-                      <Text
-                        style={[styles.sectionTitle, showError && styles.sectionTitleError]}>
+                      <Text style={[styles.sectionTitle, showError && styles.sectionTitleError]}>
                         {section.title}
                       </Text>
   
-                      {/* optional */}
+                      {/* optional, subtitle and error display */}
 
                       {section.optional && (
                         <View style={styles.optionalBadge}>
@@ -148,10 +145,7 @@ export default function OnboardingQuiz() {
 
                           return (
                             <>
-                              <TouchableOpacity
-                                style={styles.skipCheckboxRow}
-                                onPress={() => handleToggleSkipSlider(section.id) }
-                              >
+                              <TouchableOpacity style={styles.skipCheckboxRow} onPress={() => handleToggleSkipSlider(section.id) }>
                                 <View style={[  styles.checkbox, isSkipped && styles.checkboxChecked ]} >
                                   {isSkipped && (
                                     <Text style={styles.checkboxMark}>
@@ -167,11 +161,7 @@ export default function OnboardingQuiz() {
 
                               <View style={ isSkipped && styles.sliderDisabled }>
                                 <Text style={styles.sliderValue}>
-                                  {typeof answers[section.id] ===
-                                      'number'
-                                        ? answers[section.id]
-                                        : section.defaultValue
-                                  } {section.unit}
+                                  {typeof answers[section.id] === 'number' ? answers[section.id] : section.defaultValue} {section.unit}
                                 </Text>
 
                                 <Slider
@@ -179,25 +169,11 @@ export default function OnboardingQuiz() {
                                   disabled={isSkipped}
                                   minimumValue={section.min}
                                   maximumValue={section.max}
-                                  value={
-                                    typeof answers[section.id] === 'number'
-                                      ? (answers[section.id] as number)
-                                      : section.defaultValue
-                                  }
+                                  value={typeof answers[section.id] === 'number' ? (answers[section.id] as number) : section.defaultValue}
                                   step={1}
-                                  minimumTrackTintColor={
-                                    isSkipped
-                                      ? StyleUTokens.colors.placeholder
-                                      : StyleUTokens.colors.text
-                                  }
-                                  maximumTrackTintColor={
-                                    StyleUTokens.colors.placeholder
-                                  }
-                                  thumbTintColor={
-                                    isSkipped
-                                      ? StyleUTokens.colors.placeholder
-                                      : StyleUTokens.colors.text
-                                  }
+                                  minimumTrackTintColor={isSkipped ? StyleUTokens.colors.placeholder : StyleUTokens.colors.text}
+                                  maximumTrackTintColor={StyleUTokens.colors.placeholder}
+                                  thumbTintColor={isSkipped ? StyleUTokens.colors.placeholder : StyleUTokens.colors.text}
                                   onValueChange={(value) =>
                                     handleSelect(section.id, value)
                                   }
@@ -211,440 +187,403 @@ export default function OnboardingQuiz() {
 
                   {/* size selection */}
 
-                    {section.type === 'size-select' && section.fields && (
-                      <View>
-                        <View style={styles.sizeFieldRow}>
-                          {section.fields.map((field) => {
-                            const fieldKey = `${section.id}:${field.id}`;
-                            const fieldValue = answers[fieldKey];
-                            const isOpen = openSizeField === fieldKey;
-  
-                            return (
-                              <TouchableOpacity
-                                key={field.id}
-                                style={[
-                                  styles.sizeFieldBox,
-                                  isOpen && styles.sizeFieldBoxOpen,
-                                ]}
-                                onPress={() =>
-                                  setOpenSizeField(isOpen ? null : fieldKey)
-                                }
-                              >
-                                <Text style={styles.sizeFieldLabel}>
-                                  {field.label}
-                                </Text>
-  
-                                <View style={styles.sizeFieldValueRow}>
-                                  <Text style={styles.sizeFieldValue}>
-                                    {typeof fieldValue === 'string'
-                                      ? fieldValue
-                                      : 'Select'}
-                                  </Text>
-  
-                                  <Text
-                                    style={[
-                                      styles.sizeFieldChevron,
-                                      isOpen &&
-                                        styles.sizeFieldChevronOpen,
-                                    ]}
-                                  >
-                                    ▾
-                                  </Text>
-                                </View>
-                              </TouchableOpacity>
-                            );
-                          })}
-                        </View>
-  
+                  {section.type === 'size-select' && section.fields && (
+                    <View>
+                      <View style={styles.sizeFieldRow}>
                         {section.fields.map((field) => {
                           const fieldKey = `${section.id}:${field.id}`;
-  
-                          if (openSizeField !== fieldKey) return null;
-  
                           const fieldValue = answers[fieldKey];
-  
+                          const isOpen = openSizeField === fieldKey;
+
                           return (
-                            <View
+                            <TouchableOpacity
                               key={field.id}
-                              style={styles.sizeDropdownPanel}
+                              style={[
+                                styles.sizeFieldBox,
+                                isOpen && styles.sizeFieldBoxOpen,
+                              ]}
+                              onPress={() =>
+                                setOpenSizeField(isOpen ? null : fieldKey)
+                              }
                             >
-                              <Text style={styles.sizeDropdownLabel}>
-                                Select {field.label}
+                              <Text style={styles.sizeFieldLabel}>
+                                {field.label}
                               </Text>
-  
-                              <View style={styles.optionsGrid}>
-                                {field.options.map((optionValue) => {
-                                  const isSelected =
-                                    fieldValue === optionValue;
-  
-                                  return (
-                                    <TouchableOpacity
-                                      key={optionValue}
-                                      style={[
-                                        styles.option,
-                                        isSelected &&
-                                          styles.selectedOption,
-                                      ]}
-                                      onPress={() =>
-                                        handleSelectSizeField(
-                                          section.id,
-                                          field.id,
-                                          optionValue
-                                        )
-                                      }
-                                    >
-                                      <Text
-                                        style={[
-                                          styles.optionText,
-                                          isSelected &&
-                                            styles.selectedOptionText,
-                                        ]}
-                                      >
-                                        {optionValue}
-                                      </Text>
-                                    </TouchableOpacity>
-                                  );
-                                })}
-                              </View>
-                            </View>
-                          );
-                        })}
-                      </View>
-                    )}
 
-                    {/* price range */}
-
-                    {section.type === 'price-select' && section.priceFields && (
-                      <View style={styles.priceFieldsList}>
-                        <View style={styles.priceCategoryActions}>
-                          <TouchableOpacity
-                            style={styles.priceCategoryAction}
-                            onPress={() => handleToggleAnyPrice(section.id, section.priceFields!)}
-                          >
-                            <View
-                              style={[
-                                styles.priceCategoryCheckbox,
-                                isAnyPrice && styles.priceCategoryCheckboxChecked,
-                              ]}
-                            >
-                              {isAnyPrice && (
-                                <Text style={styles.priceCategoryCheckboxMark}>✓</Text>
-                              )}
-                            </View>
-
-                            <Text style={styles.priceCategoryActionText}>
-                              Any price
-                            </Text>
-                          </TouchableOpacity>
-
-                          <TouchableOpacity
-                            style={styles.priceCategoryAction}
-                            onPress={() => handleToggleSkipAllPrices(section.id, section.priceFields!)}
-                          >
-                            <View
-                              style={[
-                                styles.priceCategoryCheckbox,
-                                isSkipAll && styles.priceCategoryCheckboxChecked,
-                              ]}
-                            >
-                              {isSkipAll && (
-                                <Text style={styles.priceCategoryCheckboxMark}>✓</Text>
-                              )}
-                            </View>
-
-                            <Text style={styles.priceCategoryActionText}>
-                              Skip all
-                            </Text>
-                          </TouchableOpacity>
-                        </View>
-
-                        {section.priceFields.map((field) => {
-                          const fieldKey = `${section.id}:${field.id}`;
-                          const isSkipped = Boolean(answers[`${fieldKey}:skip`]);
-                          const storedMin = answers[`${fieldKey}:min`];
-                          const storedMax = answers[`${fieldKey}:max`];
-                          const minVal = typeof storedMin === 'number' ? storedMin : field.min;
-                          const maxVal = typeof storedMax === 'number' ? storedMax : field.max;
-                          const sliderUsableWidth = priceSliderWidth - 4;
-
-                          return (
-                            <View key={field.id} style={styles.priceCard}>
-                              <View style={styles.priceCardHeader}>
-                                <Text style={styles.priceCardTitle}>{field.label}</Text>
-
-                                <TouchableOpacity
-                                  style={styles.priceCardSkipRow}
-                                  onPress={() => handleTogglePriceSkip(section.id, field.id)}
-                                >
-                                  <View style={[styles.checkbox, isSkipped && styles.checkboxChecked]}>
-                                    {isSkipped && <Text style={styles.checkboxMark}>✓</Text>}
-                                  </View>
-                                  <Text style={styles.skipCheckboxLabel}>Skip</Text>
-                                </TouchableOpacity>
-                              </View>
-
-                              <View style={isSkipped && styles.sliderDisabled}>
-                                <View
-                                  style={styles.priceSliderContainer}
-                                  onLayout={(e) =>
-                                    setPriceSliderWidth(Math.max(e.nativeEvent.layout.width - 40, 120))
-                                  }
-                                >
-                                  <Text style={[styles.priceValue, {left:((minVal - field.min) / (field.max - field.min)) * sliderUsableWidth}]}>
-                                    ${minVal}
-                                  </Text>
-
-                                  <Text style={[styles.priceValue, {left:((maxVal - field.min) / (field.max - field.min)) * sliderUsableWidth}]}>
-                                    ${maxVal}
-                                  </Text>
-
-                                  <RangeSlider
-                                    key={`${fieldKey}-${priceSliderWidth}`}
-                                    min={field.min}
-                                    max={field.max}
-                                    step={field.step ?? 1}
-                                    initialMinValue={minVal}
-                                    initialMaxValue={maxVal}
-                                    width={priceSliderWidth}
-                                    enabled={!isSkipped}
-                                    selectedTrackColor={StyleUTokens.colors.text}
-                                    onValuesChange={([low, high]) =>
-                                      handleChangePriceRange(section.id, field.id, low, high)
-                                    }
-                                    thumbSize={18}
-                                    showThumbLines={false}
-                                  />
-                                </View>
-                              
-                              </View>
-                            </View>
-                          );
-                        })}
-                      </View>
-                    )}
-
-                    {/* options */}
-
-                    {section.options && (
-                      <View style={styles.optionsGrid}>
-                        {section.options.map((option) => {
-                          const isSelected = Array.isArray(currentAnswer)
-                            ? currentAnswer.includes(option.id)
-                            : currentAnswer === option.id;
-
-                          const isColour = section.id === 'colour';
-                          const isBodyType = section.id === 'body-type';
-                          const isAesthetic = section.id === 'aesthetic';
-
-                          // aesthetic cards
-
-                          if (isAesthetic) {
-                            return (
-                              <TouchableOpacity
-                                key={option.id}
-                                style={[
-                                  styles.aestheticCard,
-                                  isSelected &&
-                                    styles.aestheticCardSelected,
-                                ]}
-                                onPress={() =>
-                                  handleSingleSelect(section.id, option.id)
-                                }
-                              >
-                                {option.image && (
-                                  <Image
-                                    source={
-                                      typeof option.image === 'number'
-                                        ? option.image
-                                        : { uri: option.image }
-                                    }
-                                    style={styles.aestheticImage}
-                                    resizeMode="cover"
-                                  />
-                                )}
-
-                                <View style={styles.aestheticBadge}>
-                                  <Text style={styles.aestheticBadgeText}>
-                                    {option.label}
-                                  </Text>
-                                </View>
-                              </TouchableOpacity>
-                            );
-                          }
-
-                          // body type cards
-
-                          if (isBodyType) {
-                            return (
-                              <TouchableOpacity
-                                key={option.id}
-                                style={[
-                                  styles.bodyTypeCard,
-                                  isSelected &&
-                                    styles.bodyTypeCardSelected,
-                                ]}
-                                onPress={() =>
-                                  handleSingleSelect(section.id, option.id)
-                                }
-                              >
-
-                                <Text style={styles.bodyTypeTitle}>
-                                  {option.label}
+                              <View style={styles.sizeFieldValueRow}>
+                                <Text style={styles.sizeFieldValue}>
+                                  {typeof fieldValue === 'string' ? fieldValue : 'Select'}
                                 </Text>
 
-                                {option.description && (
-                                  <Text style={styles.bodyTypeDescription}>
-                                    {option.description}
-                                  </Text>
-                                )}
-                              </TouchableOpacity>
-                            );
-                          }
+                                <Text style={[styles.sizeFieldChevron, isOpen && styles.sizeFieldChevronOpen]}>
+                                  ▾
+                                </Text>
+                              </View>
+                            </TouchableOpacity>
+                          );
+                        })}
+                      </View>
 
+                      {section.fields.map((field) => {
+                        const fieldKey = `${section.id}:${field.id}`;
+                        if (openSizeField !== fieldKey) return null;
+                        const fieldValue = answers[fieldKey];
+
+                        return (
+                          <View key={field.id} style={styles.sizeDropdownPanel}>
+                            <Text style={styles.sizeDropdownLabel}>
+                              Select {field.label}
+                            </Text>
+
+                            <View style={styles.optionsGrid}>
+                              {field.options.map((optionValue) => {
+                                const isSelected = fieldValue === optionValue;
+
+                                return (
+                                  <TouchableOpacity
+                                    key={optionValue}
+                                    style={[
+                                      styles.option,
+                                      isSelected &&
+                                        styles.selectedOption,
+                                    ]}
+                                    onPress={() =>
+                                      handleSelectSizeField(section.id, field.id, optionValue)
+                                    }
+                                  >
+                                    <Text style={[styles.optionText, isSelected && styles.selectedOptionText]}>
+                                      {optionValue}
+                                    </Text>
+                                  </TouchableOpacity>
+                                );
+                              })}
+                            </View>
+                          </View>
+                        );
+                      })}
+                    </View>
+                  )}
+
+                  {/* price range */}
+
+                  {section.type === 'price-select' && section.priceFields && (
+                    <View style={styles.priceFieldsList}>
+                      <View style={styles.priceCategoryActions}>
+                        <TouchableOpacity
+                          style={styles.priceCategoryAction}
+                          onPress={() => handleToggleAnyPrice(section.id, section.priceFields!)}
+                        >
+                          <View style={[styles.checkbox, isAnyPrice && styles.checkboxChecked]}>
+                            {isAnyPrice && (
+                              <Text style={styles.checkboxMark}>✓</Text>
+                            )}
+                          </View>
+
+                          <Text style={styles.priceCategoryActionText}>
+                            Any price
+                          </Text>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity
+                          style={styles.priceCategoryAction}
+                          onPress={() => handleToggleSkipAllPrices(section.id, section.priceFields!)}
+                        >
+                          <View style={[styles.checkbox, isSkipAll && styles.checkboxChecked]}>
+                            {isSkipAll && (
+                              <Text style={styles.checkboxMark}>✓</Text>
+                            )}
+                          </View>
+
+                          <Text style={styles.priceCategoryActionText}>
+                            Skip all
+                          </Text>
+                        </TouchableOpacity>
+                      </View>
+
+                      {section.priceFields.map((field) => {
+                        const fieldKey = `${section.id}:${field.id}`;
+                        const isSkipped = Boolean(answers[`${fieldKey}:skip`]);
+                        const storedMin = answers[`${fieldKey}:min`];
+                        const storedMax = answers[`${fieldKey}:max`];
+                        const liveValue = livePriceValues[fieldKey];
+
+                        const minVal = liveValue
+                          ? liveValue[0]
+                          : typeof storedMin === 'number' ? storedMin : field.min;
+                        const maxVal = liveValue
+                          ? liveValue[1]
+                          : typeof storedMax === 'number' ? storedMax : field.max;
+
+                        const travel = Math.max(priceSliderWidth - priceThumbSize, 0);
+                        const labelLeft = (value: number) =>
+                          priceThumbSize / 2 + ((value - field.min) / (field.max - field.min)) * travel - priceLabelWidth / 2;
+
+                        return (
+                          <View key={field.id} style={styles.priceCard}>
+                            <View style={styles.priceCardHeader}>
+                              <Text style={styles.priceCardTitle}>{field.label}</Text>
+
+                              <TouchableOpacity
+                                style={styles.priceCardSkipRow}
+                                onPress={() => handleTogglePriceSkip(section.id, field.id)}
+                              >
+                                <View style={[styles.checkbox, isSkipped && styles.checkboxChecked]}>
+                                  {isSkipped && <Text style={styles.checkboxMark}>✓</Text>}
+                                </View>
+                                <Text style={styles.skipCheckboxLabel}>Skip</Text>
+                              </TouchableOpacity>
+                            </View>
+
+                            <View style={isSkipped && styles.sliderDisabled}>
+                              <View
+                                style={styles.priceSliderContainer}
+                                onLayout={(e) =>
+                                  setPriceSliderWidth(Math.max(e.nativeEvent.layout.width - priceSliderLayoutPadding, minPriceSliderWidth))
+                                }
+                              >
+                                <Text style={[styles.priceValue, {left: labelLeft(minVal)}]}>
+                                  ${minVal}
+                                </Text>
+
+                                <Text style={[styles.priceValue, {left:labelLeft(maxVal)}]}>
+                                  ${maxVal}
+                                </Text>
+
+                                <RangeSlider
+                                  key={`${fieldKey}-${priceSliderWidth}`}
+                                  min={field.min}
+                                  max={field.max}
+                                  step={field.step ?? 1}
+                                  initialMinValue={minVal}
+                                  initialMaxValue={maxVal}
+                                  width={priceSliderWidth}
+                                  enabled={!isSkipped}
+                                  selectedTrackColor={StyleUTokens.colors.text}
+                                  onValuesChange={([low, high]) =>
+                                    setLivePriceValues((prev) => ({ ...prev, [fieldKey]: [low, high] }))
+                                  }
+                                  onValuesChangeFinish={([low, high]) => {
+                                    handleChangePriceRange(section.id, field.id, low, high);
+                                    setLivePriceValues((prev) => {
+                                      const next = { ...prev };
+                                      delete next[fieldKey];
+                                      return next;
+                                    });
+                                  }}
+                                  thumbSize={priceThumbSize}
+                                  showThumbLines={false}
+                                />
+                              </View>
+                            </View>
+                          </View>
+                        );
+                      })}
+                    </View>
+                  )}
+
+                  {/* qs with 'options' data */}
+
+                  {section.options && (
+                    <View style={styles.optionsGrid}>
+                      {section.options.map((option) => {
+                        const isSelected = Array.isArray(currentAnswer)
+                          ? currentAnswer.includes(option.id)
+                          : currentAnswer === option.id;
+                        const isColour = section.id === 'colour';
+                        const isBodyType = section.id === 'body-type';
+                        const isAesthetic = section.id === 'aesthetic';
+
+                        // aesthetic cards
+                        if (isAesthetic) {
                           return (
                             <TouchableOpacity
                               key={option.id}
                               style={[
-                                isColour ? styles.colourItem : styles.option,
-                                !isColour && isSelected && styles.selectedOption,
-                                section.type === 'multi-select' && !isColour && styles.multiSelectOption,
+                                styles.aestheticCard,
+                                isSelected &&
+                                  styles.aestheticCardSelected,
                               ]}
-                              onPress={() => {
-                                if (
-                                  section.type === 'multi-select'
-                                ) {
-                                  handleMultiSelect(
-                                    section.id,
-                                    option.id
-                                  );
-                                } else {
-                                  handleSingleSelect(
-                                    section.id,
-                                    option.id
-                                  );
-                                }
-                              }}
+                              onPress={() =>
+                                handleSingleSelect(section.id, option.id)
+                              }
                             >
-                              
-                              {isColour && (
-                                <View
-                                  style={[
-                                    styles.colourCircle,
-                                    { backgroundColor: option.colour },
-                                    isSelected &&
-                                      styles.colourCircleSelected,
-                                  ]}
+                              {option.image && (
+                                <Image
+                                  source={typeof option.image === 'number' ? option.image : { uri: option.image }}
+                                  style={styles.aestheticImage}
+                                  resizeMode="cover"
                                 />
                               )}
 
-                              <Text
-                                style={[
-                                  isColour
-                                    ? styles.colourLabel
-                                    : styles.optionText,
-                                  !isColour &&
-                                    isSelected &&
-                                    styles.selectedOptionText,
-                                ]}
-                              >
+                              <View style={styles.aestheticBadge}>
+                                <Text style={styles.aestheticBadgeText}>
+                                  {option.label}
+                                </Text>
+                              </View>
+                            </TouchableOpacity>
+                          );
+                        }
+
+                        // body type cards
+                        if (isBodyType) {
+                          return (
+                            <TouchableOpacity
+                              key={option.id}
+                              style={[
+                                styles.bodyTypeCard,
+                                isSelected &&
+                                  styles.bodyTypeCardSelected,
+                              ]}
+                              onPress={() =>
+                                handleSingleSelect(section.id, option.id)
+                              }
+                            >
+
+                              <Text style={styles.bodyTypeTitle}>
                                 {option.label}
                               </Text>
 
-                              { section.type === 'multi-select' && !isColour && isSelected && (
-                                <Text style={styles.removeIcon}>✕</Text>
-                              )}
-
                               {option.description && (
-                                <Text
-                                  style={[
-                                    styles.optionDescription,
-                                    isSelected &&
-                                      styles.selectedOptionDescription,
-                                  ]}
-                                >
+                                <Text style={styles.bodyTypeDescription}>
                                   {option.description}
                                 </Text>
                               )}
                             </TouchableOpacity>
                           );
-                        })}
-                      </View>
-                    )}
-                  </View>
-                );
-              })}
-            </View>
-          )}
+                        }
 
-          {/* final step */}
+                        return (
+                          <TouchableOpacity
+                            key={option.id}
+                            style={[
+                              isColour ? styles.colourItem : styles.option,
+                              !isColour && isSelected && styles.selectedOption,
+                              section.type === 'multi-select' && !isColour && styles.multiSelectOption,
+                            ]}
+                            onPress={() => {
+                              if(section.type === 'multi-select'){
+                                handleMultiSelect(section.id, option.id);
+                              } else {
+                                handleSingleSelect(section.id, option.id);
+                              }
+                            }}
+                          >
+                            
+                            {isColour && (
+                              <View
+                                style={[
+                                  styles.colourCircle,
+                                  { backgroundColor: option.colour },
+                                  isSelected && styles.colourCircleSelected,
+                                ]}
+                              />
+                            )}
 
-          {step.type === 'wardrobe' && (
-            <View style={styles.wardrobeContent}>
-              <TouchableOpacity style={styles.wardrobeCard}>
-                <View style={styles.wardrobeIconBox}>
-                  <Text style={styles.wardrobeIcon}>⌕</Text>
+                            <Text
+                              style={[
+                                isColour ? styles.colourLabel : styles.optionText,
+                                !isColour && isSelected && styles.selectedOptionText,
+                              ]}
+                            >
+                              {option.label}
+                            </Text>
+
+                            {section.type === 'multi-select' && !isColour && isSelected && (
+                              <Text style={styles.removeIcon}>
+                                ✕
+                              </Text>
+                            )}
+
+                            {option.description && (
+                              <Text
+                                style={[
+                                  styles.optionDescription,
+                                  isSelected && styles.selectedOptionDescription,
+                                ]}
+                              >
+                                {option.description}
+                              </Text>
+                            )}
+                          </TouchableOpacity>
+                        );
+                      })}
+                    </View>
+                  )}
                 </View>
-  
-                <View style={styles.wardrobeTextContainer}>
-                  <Text style={styles.wardrobeTitle}>
-                    Search for an item
-                  </Text>
-  
-                  <Text style={styles.wardrobeSubtitle}>
-                    Find exact brands or styles online
-                  </Text>
-                </View>
-              </TouchableOpacity>
-  
-              <TouchableOpacity style={styles.wardrobeCard}>
-                <View style={styles.wardrobeIconBox}>
-                  <Text style={styles.wardrobeIcon}>▣</Text>
-                </View>
-  
-                <View style={styles.wardrobeTextContainer}>
-                  <Text style={styles.wardrobeTitle}>
-                    Upload or take a photo
-                  </Text>
-  
-                  <Text style={styles.wardrobeSubtitle}>
-                    Begin building your digital wardrobe with your own items!
-                  </Text>
-                </View>
-              </TouchableOpacity>
-            </View>
-          )}
-        </ScrollView>
-  
-        {/* footer */}
-        
-        <View style={styles.footer}>
-          {showErrors && missingRequiredSections.length > 0 && (
-            <Text style={styles.footerErrorText}>
-                Please answer all the required questions above.
-            </Text>
-          )}
-  
-          <TouchableOpacity
-            style={styles.continueButton}
-            onPress={handleContinue}
-          >
-            <Text style={styles.continueText}>
-              {currentStep < onboardingSteps.length - 2 && 'Next Step'}
-              {currentStep === onboardingSteps.length - 2 && 'Save & Next'}
-              {currentStep === onboardingSteps.length - 1 && 'Finish Onboarding'}
+              );
+            })}
+          </View>
+        )}
+
+        {/* final step */}
+
+        {step.type === 'wardrobe' && (
+          <View style={styles.wardrobeContent}>
+            <TouchableOpacity style={styles.wardrobeCard}>
+              <View style={styles.wardrobeIconBox}>
+                <Text style={styles.wardrobeIcon}>⌕</Text>
+              </View>
+
+              <View style={styles.wardrobeTextContainer}>
+                <Text style={styles.wardrobeTitle}>
+                  Search for an item
+                </Text>
+
+                <Text style={styles.wardrobeSubtitle}>
+                  Find exact brands or styles online
+                </Text>
+              </View>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.wardrobeCard}>
+              <View style={styles.wardrobeIconBox}>
+                <Text style={styles.wardrobeIcon}>▣</Text>
+              </View>
+
+              <View style={styles.wardrobeTextContainer}>
+                <Text style={styles.wardrobeTitle}>
+                  Upload or take a photo
+                </Text>
+
+                <Text style={styles.wardrobeSubtitle}>
+                  Begin building your digital wardrobe with your own items!
+                </Text>
+              </View>
+            </TouchableOpacity>
+          </View>
+        )}
+      </ScrollView>
+
+      {/* footer */}
+      
+      <View style={styles.footer}>
+        {showErrors && missingRequiredSections.length > 0 && (
+          <Text style={styles.footerErrorText}>
+              Please answer all the required questions above.
+          </Text>
+        )}
+
+        <TouchableOpacity
+          style={styles.continueButton}
+          onPress={handleContinue}
+        >
+          <Text style={styles.continueText}>
+            {currentStep < onboardingSteps.length - 2 && 'Next Step'}
+            {currentStep === onboardingSteps.length - 2 && 'Save & Next'}
+            {currentStep === onboardingSteps.length - 1 && 'Finish Onboarding'}
+          </Text>
+        </TouchableOpacity>
+
+        {currentStep === onboardingSteps.length - 1 && (
+          <TouchableOpacity onPress={handleContinue}>
+            <Text style={styles.skipForNow}>
+              Skip for now
             </Text>
           </TouchableOpacity>
-  
-          {currentStep === onboardingSteps.length - 1 && (
-            <TouchableOpacity onPress={handleContinue}>
-              <Text style={styles.skipForNow}>
-                Skip for now
-              </Text>
-            </TouchableOpacity>
-          )}
-        </View>
+        )}
+      </View>
 
-        </SafeAreaView>
-      </SafeAreaProvider>
+      </SafeAreaView>
+    </SafeAreaProvider>
   );
 }

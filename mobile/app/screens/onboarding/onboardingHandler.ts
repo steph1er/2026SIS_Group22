@@ -92,7 +92,7 @@ export function useOnboardingHandler() {
     setAnswers((prev) => {
       const skipKey = `${key}:skip`;
       const isSkipped = !prev[skipKey];
-      const next = { ...prev, [skipKey]: isSkipped };
+      const next = { ...prev, [skipKey]: isSkipped, [`${sectionId}:anyPrice`]: false };
 
       if (isSkipped) {
         delete next[`${key}:min`];
@@ -109,14 +109,18 @@ export function useOnboardingHandler() {
       const isCurrentlyAnyPrice = Boolean(prev[key]);
       const updated = {...prev, [key]: !isCurrentlyAnyPrice};
 
-      if (!isCurrentlyAnyPrice) {
-        priceFields.forEach((field) => {
-          const fieldKey = `${sectionId}:${field.id}`;
+      priceFields.forEach((field) => {
+        const fieldKey = `${sectionId}:${field.id}`;
+        if (!isCurrentlyAnyPrice) {
           updated[`${fieldKey}:skip`] = false;
           updated[`${fieldKey}:min`] = field.min;
           updated[`${fieldKey}:max`] = field.max;
-        });
-      }
+        } else {
+          delete updated[`${fieldKey}:skip`];
+          delete updated[`${fieldKey}:min`];
+          delete updated[`${fieldKey}:max`];
+        }
+      });
 
       return updated;
     });
@@ -129,10 +133,16 @@ export function useOnboardingHandler() {
         return Boolean(prev[`${key}:skip`]);
       });
 
-      const updated = { ...prev };
+      const updated = { ...prev , [`${sectionId}:anyPrice`]: false };
       priceFields.forEach((field) => {
         const key = `${sectionId}:${field.id}`;
-        updated[`${key}:skip`] = !isCurrentlySkipAll;
+        const willSkip = !isCurrentlySkipAll;
+        updated[`${key}:skip`] = willSkip;
+
+        if (willSkip) {
+          delete updated[`${key}:min`];
+          delete updated[`${key}:max`];
+        }
       });
 
       return updated;

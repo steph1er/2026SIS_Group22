@@ -17,8 +17,8 @@ export const inputStyles = StyleSheet.create({
   },
 
   checkbox: {
-    width: 20,
-    height: 20,
+    width: 15,
+    height: 15,
     borderRadius: 5,
     borderWidth: 1.5,
     borderColor: colors.mutedText,
@@ -34,9 +34,9 @@ export const inputStyles = StyleSheet.create({
 
   checkboxMark: {
     color: colors.buttonText,
-    fontSize: 13,
+    fontSize: 8,
     fontWeight: '700',
-    lineHeight: 13,
+    lineHeight: 8,
   },
 
   skipCheckboxLabel: {
@@ -127,38 +127,15 @@ export const inputStyles = StyleSheet.create({
 
   priceCategoryActions: {
     flexDirection: 'row',
-    justifyContent: 'flex-end',
     alignItems: 'center',
     gap: 16,
     marginBottom: 10,
+    marginTop: 6
   },
 
   priceCategoryAction: {
     flexDirection: 'row',
     alignItems: 'center',
-  },
-
-  priceCategoryCheckbox: {
-    width: 18,
-    height: 18,
-    borderRadius: 5,
-    borderWidth: 1.5,
-    borderColor: colors.mutedText,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 6,
-  },
-
-  priceCategoryCheckboxChecked: {
-    backgroundColor: colors.accent,
-    borderColor: colors.accent,
-  },
-
-  priceCategoryCheckboxMark: {
-    color: colors.buttonText,
-    fontSize: 12,
-    fontWeight: '700',
-    lineHeight: 12,
   },
 
   priceCategoryActionText: {
@@ -188,10 +165,12 @@ export const inputStyles = StyleSheet.create({
 
   priceValue: {
     position: 'absolute',
+    top: 10,
+    width: 40,
     fontSize: 12,
     fontWeight: '600',
     color: colors.mutedText,
-    marginBottom: 4,
+    textAlign: 'right',
   },
   
   priceCardSkipRow: {
@@ -201,6 +180,7 @@ export const inputStyles = StyleSheet.create({
   
   priceSliderContainer: {
     alignItems: 'center',
+    paddingTop: 20,
     paddingVertical: 4,
     paddingHorizontal: 10,
   }
