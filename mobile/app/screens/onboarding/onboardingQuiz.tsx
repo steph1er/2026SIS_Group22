@@ -331,7 +331,7 @@ export default function OnboardingQuiz() {
                                 <View
                                   style={styles.priceSliderContainer}
                                   onLayout={(e) =>
-                                    setPriceSliderWidth(Math.max(e.nativeEvent.layout.width - 4, 120))
+                                    setPriceSliderWidth(Math.max(e.nativeEvent.layout.width - 40, 120))
                                   }
                                 >
                                   <RangeSlider
@@ -347,8 +347,14 @@ export default function OnboardingQuiz() {
                                     onValuesChangeFinish={([low, high]) =>
                                       handleChangePriceRange(section.id, field.id, low, high)
                                     }
+                                    thumbSize={18}
+                                    showThumbLines={false}
                                   />
                                 </View>
+                              
+                                <Text style={styles.priceValue}>
+                                  ${minVal} – ${maxVal}
+                                </Text>
                               </View>
                             </View>
                           );

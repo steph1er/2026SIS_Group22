@@ -143,6 +143,14 @@ export const inputStyles = StyleSheet.create({
     fontWeight: '600',
     color: colors.text,
   },
+
+  priceValue: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: colors.mutedText,
+    marginBottom: 4,
+    textAlign: 'right',
+  },
   
   priceCardSkipRow: {
     flexDirection: 'row',
@@ -152,5 +160,6 @@ export const inputStyles = StyleSheet.create({
   priceSliderContainer: {
     alignItems: 'center',
     paddingVertical: 4,
+    paddingHorizontal: 10,
   }
 });
