@@ -84,7 +84,7 @@ export function useOnboardingHandler() {
 
   const handleChangePriceRange = ( sectionId: string, fieldId: string, min: number, max: number ) => {
     const key = `${sectionId}:${fieldId}`;
-    setAnswers((prev) => ({ ...prev, [`${key}:min`]: min, [`${key}:max`]: max }));
+    setAnswers((prev) => ({ ...prev, [`${key}:min`]: min, [`${key}:max`]: max, [`${sectionId}:anyPrice`]: false }));
   };
 
   const handleTogglePriceSkip = (sectionId: string, fieldId: string) => {
@@ -100,6 +100,42 @@ export function useOnboardingHandler() {
       }
 
       return next;
+    });
+  };
+
+  const handleToggleAnyPrice = (sectionId: string, priceFields: { id: string; min: number; max: number }[]) => {
+    setAnswers((prev) => {
+      const key = `${sectionId}:anyPrice`;
+      const isCurrentlyAnyPrice = Boolean(prev[key]);
+      const updated = {...prev, [key]: !isCurrentlyAnyPrice};
+
+      if (!isCurrentlyAnyPrice) {
+        priceFields.forEach((field) => {
+          const fieldKey = `${sectionId}:${field.id}`;
+          updated[`${fieldKey}:skip`] = false;
+          updated[`${fieldKey}:min`] = field.min;
+          updated[`${fieldKey}:max`] = field.max;
+        });
+      }
+
+      return updated;
+    });
+  };
+
+  const handleToggleSkipAllPrices = (sectionId: string, priceFields: { id: string; min: number; max: number }[]) => {
+    setAnswers((prev) => {
+      const isCurrentlySkipAll = priceFields.every((field) => {
+        const key = `${sectionId}:${field.id}`;
+        return Boolean(prev[`${key}:skip`]);
+      });
+
+      const updated = { ...prev };
+      priceFields.forEach((field) => {
+        const key = `${sectionId}:${field.id}`;
+        updated[`${key}:skip`] = !isCurrentlySkipAll;
+      });
+
+      return updated;
     });
   };
 
@@ -176,6 +212,8 @@ export function useOnboardingHandler() {
     handleToggleSkipSlider,
     handleChangePriceRange,
     handleTogglePriceSkip,
+    handleToggleAnyPrice,
+    handleToggleSkipAllPrices,
     isSectionAnswered,
     handleContinue,
     handleBack,

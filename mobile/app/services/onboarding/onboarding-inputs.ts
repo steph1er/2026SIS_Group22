@@ -124,9 +124,51 @@ export const inputStyles = StyleSheet.create({
   priceFieldsList: {
     gap: 12,
   },
+
+  priceCategoryActions: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+    gap: 16,
+    marginBottom: 10,
+  },
+
+  priceCategoryAction: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+
+  priceCategoryCheckbox: {
+    width: 18,
+    height: 18,
+    borderRadius: 5,
+    borderWidth: 1.5,
+    borderColor: colors.mutedText,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 6,
+  },
+
+  priceCategoryCheckboxChecked: {
+    backgroundColor: colors.accent,
+    borderColor: colors.accent,
+  },
+
+  priceCategoryCheckboxMark: {
+    color: colors.buttonText,
+    fontSize: 12,
+    fontWeight: '700',
+    lineHeight: 12,
+  },
+
+  priceCategoryActionText: {
+    fontSize: 13,
+    color: colors.mutedText,
+  },
   
   priceCard: {
     padding: 12,
+    paddingTop: 16,
     backgroundColor: colors.backgroundElement,
     borderRadius: 8,
   },
@@ -145,11 +187,11 @@ export const inputStyles = StyleSheet.create({
   },
 
   priceValue: {
+    position: 'absolute',
     fontSize: 12,
     fontWeight: '600',
     color: colors.mutedText,
     marginBottom: 4,
-    textAlign: 'right',
   },
   
   priceCardSkipRow: {

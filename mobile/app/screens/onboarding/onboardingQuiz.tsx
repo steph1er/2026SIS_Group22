@@ -35,6 +35,8 @@ export default function OnboardingQuiz() {
     handleToggleSkipSlider,
     handleChangePriceRange,
     handleTogglePriceSkip,
+    handleToggleAnyPrice,
+    handleToggleSkipAllPrices,
     isSectionAnswered,
     handleContinue,
     handleBack,
@@ -94,6 +96,17 @@ export default function OnboardingQuiz() {
                   showErrors &&
                   !section.optional &&
                   !isSectionAnswered(section, answers);
+                
+                const isAnyPrice =
+                  section.type === 'price-select' &&
+                  Boolean(answers[`${section.id}:anyPrice`]);
+
+                const isSkipAll =
+                  section.type === 'price-select' &&
+                  section.priceFields?.every((field) => {
+                    const fieldKey = `${section.id}:${field.id}`;
+                    return Boolean(answers[`${fieldKey}:skip`]);
+                  });
   
                 return (
                   <View key={section.id} style={styles.section}>
@@ -303,6 +316,48 @@ export default function OnboardingQuiz() {
 
                     {section.type === 'price-select' && section.priceFields && (
                       <View style={styles.priceFieldsList}>
+                        <View style={styles.priceCategoryActions}>
+                          <TouchableOpacity
+                            style={styles.priceCategoryAction}
+                            onPress={() => handleToggleAnyPrice(section.id, section.priceFields!)}
+                          >
+                            <View
+                              style={[
+                                styles.priceCategoryCheckbox,
+                                isAnyPrice && styles.priceCategoryCheckboxChecked,
+                              ]}
+                            >
+                              {isAnyPrice && (
+                                <Text style={styles.priceCategoryCheckboxMark}>✓</Text>
+                              )}
+                            </View>
+
+                            <Text style={styles.priceCategoryActionText}>
+                              Any price
+                            </Text>
+                          </TouchableOpacity>
+
+                          <TouchableOpacity
+                            style={styles.priceCategoryAction}
+                            onPress={() => handleToggleSkipAllPrices(section.id, section.priceFields!)}
+                          >
+                            <View
+                              style={[
+                                styles.priceCategoryCheckbox,
+                                isSkipAll && styles.priceCategoryCheckboxChecked,
+                              ]}
+                            >
+                              {isSkipAll && (
+                                <Text style={styles.priceCategoryCheckboxMark}>✓</Text>
+                              )}
+                            </View>
+
+                            <Text style={styles.priceCategoryActionText}>
+                              Skip all
+                            </Text>
+                          </TouchableOpacity>
+                        </View>
+
                         {section.priceFields.map((field) => {
                           const fieldKey = `${section.id}:${field.id}`;
                           const isSkipped = Boolean(answers[`${fieldKey}:skip`]);
@@ -310,6 +365,7 @@ export default function OnboardingQuiz() {
                           const storedMax = answers[`${fieldKey}:max`];
                           const minVal = typeof storedMin === 'number' ? storedMin : field.min;
                           const maxVal = typeof storedMax === 'number' ? storedMax : field.max;
+                          const sliderUsableWidth = priceSliderWidth - 4;
 
                           return (
                             <View key={field.id} style={styles.priceCard}>
@@ -334,6 +390,14 @@ export default function OnboardingQuiz() {
                                     setPriceSliderWidth(Math.max(e.nativeEvent.layout.width - 40, 120))
                                   }
                                 >
+                                  <Text style={[styles.priceValue, {left:((minVal - field.min) / (field.max - field.min)) * sliderUsableWidth}]}>
+                                    ${minVal}
+                                  </Text>
+
+                                  <Text style={[styles.priceValue, {left:((maxVal - field.min) / (field.max - field.min)) * sliderUsableWidth}]}>
+                                    ${maxVal}
+                                  </Text>
+
                                   <RangeSlider
                                     key={`${fieldKey}-${priceSliderWidth}`}
                                     min={field.min}
@@ -344,7 +408,7 @@ export default function OnboardingQuiz() {
                                     width={priceSliderWidth}
                                     enabled={!isSkipped}
                                     selectedTrackColor={StyleUTokens.colors.text}
-                                    onValuesChangeFinish={([low, high]) =>
+                                    onValuesChange={([low, high]) =>
                                       handleChangePriceRange(section.id, field.id, low, high)
                                     }
                                     thumbSize={18}
@@ -352,9 +416,6 @@ export default function OnboardingQuiz() {
                                   />
                                 </View>
                               
-                                <Text style={styles.priceValue}>
-                                  ${minVal} – ${maxVal}
-                                </Text>
                               </View>
                             </View>
                           );
