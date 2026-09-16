@@ -1,6 +1,7 @@
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { Tabs } from 'expo-router';
 
 import { AuthProvider } from '../src/auth/auth-provider';
 import './global.css';

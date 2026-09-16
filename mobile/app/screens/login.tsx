@@ -39,7 +39,7 @@ export default function LoginScreen() {
       return;
     }
 
-    // temporary routing while backend onboarding status integration is not yet implemented
+    // Temporary routing while backend onboarding status integration is not yet implemented
     setBusy(false);  
     router.replace('./onboarding');
   }

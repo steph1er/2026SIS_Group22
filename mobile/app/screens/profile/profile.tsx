@@ -1,111 +1,118 @@
-// import { ThemedView } from '../components/themed-view';
-// import { ThemedText } from '../components/themed-text';
-// import { PrimaryButton } from '../components/primary-button';
-// import { BottomNavBar } from '../components/bottom-nav-bar';
-// import { Link } from 'expo-router';
-
-// export default function ProfileScreen() {
-//   return (
-//     <ThemedView style={{ flex: 1 }}>
-//       <ThemedView style={{ flex: 1, justifyContent: 'center', alignItems: 'center', gap: 16, padding: 24 }}>
-//         <ThemedText type="title">My Profile</ThemedText>
-//         <ThemedText>Amanda Smith</ThemedText>
-
-//           <PrimaryButton label="AI Colour Analysis" />
-//           <PrimaryButton label="My Wardrobe" />
-//       </ThemedView>
-//       <BottomNavBar />
-//     </ThemedView>
-//   );
-// } 
-
-
-import { ScrollView, View, Image, TouchableOpacity, StyleSheet } from 'react-native';
+import { ScrollView, View, Image, TouchableOpacity, Switch, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { ThemedView } from '../../components/themed-view';
 import { ThemedText } from '../../components/themed-text';
 import { PrimaryButton } from '../../components/primary-button';
 import { BottomNavBar } from '../../components/bottom-nav-bar';
 import { Link } from 'expo-router';
 
+// Shape of a completed style quiz summary, once onboarding answers are
+// persisted to the backend. Swap this stub for the real fetched value
+// (e.g. from Supabase) when that's wired up — the card below already
+// renders either state.
+type QuizResultsSummary = {
+  completedAt: string;
+  vibe: string;
+} | null;
+
+const quizResults: QuizResultsSummary = null;
+
 export default function ProfileScreen() {
   return (
     <ThemedView style={{ flex: 1 }}>
-      <ScrollView contentContainerStyle={styles.content}>
-        {/* Header */}
-        <View style={styles.header}>
-          <ThemedText type="title">My Profile</ThemedText>
-          <Link href="./settings" asChild>
-            <TouchableOpacity>
-              <Ionicons name="settings-outline" size={22} />
-            </TouchableOpacity>
-          </Link>
-        </View>
-
-        {/* User row */}
-        <View style={styles.userRow}>
-          <Image
-            source={{ uri: 'https://placehold.co/56x56' }}
-            style={styles.avatar}
-          />
-          <View>
-            <ThemedText type="subtitle">Amanda Smith</ThemedText>
-            <ThemedText style={styles.muted}>@amanda_designs</ThemedText>
+      <SafeAreaView style={{ flex: 1 }} edges={['top']}>
+        <ScrollView contentContainerStyle={styles.content}>
+          <View style={styles.header}>
+            <ThemedText type="title">My Profile</ThemedText>
+            <Link href="./settings" asChild>
+              <TouchableOpacity hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                <Ionicons name="settings-outline" size={22} />
+              </TouchableOpacity>
+            </Link>
           </View>
-        </View>
 
-        {/* Tab switcher */}
-        <View style={styles.tabSwitcher}>
-          <View style={[styles.tab, styles.tabActive]}>
-            <ThemedText style={styles.tabTextActive}>My Preferences</ThemedText>
-          </View>
-          <Link href="./wishlist-saved" asChild>
-            <TouchableOpacity style={styles.tab}>
-              <ThemedText style={styles.tabText}>Saved</ThemedText>
-            </TouchableOpacity>
-          </Link>
-        </View>
-
-        {/* AI Colour Analysis card */}
-        <View style={styles.analysisCard}>
-          <View style={styles.analysisHeaderRow}>
-            <ThemedText style={styles.analysisLabel}>AI COLOUR ANALYSIS</ThemedText>
-            <View style={styles.badge}>
-              <ThemedText style={styles.badgeText}>Soft Autumn</ThemedText>
+          <View style={styles.userRow}>
+            <Image
+              source={{ uri: 'https://placehold.co/56x56' }}
+              style={styles.avatar}
+            />
+            <View>
+              <ThemedText type="subtitle">Amanda Smith</ThemedText>
+              <ThemedText style={styles.muted}>@amanda_designs</ThemedText>
             </View>
           </View>
-          <ThemedText type="subtitle">Your Personal Season Guide</ThemedText>
-          <ThemedText style={styles.muted}>
-            Get outfit curations that match your natural undertones. Review or
-            redo your analysis anytime.
+
+          <View style={styles.tabSwitcher}>
+            <View style={[styles.tab, styles.tabActive]}>
+              <ThemedText style={styles.tabTextActive}>My Preferences</ThemedText>
+            </View>
+            <Link href="./wishlist-saved" asChild>
+              <TouchableOpacity style={styles.tab}>
+                <ThemedText style={styles.tabText}>Saved</ThemedText>
+              </TouchableOpacity>
+            </Link>
+          </View>
+
+          <ThemedText type="subtitle" style={styles.sectionTitle}>
+            Wardrobe Details
           </ThemedText>
-          <Link href="./colour-analysis" asChild>
-            <PrimaryButton label="Redo Digital Scan"/>
+
+          {/* Links back to the onboarding quiz. Once quiz answers are saved
+              to the backend, replace `quizResults` above with the real
+              value and this card will switch to showing a summary instead
+              of the "not saved yet" prompt — no layout changes needed. */}
+          <Link href="../onboarding" asChild>
+            <TouchableOpacity style={styles.quizCard}>
+              <View style={styles.rowCardIcon}>
+                <Ionicons name="clipboard-outline" size={20} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <ThemedText type="subtitle">
+                  {quizResults ? 'Your Style Quiz Results' : 'Style Quiz Not Saved Yet'}
+                </ThemedText>
+                <ThemedText style={styles.muted}>
+                  {quizResults
+                    ? `Completed ${quizResults.completedAt} · ${quizResults.vibe}`
+                    : "Your onboarding answers aren't linked to your account yet. Tap to retake the quiz and update your preferences."}
+                </ThemedText>
+              </View>
+              <Ionicons name="chevron-forward" size={20} />
+            </TouchableOpacity>
           </Link>
-        </View>
 
-        {/* Outfit Builder Canvas row */}
-        <TouchableOpacity style={styles.rowCard}>
-          <View style={styles.rowCardIcon}>
-            <Ionicons name="sparkles-outline" size={20} />
-          </View>
-          <View style={{ flex: 1 }}>
-            <ThemedText type="subtitle">Outfit Builder Canvas</ThemedText>
+          <View style={styles.analysisCard}>
+            <View style={styles.analysisHeaderRow}>
+              <ThemedText style={styles.analysisLabel}>AI COLOUR ANALYSIS</ThemedText>
+              <View style={styles.badge}>
+                <ThemedText style={styles.badgeText}>Soft Autumn</ThemedText>
+              </View>
+            </View>
+            <ThemedText type="subtitle">Your Personal Season Guide</ThemedText>
             <ThemedText style={styles.muted}>
-              Experiment with visual layouts & styling
+              Get outfit curations that match your natural undertones. Review or
+              redo your analysis anytime.
             </ThemedText>
+            <Link href="./colour-analysis" asChild>
+              <PrimaryButton label="Redo Digital Scan" />
+            </Link>
           </View>
-          <Ionicons name="chevron-forward" size={20} />
-        </TouchableOpacity>
 
-        {/* Wardrobe details */}
-        <ThemedText type="subtitle" style={styles.sectionTitle}>
-          Wardrobe Details
-        </ThemedText>
-        <DetailRow label="Preferred Vibe" value="Minimalist, Casual" />
-        <DetailRow label="Sizing" value="Medium / Size 10" />
-        <DetailRow label="Jewelry Preference" value="Gold Finish" />
-      </ScrollView>
+          <TouchableOpacity style={styles.rowCard}>
+            <View style={styles.rowCardIcon}>
+              <Ionicons name="sparkles-outline" size={20} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <ThemedText type="subtitle">Outfit Builder Canvas</ThemedText>
+              <ThemedText style={styles.muted}>
+                Experiment with visual layouts & styling
+              </ThemedText>
+            </View>
+            <Ionicons name="chevron-forward" size={20} />
+          </TouchableOpacity>
+          
+        </ScrollView>
+      </SafeAreaView>
       <BottomNavBar />
     </ThemedView>
   );
@@ -211,6 +218,14 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     marginTop: 8,
+  },
+  quizCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    backgroundColor: '#F7E9E4',
+    borderRadius: 16,
+    padding: 16,
   },
   detailRow: {
     flexDirection: 'row',
