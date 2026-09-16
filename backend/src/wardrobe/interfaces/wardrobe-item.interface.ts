@@ -3,12 +3,13 @@ export interface WardrobeItem {
     userID: string;
     imageURL: string;
     clothingCategory: string;
-    style: string;
+    style: string[];
     colour: string[];
-    created: Date;
-    modified: Date;
+    createdAt: Date;
+    modifiedAt: Date;
     brand: string;
     size: string;
     material: string[];
-    // TODO - check with group (could add season, occasion, wear count, cost etc.)
+    tags: string[];
+    price: number;
 }
