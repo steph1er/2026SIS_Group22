@@ -3,7 +3,6 @@ import { CameraView } from 'expo-camera';
 import { ThemedView } from '../components/themed-view';
 import { ThemedText } from '../components/themed-text';
 import { PrimaryButton } from '../components/primary-button';
-import { BottomNavBar } from '../components/bottom-nav-bar';
 import { Link } from 'expo-router';
 
 export default function ColourAnalysisScreen() {
@@ -15,7 +14,6 @@ export default function ColourAnalysisScreen() {
 
           <PrimaryButton label="View Item" />
       </ThemedView>
-      <BottomNavBar />
     </ThemedView>
   );
 }

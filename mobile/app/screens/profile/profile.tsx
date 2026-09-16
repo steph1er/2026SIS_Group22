@@ -4,7 +4,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { ThemedView } from '../../components/themed-view';
 import { ThemedText } from '../../components/themed-text';
 import { PrimaryButton } from '../../components/primary-button';
-import { BottomNavBar } from '../../components/bottom-nav-bar';
 import { Link } from 'expo-router';
 
 // Shape of a completed style quiz summary, once onboarding answers are
@@ -113,7 +112,6 @@ export default function ProfileScreen() {
           
         </ScrollView>
       </SafeAreaView>
-      <BottomNavBar />
     </ThemedView>
   );
 }

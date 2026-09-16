@@ -6,10 +6,10 @@ import { Ionicons } from '@expo/vector-icons';
 
 import { ThemedView } from '../../components/themed-view';
 import { ThemedText } from '../../components/themed-text';
-import { BottomNavBar } from '../../components/bottom-nav-bar';
 import { PrimaryButton } from '../../components/primary-button';
 
 import { signOut } from '../../../src/auth/auth-service';
+import { router } from 'expo-router';
 
 type SettingsState = {
   profile: {
@@ -131,11 +131,25 @@ export default function SettingsScreen() {
         onPress: async () => {
           setLoggingOut(true);
 
-          const { error } = await signOut();
+          try {
+            const { error } = await signOut();
 
-          if (error) {
+            if (error) {
+              setLoggingOut(false);
+              Alert.alert('Unable to Log Out', error.message);
+              return;
+            }
+
+            router.replace('/login');
+          } catch (error) {
             setLoggingOut(false);
-            Alert.alert('Unable to Log Out', error.message);
+
+            Alert.alert(
+              'Unable to Log Out',
+              error instanceof Error
+                ? error.message
+                : 'An unexpected error occurred.'
+            );
           }
         },
       },
@@ -318,8 +332,6 @@ export default function SettingsScreen() {
           disabled={loggingOut}
         />
         </ScrollView>
-
-        <BottomNavBar />
 
         <Modal
           visible={languageModalVisible}

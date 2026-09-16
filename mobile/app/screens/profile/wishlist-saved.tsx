@@ -3,7 +3,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { ThemedView } from '../../components/themed-view';
 import { ThemedText } from '../../components/themed-text';
-import { BottomNavBar } from '../../components/bottom-nav-bar';
 import { Link } from 'expo-router';
 
 type Collection = {
@@ -120,8 +119,6 @@ export default function WishlistSavedScreen() {
           </TouchableOpacity>
         </ScrollView>
       </SafeAreaView>
-
-      <BottomNavBar />
     </ThemedView>
   );
 }

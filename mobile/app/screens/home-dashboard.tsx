@@ -2,7 +2,6 @@ import { ThemedView } from '../components/themed-view';
 import { ThemedText } from '../components/themed-text';
 import { PrimaryButton } from '../components/primary-button';
 import { Link } from 'expo-router';
-import { BottomNavBar } from '../components/bottom-nav-bar';
 
 export default function HomeDashboardScreen() {
   return (
@@ -26,8 +25,6 @@ export default function HomeDashboardScreen() {
           <PrimaryButton label="Profile" />
         </Link>
       </ThemedView>
-
-      <BottomNavBar />
     </ThemedView>
   );
 }
