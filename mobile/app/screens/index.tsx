@@ -26,7 +26,8 @@ export default function WelcomeScreen() {
       <View style={styles.content}>
 
 
-        <Link href="/create-outfits" asChild>
+        {/* FOR VISUAL TESTING */}
+        <Link href="/create-outfit" asChild>
             <PrimaryButton label="Create Outfits UI Test" />
           </Link>
 

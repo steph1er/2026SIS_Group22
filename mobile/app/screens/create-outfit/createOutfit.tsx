@@ -3,7 +3,7 @@ import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 // import { styles } from '../../services/outfit-builder-theme';
-import { RecommendedItem, WardrobeItem } from './outfitBuilderTypes';
+import { RecommendedItem, WardrobeItem } from './createOutfitTypes';
 
 export default function CreateOutfits() {
 
