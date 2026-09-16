@@ -94,7 +94,7 @@ export default function OnboardingQuiz() {
 
           {step.type !== 'wardrobe' && (
             <View style={styles.content}>
-              {step.sections?.map((section, index) => {
+              {step.sections?.map((section) => {
                 const currentAnswer = answers[section.id];
                 const showError = showErrors && !section.optional && !isSectionAnswered(section, answers);
 
@@ -412,6 +412,10 @@ export default function OnboardingQuiz() {
                                   style={styles.aestheticImage}
                                   resizeMode="cover"
                                 />
+                              )}
+
+                              {isSelected && (
+                                <View style={styles.aestheticOverlay} />
                               )}
 
                               <View style={styles.aestheticBadge}>
