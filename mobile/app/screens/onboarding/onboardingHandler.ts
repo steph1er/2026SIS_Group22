@@ -194,6 +194,7 @@ export function useOnboardingHandler() {
     } else {
         // TODO:
         // Save onboarding answers
+        console.log(answers);
         router.replace('/');
     }
   };

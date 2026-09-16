@@ -400,11 +400,10 @@ export default function OnboardingQuiz() {
                               key={option.id}
                               style={[
                                 styles.aestheticCard,
-                                isSelected &&
-                                  styles.aestheticCardSelected,
+                                isSelected && styles.aestheticCardSelected,
                               ]}
                               onPress={() =>
-                                handleSingleSelect(section.id, option.id)
+                                handleMultiSelect(section.id, option.id)
                               }
                             >
                               {option.image && (
