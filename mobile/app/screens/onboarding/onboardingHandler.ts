@@ -194,7 +194,7 @@ export function useOnboardingHandler() {
     } else {
         // TODO:
         // Save onboarding answers
-        router.replace('/');
+        router.replace('./home-dashboard');
     }
   };
 

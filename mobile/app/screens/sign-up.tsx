@@ -36,7 +36,7 @@ export default function SignUpScreen() {
       setMessage('Check your email to confirm your account, then log in.');
       return;
     }
-    router.replace('/');
+    router.replace('./onboarding');
   }
 
   return (
