@@ -1,10 +1,10 @@
-import { StyleSheet, Text, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { Link } from 'expo-router';
 import { useState } from 'react';
+import { StyleSheet, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { signOut } from '../../src/auth/auth-service';
 import { useAuth } from '../../src/auth/auth-provider';
+import { signOut } from '../../src/auth/auth-service';
 import { PrimaryButton } from '../components/primary-button';
 import { StyleUTokens } from '../services/styleu-theme';
 
