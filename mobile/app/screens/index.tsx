@@ -62,7 +62,7 @@ export default function WelcomeScreen() {
           )}
           {(configurationError || message) ? <Text accessibilityRole="alert" style={styles.status}>{configurationError || message}</Text> : null}
         </View>
-      </View>
+      </View> 
     </SafeAreaView>
   );
 }
