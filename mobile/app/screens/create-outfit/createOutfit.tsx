@@ -2,14 +2,22 @@ import { useState } from 'react';
 import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-// import { styles } from '../../services/outfit-builder-theme';
 import { RecommendedItem, WardrobeItem } from './createOutfitTypes';
+
+import { router } from 'expo-router';
+import { styles } from '../../services/create-outfit-theme';
+
+import { BackButton } from '../../components/back-button';
 
 export default function CreateOutfits() {
 
   const [selectedItem, setSelectedItem] = useState<
     WardrobeItem | RecommendedItem | null
     >(null);
+
+  const handleBack = () => {
+    router.replace('./home-dashboard')
+  }
 
   const handleItemSelect = (item: WardrobeItem | RecommendedItem) => {
     setSelectedItem(item);
@@ -34,14 +42,20 @@ export default function CreateOutfits() {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1 }}>
+    <SafeAreaView style={styles.container}>
       {/* header */}
-      <View>
-        <View>
-          <Text>
+      <View style={styles.headerContainer}>
+        <View style={styles.title}>
+          <BackButton />
+          <Text style={styles.headerText}>
             Outfit Builder
           </Text>
         </View>
+
+        <TouchableOpacity style={styles.assistButton}>
+          <Text style={styles.assistText}>AI Assist ON</Text>
+          {/* TODO: switch text on/off */}
+        </TouchableOpacity>
       </View>
 
       {/* outfit */}
@@ -67,12 +81,12 @@ export default function CreateOutfits() {
       </ScrollView>
 
       {/* bottom bar */}
-      <View>
-        <TouchableOpacity onPress={handleAddToWishlist}>
-          <Text>Add to Wishlist</Text>
+      <View style={styles.buttonContainer}>
+        <TouchableOpacity onPress={handleAddToWishlist} style={styles.wishlistButton}>
+          <Text style={styles.buttonText}>Add to Wishlist</Text>
         </TouchableOpacity>
-        <TouchableOpacity onPress={handleSaveOutfit}>
-          <Text>Save Outfit</Text>
+        <TouchableOpacity onPress={handleSaveOutfit} style={styles.saveButton}>
+          <Text style={styles.buttonText}>Save Outfit</Text>
         </TouchableOpacity>
       </View>
 

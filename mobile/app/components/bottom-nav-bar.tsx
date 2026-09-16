@@ -30,7 +30,7 @@ export function BottomNavBar() {
     console.log('Selected:', key);
 
     if(key === 'create'){
-      router.push('./outfit-builder')
+      router.push('./create-outfit')
     }
   };
 
