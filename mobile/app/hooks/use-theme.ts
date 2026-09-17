@@ -3,7 +3,7 @@
  * https://docs.expo.dev/guides/color-schemes/
  */
 
-import { Colors } from '../services/theme';
+import { AccentColors, Colors } from '../services/theme';
 import { useColorScheme } from './use-color-scheme';
 
 export function useTheme() {
@@ -11,4 +11,11 @@ export function useTheme() {
   const theme = scheme === 'unspecified' ? 'light' : scheme;
 
   return Colors[theme];
+}
+
+export function useAccentColors() {
+  const scheme = useColorScheme();
+  const theme = scheme === 'unspecified' ? 'light' : scheme;
+ 
+  return AccentColors[theme];
 }
