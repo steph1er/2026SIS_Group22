@@ -1,4 +1,5 @@
 import type { AuthResponse, AuthTokenResponsePassword, UserAttributes } from '@supabase/supabase-js';
+import * as Linking from 'expo-linking';
 
 import { requireSupabase } from './supabase-client';
 
@@ -15,6 +16,7 @@ export function signUp({ email, password, fullName, phone }: SignUpDetails): Pro
     email: email.trim(),
     password,
     options: {
+      emailRedirectTo: Linking.createURL('auth/callback'),
       data: {
         ...(fullName ? { full_name: fullName.trim() } : {}),
         ...(phone ? { phone: phone.trim() } : {}),

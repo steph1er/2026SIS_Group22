@@ -13,6 +13,31 @@
    then return to the app and log in. Configure a reachable Supabase Site URL
    for the confirmation link. Successful login shows your email and Sign out.
 
+### Email confirmation redirects
+
+In the hosted Supabase dashboard, open **Authentication → URL Configuration**.
+Use `http://localhost:8081` as the development Site URL and allow these redirect
+URLs:
+
+```text
+http://localhost:8081/**
+http://127.0.0.1:8081/**
+mobile://**
+exp://**
+```
+
+Signup emails redirect to `/auth/callback`, where the app saves the confirmed
+session and returns the user to the home screen. The web development server must
+still be running when testing a localhost confirmation link. Use a deployed HTTPS
+URL for shared or production testing and add that URL to the allow list.
+
+The branded confirmation email is stored at
+`supabase/templates/confirmation.html`. Local Supabase uses it through
+`config.toml`. For the hosted project, copy that HTML into **Authentication →
+Email Templates → Confirm signup** and use `Verify your StyleU email` as the
+subject. The button uses Supabase's `{{ .ConfirmationURL }}` value, which verifies
+the address before opening the app callback.
+
 The profile migration preserves `profiles.id` and adds unique `profiles.user_id`
 referencing `auth.users.id`. New signups receive a profile automatically; existing
 auth accounts are backfilled. Unlinked legacy profiles are retained but hidden by
