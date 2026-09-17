@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { signInWithGoogle, signUp } from '../../src/auth/auth-service';
+import { signInWithGoogle, signOut, signUp } from '../../src/auth/auth-service';
 import { useAuth } from '../../src/auth/auth-provider';
 import { BackButton } from '../components/back-button';
 import { OnboardingFormField } from '../components/onboarding-form-field';
@@ -26,17 +26,23 @@ export default function SignUpScreen() {
     }
     setBusy(true);
     setMessage('');
-    const { data, error } = await signUp({ email, password, fullName, phone });
-    setBusy(false);
+    const { error } = await signUp({ email, password, fullName, phone });
     if (error) {
+      setBusy(false);
       setMessage(error.message);
       return;
     }
-    if (!data.session) {
-      setMessage('Check your email to confirm your account, then log in.');
+
+    // Email confirmation is disabled, so signup creates a session immediately.
+    // Clear it locally so the user can complete the requested login step.
+    const { error: signOutError } = await signOut('local');
+    setBusy(false);
+    if (signOutError) {
+      setMessage(signOutError.message);
       return;
     }
-    router.replace('/');
+
+    router.replace({ pathname: '/login', params: { created: '1' } });
   }
 
   async function handleGoogleSignIn() {

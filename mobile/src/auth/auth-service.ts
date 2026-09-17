@@ -70,13 +70,12 @@ export async function signInWithGoogle(): Promise<boolean> {
   return true;
 }
 
-/** Register a user. Supabase may return no session until email confirmation is complete. */
+/** Register a user with email and password. */
 export function signUp({ email, password, fullName, phone }: SignUpDetails): Promise<AuthResponse> {
   return requireSupabase().auth.signUp({
     email: email.trim(),
     password,
     options: {
-      emailRedirectTo: Linking.createURL('auth/callback'),
       data: {
         ...(fullName ? { full_name: fullName.trim() } : {}),
         ...(phone ? { phone: phone.trim() } : {}),
@@ -89,8 +88,8 @@ export function signIn(email: string, password: string): Promise<AuthTokenRespon
   return requireSupabase().auth.signInWithPassword({ email: email.trim(), password });
 }
 
-export function signOut() {
-  return requireSupabase().auth.signOut();
+export function signOut(scope: 'global' | 'local' | 'others' = 'global') {
+  return requireSupabase().auth.signOut({ scope });
 }
 
 export function resetPassword(email: string) {

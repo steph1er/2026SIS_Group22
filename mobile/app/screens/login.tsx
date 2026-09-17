@@ -1,4 +1,4 @@
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -11,6 +11,7 @@ import { PrimaryButton } from '../components/primary-button';
 import { StyleUTokens } from '../services/styleu-theme';
 
 export default function LoginScreen() {
+  const { created } = useLocalSearchParams<{ created?: string }>();
   const { configurationError } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -56,7 +57,11 @@ export default function LoginScreen() {
           <Pressable onPress={handleResetPassword} disabled={busy}>
             <Text style={styles.forgotPassword}>Forgot password?</Text>
           </Pressable>
-          {(configurationError || message) ? <Text accessibilityRole="alert" style={styles.status}>{configurationError || message}</Text> : null}
+          {(configurationError || message || created === '1') ? (
+            <Text accessibilityRole="alert" style={styles.status}>
+              {configurationError || message || 'Account created. Log in with your email and password.'}
+            </Text>
+          ) : null}
         </View>
 
         <View style={styles.footer}>

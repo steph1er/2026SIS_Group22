@@ -9,11 +9,12 @@
    `npx supabase db push` from the repository root after linking that project.
    Review the target before running: this changes the linked database.
 3. Start the mobile app (`npm run web` in `mobile`). Create a test account using
-   an email you control. If email confirmation is enabled, confirm the email,
-   then return to the app and log in. Configure a reachable Supabase Site URL
-   for the confirmation link. Successful login shows your email and Sign out.
+   an email you control. Email confirmation is currently disabled for
+   development, so signup stores the account and returns to the login screen.
+   Log in with the same credentials; successful login shows your email and Sign
+   out.
 
-### Email confirmation redirects
+### Auth redirects
 
 In the hosted Supabase dashboard, open **Authentication → URL Configuration**.
 Use `http://localhost:8081` as the development Site URL and allow these redirect
@@ -26,10 +27,10 @@ mobile://**
 exp://**
 ```
 
-Signup emails redirect to `/auth/callback`, where the app saves the confirmed
-session and returns the user to the home screen. The web development server must
-still be running when testing a localhost confirmation link. Use a deployed HTTPS
-URL for shared or production testing and add that URL to the allow list.
+Google OAuth redirects to `/auth/callback`, where the app saves the session and
+returns the user to the home screen. The web development server must still be
+running when testing a localhost callback. Use a deployed HTTPS URL for shared
+or production testing and add that URL to the allow list.
 
 The branded confirmation email is stored at
 `supabase/templates/confirmation.html`. Local Supabase uses it through
@@ -113,7 +114,8 @@ of identity. Mobile requests can use the existing
 
 ## Verification checklist
 
-- Signup with confirmation enabled does not show a signed-in state prematurely.
+- Email signup returns to login without sending a confirmation email.
+- A newly registered email account can log in immediately.
 - Wrong passwords show an error; correct login shows the account email.
 - Reload restores the session; sign out returns to the form.
 - A valid token reaches `/wardrobes`; missing/invalid tokens return 401.
