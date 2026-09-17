@@ -1,5 +1,7 @@
 import type { AuthResponse, AuthTokenResponsePassword, UserAttributes } from '@supabase/supabase-js';
 import * as Linking from 'expo-linking';
+import * as WebBrowser from 'expo-web-browser';
+import { Platform } from 'react-native';
 
 import { requireSupabase } from './supabase-client';
 
@@ -9,6 +11,64 @@ export type SignUpDetails = {
   fullName?: string;
   phone?: string;
 };
+
+function getCallbackParameters(url: string) {
+  const query = url.includes('?') ? url.split('?')[1]?.split('#')[0] : '';
+  const fragment = url.includes('#') ? url.split('#')[1] : '';
+  return new URLSearchParams([query, fragment].filter(Boolean).join('&'));
+}
+
+/** Complete a Supabase email or OAuth redirect and store the resulting session. */
+export async function completeAuthCallback(url: string) {
+  const parameters = getCallbackParameters(url);
+  const callbackError = parameters.get('error_description');
+  const code = parameters.get('code');
+  const accessToken = parameters.get('access_token');
+  const refreshToken = parameters.get('refresh_token');
+
+  if (callbackError) throw new Error(callbackError);
+
+  if (code) {
+    const { error } = await requireSupabase().auth.exchangeCodeForSession(code);
+    if (error) throw error;
+    return;
+  }
+
+  if (accessToken && refreshToken) {
+    const { error } = await requireSupabase().auth.setSession({
+      access_token: accessToken,
+      refresh_token: refreshToken,
+    });
+    if (error) throw error;
+    return;
+  }
+
+  throw new Error('The authentication link is missing its session details.');
+}
+
+/** Open Google authentication and return true when a native session is ready. */
+export async function signInWithGoogle(): Promise<boolean> {
+  const redirectTo = Linking.createURL('auth/callback');
+  const { data, error } = await requireSupabase().auth.signInWithOAuth({
+    provider: 'google',
+    options: {
+      redirectTo,
+      skipBrowserRedirect: Platform.OS !== 'web',
+    },
+  });
+
+  if (error) throw error;
+
+  // On web, Supabase redirects the current page and the callback route finishes sign-in.
+  if (Platform.OS === 'web') return false;
+  if (!data.url) throw new Error('Google sign-in did not return an authorization URL.');
+
+  const result = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
+  if (result.type !== 'success') return false;
+
+  await completeAuthCallback(result.url);
+  return true;
+}
 
 /** Register a user. Supabase may return no session until email confirmation is complete. */
 export function signUp({ email, password, fullName, phone }: SignUpDetails): Promise<AuthResponse> {

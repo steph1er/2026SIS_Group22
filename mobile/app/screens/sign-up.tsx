@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { signUp } from '../../src/auth/auth-service';
+import { signInWithGoogle, signUp } from '../../src/auth/auth-service';
 import { useAuth } from '../../src/auth/auth-provider';
 import { BackButton } from '../components/back-button';
 import { OnboardingFormField } from '../components/onboarding-form-field';
@@ -39,6 +39,20 @@ export default function SignUpScreen() {
     router.replace('/');
   }
 
+  async function handleGoogleSignIn() {
+    setBusy(true);
+    setMessage('');
+
+    try {
+      const sessionReady = await signInWithGoogle();
+      if (sessionReady) router.replace('/');
+    } catch (error: unknown) {
+      setMessage(error instanceof Error ? error.message : 'Unable to sign in with Google.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
     <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.flex}>
@@ -46,8 +60,13 @@ export default function SignUpScreen() {
             <BackButton />
           <Text accessibilityRole="header" style={styles.title}>Create your account</Text>
 
-          <Pressable style={[styles.googleButton, styles.disabled]} disabled>
-            <Text style={styles.googleButtonLabel}>Continue with Google (coming soon)</Text>
+          <Pressable
+            accessibilityRole="button"
+            style={[styles.googleButton, busy || configurationError ? styles.disabled : null]}
+            disabled={busy || Boolean(configurationError)}
+            onPress={handleGoogleSignIn}
+          >
+            <Text style={styles.googleButtonLabel}>{busy ? 'Opening Google…' : 'Continue with Google'}</Text>
           </Pressable>
 
           <View style={styles.dividerRow}>

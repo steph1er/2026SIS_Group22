@@ -38,6 +38,28 @@ Email Templates → Confirm signup** and use `Verify your StyleU email` as the
 subject. The button uses Supabase's `{{ .ConfirmationURL }}` value, which verifies
 the address before opening the app callback.
 
+### Google sign-in
+
+Google sign-in uses the same `/auth/callback` route. To enable it for the hosted
+project:
+
+1. In Google Cloud, create an OAuth 2.0 client with application type **Web
+   application**.
+2. Add this Google authorized redirect URI:
+
+   ```text
+   https://kglybxcngrruskhuzqsz.supabase.co/auth/v1/callback
+   ```
+
+3. In Supabase, open **Authentication → Sign In / Providers → Google**, enter
+   the Google client ID and client secret, enable the provider, and save it.
+4. Keep the web, `mobile://**`, and `exp://**` URLs above in Supabase's redirect
+   allow list so Supabase can return users to the browser, a development build,
+   or Expo Go.
+
+Never commit the Google client secret. A Google account that signs in for the
+first time is registered automatically when project signups are enabled.
+
 The profile migration preserves `profiles.id` and adds unique `profiles.user_id`
 referencing `auth.users.id`. New signups receive a profile automatically; existing
 auth accounts are backfilled. Unlinked legacy profiles are retained but hidden by
