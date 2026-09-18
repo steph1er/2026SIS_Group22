@@ -1,9 +1,9 @@
 import { StyleSheet } from 'react-native';
-import { StyleUTokens } from './styleu-theme';
+import { StyleUTokens } from '../styleu-theme';
 
 const { colors } = StyleUTokens;
 
-export const styles = StyleSheet.create ({
+export const themeStyles = StyleSheet.create ({
   container: {
     flex: 1,
     backgroundColor: colors.background,
@@ -38,11 +38,10 @@ export const styles = StyleSheet.create ({
     paddingHorizontal: 12,
     alignItems: 'center',
     alignSelf: 'center',
-    opacity: 0.4,
   },
 
   assistOff: {
-    opacity: 0.2,
+    backgroundColor: colors.mutedAccent,
   },
 
   assistText: {
@@ -51,12 +50,27 @@ export const styles = StyleSheet.create ({
     fontWeight: '600',
   },
 
+  assistTextOff: {
+    color: colors.mutedText,
+  },
+
+  contentContainer: {
+    backgroundColor: colors.backgroundElement,
+    flex: 1,
+    width: '100%',
+  },
+
   buttonContainer: {
+    backgroundColor: colors.background,
+    position: 'absolute',
+    bottom: -34, // TODO: make it relevant to bottom inset
+    left: 0,
+    right: 0,
     flexDirection: 'row',
-    alignSelf: 'center',
+    justifyContent: 'center',
     gap: 12,
-    paddingTop: 8,
-    paddingBottom: 16,
+    paddingTop: 16,
+    paddingBottom: 54,
   },
 
   buttonText: {
@@ -70,6 +84,7 @@ export const styles = StyleSheet.create ({
     paddingVertical: 16,
     borderRadius: 16,
     alignItems: 'center',
+    alignSelf: 'center',
     width: '42%',
     borderWidth: 1,
     borderColor: colors.border,
@@ -84,6 +99,7 @@ export const styles = StyleSheet.create ({
     paddingVertical: 16,
     borderRadius: 16,
     alignItems: 'center',
+    alignSelf: 'center',
     width: '42%',
   },
 })

@@ -7,6 +7,8 @@ export const StyleUTokens = {
     mutedText: '#75726F',
     placeholder: '#ABABAB',
     accent: '#E2B7A9',
+    mutedAccent: '#e2b7a952',
+    button: '#e2ddddaa',
 
     // onboarding
     backgroundElement: '#F0F0F3',
