@@ -1,0 +1,9 @@
+fastapi
+uvicorn[standard]
+python-multipart
+rembg[CPU]
+opencv-python-headless
+numpy
+Pillow
+open_clip_torch
+torch
