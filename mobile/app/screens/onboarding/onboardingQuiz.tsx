@@ -4,7 +4,6 @@ import { Image, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import RangeSlider from 'react-native-fast-range-slider';
 import Animated from 'react-native-reanimated';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
-
 import { onboardingSteps } from './onboardingData';
 
 import { inputStyles } from '../../services/onboarding/onboarding-inputs';

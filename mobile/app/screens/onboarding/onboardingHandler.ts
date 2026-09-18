@@ -192,10 +192,9 @@ export function useOnboardingHandler() {
     if (currentStep < onboardingSteps.length - 1) {
       setCurrentStep((prev) => prev + 1);
     } else {
-        // TODO:
-        // Save onboarding answers
-        console.log(answers);
-        router.replace('/');
+        // TODO: save onboarding answers
+        console.log(answers); // temp
+        router.replace('./home-dashboard');
     }
   };
 

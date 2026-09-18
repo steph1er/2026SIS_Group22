@@ -24,12 +24,23 @@ export default function LoginScreen() {
     }
     setBusy(true);
     setMessage('');
-    const { error } = await signIn(email, password);
-    setBusy(false);
+
+    const { data, error } = await signIn(email, password);
+
     if (error) {
+      setBusy(false);
       setMessage(error.message);
       return;
     }
+
+    if (!data.user) {
+      setBusy(false);
+      setMessage('No user found. Please check your email and password.');
+      return;
+    }
+
+    // Temporary routing while backend onboarding status integration is not yet implemented
+    setBusy(false);  
     router.replace('./onboarding');
   }
 
