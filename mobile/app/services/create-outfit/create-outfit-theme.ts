@@ -31,29 +31,6 @@ export const themeStyles = StyleSheet.create ({
     fontWeight: '700',
   },
 
-  assistButton: {
-    backgroundColor: colors.accent,
-    paddingVertical: 8,
-    borderRadius: 16,
-    paddingHorizontal: 12,
-    alignItems: 'center',
-    alignSelf: 'center',
-  },
-
-  assistOff: {
-    backgroundColor: colors.mutedAccent,
-  },
-
-  assistText: {
-    color: colors.text,
-    fontSize: 12,
-    fontWeight: '600',
-  },
-
-  assistTextOff: {
-    color: colors.mutedText,
-  },
-
   contentContainer: {
     backgroundColor: colors.backgroundElement,
     flex: 1,

@@ -4,6 +4,8 @@ import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import CreateOutfitItem from './createOutfitItem';
+// import CreateOutfitSave from './createOutfitSave';
 import { RecommendedItem, WardrobeItem } from './createOutfitTypes';
 
 import { router } from 'expo-router';
@@ -14,7 +16,7 @@ import { visualiserStyles } from '../../services/create-outfit/create-outfit-vis
 
 import { BackButton } from '../../components/back-button';
 
-const styles = {...themeStyles, ...visualiserStyles, ...itemStyles, ...catalogueStyles};
+export const styles = {...themeStyles, ...visualiserStyles, ...itemStyles, ...catalogueStyles};
 
 export default function CreateOutfits() {
 
@@ -43,19 +45,38 @@ export default function CreateOutfits() {
 
   const [selectedItem, setSelectedItem] = useState<WardrobeItem | RecommendedItem | null>(null);
   const [selectedCategory, setSelectedCategory] = useState('Tops');
-  const [aiAssist, setAiAssist] = useState(true);
 
   // TEMP FOR TESTING
   const categories = ['Tops', 'Pants','Shorts', 'Skirts', 'Dresses', 'Outerwear', 'Shoes', 'Accessories'];
-  const placeholderItems = [
-    { id: '1', name: 'placeholder', image: 'https://placehold.net/7.png' },
-    { id: '2', name: 'placeholder', image: 'https://placehold.net/3.png' },
-    { id: '3', name: 'placeholder', image: 'https://placehold.net/2.png' },
-    { id: '4',  name: 'placeholder name', image: 'https://placehold.net/1.png' },
-    { id: '5',  name: 'placeholder', image: 'https://placehold.net/1.png' },
-    { id: '6',  name: 'placeholder', image: 'https://placehold.net/1.png' },
-    { id: '7',  name: 'placeholder', image: 'https://placehold.net/1.png' },
-    { id: '8',  name: 'placeholders', image: 'https://placehold.net/1.png' },
+  const placeholderItems: RecommendedItem[] = [
+    {
+      id: '1',
+      name: 'placeholder',
+      brand: 'Placeholder Brand',
+      price: '$00.00',
+      image_url: 'https://placehold.net/7.png',
+    },
+    {
+      id: '2',
+      name: 'placeholder',
+      brand: 'Placeholder Brand',
+      price: '$00.00',
+      image_url: 'https://placehold.net/3.png',
+    },
+    {
+      id: '3',
+      name: 'placeholder',
+      brand: 'Placeholder Brand',
+      price: '$00.00',
+      image_url: 'https://placehold.net/2.png',
+    },
+    {
+      id: '4',
+      name: 'placeholder name',
+      brand: 'Placeholder Brand',
+      price: '$00.00',
+      image_url: 'https://placehold.net/1.png',
+    },
   ];
 
   const handleBack = () => {
@@ -76,8 +97,13 @@ export default function CreateOutfits() {
     // TODO: handle add item to outfit
   };
 
+  // send item array and guard not null
   const handleSaveOutfit = () => {
-    // TODO: save outfit
+
+  };
+
+  const handleCloseSave = () => {
+
   };
 
   const handleAddToWishlist = () => {
@@ -94,11 +120,6 @@ export default function CreateOutfits() {
             Outfit Builder
           </Text>
         </View>
-
-        <TouchableOpacity style={[styles.assistButton, !aiAssist && styles.assistOff]} onPress={() => setAiAssist(!aiAssist)}>
-          <Text style={[styles.assistText, !aiAssist && styles.assistTextOff]}>Generate Outfit {aiAssist ? 'ON' : 'OFF'}</Text>
-          {/* TODO: switch text on/off */}
-        </TouchableOpacity>
       </View>
 
       <View style={styles.contentContainer}>
@@ -141,8 +162,8 @@ export default function CreateOutfits() {
               <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                 <View style={styles.suggestedItemsGrid}>
                   {placeholderItems.map((item) => (
-                    <TouchableOpacity key={item.id} style={styles.itemCard}>
-                      <Image source={{ uri: item.image }} style={styles.itemImage}/>
+                    <TouchableOpacity key={item.id} style={styles.itemCard} onPress={() => handleItemSelect(item)}>
+                      <Image source={{ uri: item.image_url }} style={styles.itemImage}/>
                       <Text style={styles.itemName}>{item.name}</Text>
                     </TouchableOpacity>
                   ))}
@@ -155,8 +176,8 @@ export default function CreateOutfits() {
               {/* TODO: link to db */}
               <View style={styles.wardrobeItemsGrid}>
                 {placeholderItems.map((item) => (
-                    <TouchableOpacity key={item.id} style={[styles.itemCard, { width: 120 }]}>
-                      <Image source={{ uri: item.image }} style={styles.itemImage}/>
+                    <TouchableOpacity key={item.id} style={[styles.itemCard, { width: 120 }]} onPress={() => handleItemSelect(item)}>
+                      <Image source={{ uri: item.image_url }} style={styles.itemImage}/>
                       <Text style={styles.itemName}>{item.name}</Text>
                     </TouchableOpacity>
                   ))}
@@ -177,16 +198,18 @@ export default function CreateOutfits() {
 
         {/* item details */}
         {selectedItem && (
-          <View>
-            {/* add animation */}
-            {/* drag handle */}
-            {/* item image + details */}
-
-            <TouchableOpacity onPress={() => handleAddItemToOutfit(selectedItem.id)}>
-              <Text>Add to Outfit</Text>
-            </TouchableOpacity>
-          </View>
+          <CreateOutfitItem
+            item={selectedItem}
+            onClose={handleCloseItemDetails}
+          />
         )}
+
+        {/* this is breaking it... */}
+        {/* {save && (
+          <CreateOutfitSave
+            onClose={handleCloseSave}
+          />
+        )} */}
       </View>
 
     </SafeAreaView>
