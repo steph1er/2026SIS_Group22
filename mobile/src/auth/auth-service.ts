@@ -99,3 +99,24 @@ export function resetPassword(email: string) {
 export function updateUser(attributes: UserAttributes) {
   return requireSupabase().auth.updateUser(attributes);
 }
+
+// determines where an authenticated user should be sent
+// users who have not completed onboarding should be sent to the onboarding quiz
+// users who have completed onboarding go to the home dashboard
+
+export async function getPostAuthRoute(userId: string) {
+  const { data, error } = await requireSupabase()
+    .from('profiles')
+    .select('onboarding_completed')
+    .eq('id', userId)
+    .maybeSingle();
+
+  if (error) {
+    return { route: null, error };
+  }
+
+  return {
+    route: data?.onboarding_completed === true ? '/home-dashboard' : '/onboarding',
+    error: null,
+  };
+}

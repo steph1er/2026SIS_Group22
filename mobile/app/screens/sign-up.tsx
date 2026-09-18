@@ -41,7 +41,6 @@ export default function SignUpScreen() {
       setMessage(signOutError.message);
       return;
     }
-
     router.replace({ pathname: '/login', params: { created: '1' } });
   }
 
@@ -51,7 +50,7 @@ export default function SignUpScreen() {
 
     try {
       const sessionReady = await signInWithGoogle();
-      if (sessionReady) router.replace('/');
+      if (sessionReady) router.replace('/home-dashboard');
     } catch (error: unknown) {
       setMessage(error instanceof Error ? error.message : 'Unable to sign in with Google.');
     } finally {
@@ -97,8 +96,11 @@ export default function SignUpScreen() {
           </View>
 
           <View style={styles.footer}>
-            <PrimaryButton label={busy ? 'Creating account…' : 'Start Onboarding Quiz'} onPress={handleSignUp} disabled={busy || Boolean(configurationError)} />
-            {(configurationError || message) ? <Text accessibilityRole="alert" style={styles.status}>{configurationError || message}</Text> : null}
+            <PrimaryButton
+              label={busy ? 'Creating account…' : 'Start Onboarding Quiz'}
+              onPress={handleSignUp} disabled={busy || Boolean(configurationError)} />
+              {(configurationError || message) ?
+                <Text accessibilityRole="alert" style={styles.status}>{configurationError || message}</Text> : null}
             <Text style={styles.terms}>By signing up, you agree to our Terms and Conditions</Text>
           </View>
         </ScrollView>

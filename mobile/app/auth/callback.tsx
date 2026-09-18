@@ -16,7 +16,7 @@ export default function AuthCallbackScreen() {
 
     async function completeConfirmation() {
       await completeAuthCallback(url!);
-      router.replace('/');
+      router.replace('/home-dashboard');
     }
 
     void completeConfirmation().catch((error: unknown) => {

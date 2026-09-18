@@ -1,24 +1,16 @@
+import { Link, Redirect } from 'expo-router';
 import { StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Link } from 'expo-router';
-import { useState } from 'react';
 
-import { signOut } from '../../src/auth/auth-service';
 import { useAuth } from '../../src/auth/auth-provider';
 import { PrimaryButton } from '../components/primary-button';
 import { StyleUTokens } from '../services/styleu-theme';
 
 export default function WelcomeScreen() {
   const { user, isLoading, configurationError } = useAuth();
-  const [busy, setBusy] = useState(false);
-  const [message, setMessage] = useState('');
 
-  async function handleSignOut() {
-    setBusy(true);
-    setMessage('');
-    const { error } = await signOut();
-    if (error) setMessage(error.message);
-    setBusy(false);
+  if (!isLoading && user) {
+    return <Redirect href="/home-dashboard" />;
   }
 
   return (
@@ -36,11 +28,6 @@ export default function WelcomeScreen() {
         <View style={styles.footer}>
           {isLoading ? (
             <Text style={styles.status}>Restoring your session…</Text>
-          ) : user ? (
-            <>
-              <Text style={styles.status}>Signed in as {user.email}</Text>
-              <PrimaryButton label={busy ? 'Signing out…' : 'Sign Out'} onPress={handleSignOut} disabled={busy} />
-            </>
           ) : (
             <>
               <Link href="/sign-up" asChild>
@@ -52,7 +39,7 @@ export default function WelcomeScreen() {
               <Text style={styles.terms}>By signing up, you agree to our Terms and Conditions</Text>
             </>
           )}
-          {(configurationError || message) ? <Text accessibilityRole="alert" style={styles.status}>{configurationError || message}</Text> : null}
+          {configurationError ? <Text accessibilityRole="alert" style={styles.status}>{configurationError}</Text> : null}
         </View>
       </View>
     </SafeAreaView>
