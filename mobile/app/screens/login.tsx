@@ -4,7 +4,7 @@ import { KeyboardAvoidingView, Platform, Pressable, StyleSheet, Text, View } fro
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useAuth } from '../../src/auth/auth-provider';
-import { resetPassword, signIn } from '../../src/auth/auth-service';
+import { getPostAuthRoute, resetPassword, signIn } from '../../src/auth/auth-service';
 import { BackButton } from '../components/back-button';
 import { OnboardingFormField } from '../components/onboarding-form-field';
 import { PrimaryButton } from '../components/primary-button';
@@ -40,8 +40,17 @@ export default function LoginScreen() {
       return;
     }
 
+    // Home for users who finished onboarding, onboarding for those who did not.
+    // The button stays busy until this resolves, and nothing navigates if the check fails.
+    const result = await getPostAuthRoute(data.user.id);
     setBusy(false);
-    router.replace('/home-dashboard');
+
+    if (result.error) {
+      setMessage("You're signed in, but we couldn't check your account. Please check your connection and try again.");
+      return;
+    }
+
+    router.replace(result.route);
   }
 
   async function handleResetPassword() {

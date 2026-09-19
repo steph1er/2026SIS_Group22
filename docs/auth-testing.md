@@ -12,7 +12,9 @@
    an email you control. Email confirmation is currently disabled for
    development, so signup keeps the new user signed in and opens the onboarding
    quiz. To test login, sign out from Settings and log in with the same
-   credentials, which opens the home screen.
+   credentials. Login and a restored session both read `onboarding_completed`
+   from the user's profile (`profiles.user_id = user.id`): `true` opens the home
+   screen, `false` opens onboarding.
 
 ### Auth redirects
 
@@ -119,6 +121,14 @@ of identity. Mobile requests can use the existing
 - A newly registered email account can log in immediately.
 - Wrong passwords show an error; correct login shows the account email.
 - Reload restores the session; sign out returns to the form.
+- Login as a user with `onboarding_completed = true` opens the home screen; as a
+  user with `false` it opens onboarding.
+- Restarting the app mid-onboarding (signed in, not finished) reopens onboarding;
+  restarting after finishing reopens the home screen.
+- A profile with no row opens the home screen (with a console warning); a failed
+  profile check shows an error and a retry option instead of navigating.
+- Google sign-in is not yet checked against `onboarding_completed`; it still opens
+  the home screen.
 - A valid token reaches `/wardrobes`; missing/invalid tokens return 401.
 - In Supabase, the account has one profile with matching `user_id`.
 - Using two users' tokens against Supabase's REST `profiles` endpoint (with the

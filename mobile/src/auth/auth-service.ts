@@ -100,23 +100,49 @@ export function updateUser(attributes: UserAttributes) {
   return requireSupabase().auth.updateUser(attributes);
 }
 
-// determines where an authenticated user should be sent
-// users who have not completed onboarding should be sent to the onboarding quiz
-// users who have completed onboarding go to the home dashboard
+export type PostAuthRoute = '/home-dashboard' | '/onboarding';
 
-export async function getPostAuthRoute(userId: string) {
-  const { data, error } = await requireSupabase()
-    .from('profiles')
-    .select('onboarding_completed')
-    .eq('user_id', userId)
-    .maybeSingle();
+/** Either a route to go to, or an error. On an error there is no route, so callers must not navigate. */
+export type PostAuthRouteResult =
+  | { route: PostAuthRoute; error: null }
+  | { route: null; error: Error };
 
-  if (error) {
-    return { route: null, error };
+/**
+ * Decide where a signed-in user should go, from profiles.onboarding_completed.
+ * `userId` is auth.users.id and is matched against profiles.user_id (never profiles.id).
+ *
+ *   onboarding_completed = false → /onboarding
+ *   onboarding_completed = true  → /home-dashboard
+ *   no profile row               → /home-dashboard (warned; a profile is never created here)
+ *   query failure                → error, no route (onboarding is mandatory for new users,
+ *                                  so a failed check must neither skip nor force it)
+ *
+ * Read-only, and never throws.
+ */
+export async function getPostAuthRoute(userId: string): Promise<PostAuthRouteResult> {
+  try {
+    const { data, error } = await requireSupabase()
+      .from('profiles')
+      .select('onboarding_completed')
+      .eq('user_id', userId)
+      .maybeSingle();
+
+    if (error) throw new Error(error.message);
+
+    if (!data) {
+      console.warn('No profile row found for the signed-in user; continuing to the home dashboard.');
+      return { route: '/home-dashboard', error: null };
+    }
+
+    if (data.onboarding_completed === false) return { route: '/onboarding', error: null };
+    if (data.onboarding_completed === true) return { route: '/home-dashboard', error: null };
+
+    throw new Error('The onboarding status was not readable.');
+  } catch (error) {
+    console.error('Unable to check onboarding status:', error);
+    return {
+      route: null,
+      error: error instanceof Error ? error : new Error('Unable to check onboarding status.'),
+    };
   }
-
-  return {
-    route: data?.onboarding_completed === true ? '/home-dashboard' : '/onboarding',
-    error: null,
-  };
 }
