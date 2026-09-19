@@ -9,9 +9,59 @@
    `npx supabase db push` from the repository root after linking that project.
    Review the target before running: this changes the linked database.
 3. Start the mobile app (`npm run web` in `mobile`). Create a test account using
-   an email you control. If email confirmation is enabled, confirm the email,
-   then return to the app and log in. Configure a reachable Supabase Site URL
-   for the confirmation link. Successful login shows your email and Sign out.
+   an email you control. Email confirmation is currently disabled for
+   development, so signup keeps the new user signed in and opens the onboarding
+   quiz. To test login, sign out from Settings and log in with the same
+   credentials. Login and a restored session both read `onboarding_completed`
+   from the user's profile (`profiles.user_id = user.id`): `true` opens the home
+   screen, `false` opens onboarding.
+
+### Auth redirects
+
+In the hosted Supabase dashboard, open **Authentication → URL Configuration**.
+Use `http://localhost:8081` as the development Site URL and allow these redirect
+URLs:
+
+```text
+http://localhost:8081/**
+http://127.0.0.1:8081/**
+mobile://**
+exp://**
+```
+
+Google OAuth redirects to `/auth/callback`, where the app saves the session and
+returns the user to the home screen. The web development server must still be
+running when testing a localhost callback. Use a deployed HTTPS URL for shared
+or production testing and add that URL to the allow list.
+
+The branded confirmation email is stored at
+`supabase/templates/confirmation.html`. Local Supabase uses it through
+`config.toml`. For the hosted project, copy that HTML into **Authentication →
+Email Templates → Confirm signup** and use `Verify your StyleU email` as the
+subject. The button uses Supabase's `{{ .ConfirmationURL }}` value, which verifies
+the address before opening the app callback.
+
+### Google sign-in
+
+Google sign-in uses the same `/auth/callback` route. To enable it for the hosted
+project:
+
+1. In Google Cloud, create an OAuth 2.0 client with application type **Web
+   application**.
+2. Add this Google authorized redirect URI:
+
+   ```text
+   https://kglybxcngrruskhuzqsz.supabase.co/auth/v1/callback
+   ```
+
+3. In Supabase, open **Authentication → Sign In / Providers → Google**, enter
+   the Google client ID and client secret, enable the provider, and save it.
+4. Keep the web, `mobile://**`, and `exp://**` URLs above in Supabase's redirect
+   allow list so Supabase can return users to the browser, a development build,
+   or Expo Go.
+
+Never commit the Google client secret. A Google account that signs in for the
+first time is registered automatically when project signups are enabled.
 
 The profile migration preserves `profiles.id` and adds unique `profiles.user_id`
 referencing `auth.users.id`. New signups receive a profile automatically; existing
@@ -66,9 +116,21 @@ of identity. Mobile requests can use the existing
 
 ## Verification checklist
 
-- Signup with confirmation enabled does not show a signed-in state prematurely.
+- Email signup keeps the user signed in and opens onboarding, without sending a
+  confirmation email.
+- A newly registered email account can log in immediately.
 - Wrong passwords show an error; correct login shows the account email.
 - Reload restores the session; sign out returns to the form.
+- Login as a user with `onboarding_completed = true` opens the home screen; as a
+  user with `false` it opens onboarding.
+- Restarting the app mid-onboarding (signed in, not finished) reopens onboarding
+  on the furthest screen reached, with earlier answers still selected (saved in
+  `public.onboarding` after each screen, with `current_step`);
+  restarting after finishing reopens the home screen.
+- A profile with no row opens the home screen (with a console warning); a failed
+  profile check shows an error and a retry option instead of navigating.
+- Google sign-in is not yet checked against `onboarding_completed`; it still opens
+  the home screen.
 - A valid token reaches `/wardrobes`; missing/invalid tokens return 401.
 - In Supabase, the account has one profile with matching `user_id`.
 - Using two users' tokens against Supabase's REST `profiles` endpoint (with the

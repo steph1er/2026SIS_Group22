@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { View, StyleSheet, Pressable, Modal } from 'react-native';
 import { Link, router, usePathname } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
+import { useAuth } from '../../src/auth/auth-provider';
 import { ThemedText } from './themed-text';
 
 const TABS = [
@@ -22,6 +23,7 @@ const MENU_OPTIONS = [
 
 export function BottomNavBar() {
   const pathname = usePathname();
+  const { user } = useAuth();
   const [menuVisible, setMenuVisible] = useState(false);
 
   const handleOptionPress = (href: string) => {
@@ -29,6 +31,10 @@ export function BottomNavBar() {
         router.push(href as never);
 
   };
+
+  // Only for signed-in users, so the Welcome, Login and Sign Up screens cannot open
+  // Home or Profile. Also hidden during onboarding so a new user cannot skip it.
+  if (!user || pathname.startsWith('/onboarding')) return null;
 
   return (
     <>

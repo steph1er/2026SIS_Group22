@@ -1,4 +1,4 @@
-import {Alert, Image, Modal, Pressable, ScrollView, Switch, TextInput, TouchableOpacity, View, StyleSheet} from 'react-native';
+import {ActivityIndicator, Alert, Modal, Pressable, ScrollView, Switch, TextInput, TouchableOpacity, View, StyleSheet} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import type { ReactNode } from 'react';
 import { useState } from 'react';
@@ -9,19 +9,13 @@ import { ThemedText } from '../../components/themed-text';
 import { PrimaryButton } from '../../components/primary-button';
 
 import { signOut } from '../../../src/auth/auth-service';
+import { useProfile } from '../../../src/profile/use-profile';
 import { router } from 'expo-router';
 
+// Only the toggles below are local UI state. There are no database fields for
+// them yet, so they are not saved anywhere. Account details (display name,
+// email) come from the signed-in user's profile and auth account instead.
 type SettingsState = {
-  profile: {
-    name: string;
-    photoUri: string | null;
-  };
-  account: {
-    username: string;
-    email: string;
-    password: string;
-    phoneNumber: string;
-  };
   preferences: {
     notifications: boolean;
     darkMode: boolean;
@@ -34,18 +28,6 @@ type SettingsState = {
 };
 
 const initialSettingsState: SettingsState = {
-
-  // Dummy data for now; in a real app, this would be fetched from the backend
-  profile: {
-    name: 'Amanda Smith',
-    photoUri: null,
-  },
-  account: {
-    username: 'amanda_designs',
-    email: 'amanda@designs.co',
-    password: 'password123',
-    phoneNumber: '+1 (555) 014-2288',
-  },
   preferences: {
     notifications: true,
     darkMode: false,
@@ -66,13 +48,23 @@ const languageOptions = [
 ];
 
 export default function SettingsScreen() {
+  const { user, profile, error, isLoading, refetch, update } = useProfile();
+
   const [settings, setSettings] =
     useState<SettingsState>(initialSettingsState);
 
-  const [showPassword, setShowPassword] = useState(false);
   const [languageModalVisible, setLanguageModalVisible] = useState(false);
-  const [hasChanges, setHasChanges] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  // The unsaved display name, tagged with the account it was typed for so a
+  // draft can never carry over to a different signed-in user.
+  const [nameDraft, setNameDraft] = useState<{ userId: string; text: string } | null>(null);
+
+  const savedName = profile?.display_name ?? '';
+  const displayName =
+    nameDraft && nameDraft.userId === user?.id ? nameDraft.text : savedName;
+  const hasNameChange = Boolean(profile) && displayName.trim() !== savedName.trim();
 
   const updateSettings = <K extends keyof SettingsState>(
     section: K,
@@ -85,38 +77,31 @@ export default function SettingsScreen() {
         ...values,
       },
     }));
-
-    setHasChanges(true);
   };
 
-  const handleSave = () => {
-    /*
-     * FUTURE DATABASE IMPLEMENTATION:
-     *
-     * This is where the settings object can be sent to Supabase.
-     *
-     * Example:
-     *
-     * await supabase
-     *   .from('profiles')
-     *   .update({
-     *     username: settings.account.username,
-     *     email: settings.account.email,
-     *     phone_number: settings.account.phoneNumber,
-     *     ...
-     *   })
-     *   .eq('id', user.id);
-     *
-     * Keeping the UI state separate from the database makes
-     * the screen easier to connect to a backend later.
-     */
+  const handleSave = async () => {
+    const name = displayName.trim();
 
-    setHasChanges(false);
+    if (!name) {
+      Alert.alert('Display Name Required', 'Please enter a display name.');
+      return;
+    }
 
-    Alert.alert(
-      'Changes Saved',
-      'Your settings have been updated locally. Database saving can be connected later.'
-    );
+    setSaving(true);
+
+    try {
+      // useProfile scopes the update to profiles.user_id = the signed-in user's id.
+      await update({ display_name: name });
+      setNameDraft(null);
+      Alert.alert('Changes Saved', 'Your display name has been updated.');
+    } catch (saveError) {
+      Alert.alert(
+        'Unable to Save',
+        saveError instanceof Error ? saveError.message : 'An unexpected error occurred.'
+      );
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleLogout = () => {
@@ -140,7 +125,12 @@ export default function SettingsScreen() {
               return;
             }
 
-            router.replace('/login');
+            // `replace` only swaps this screen, leaving Profile and Home underneath for
+            // Back to return to. Clear the whole authenticated history first, then
+            // rebuild the logged-out stack as Welcome > Login.
+            if (router.canDismiss()) router.dismissAll();
+            router.replace('/');
+            router.push('/login');
           } catch (error) {
             setLoggingOut(false);
 
@@ -175,92 +165,64 @@ export default function SettingsScreen() {
 
           <Section title="Profile">
             <View style={styles.profileRow}>
-              <TouchableOpacity
-                style={styles.avatarPlaceholder}
-                onPress={() => {
-                  // Future: open image picker here
-                  Alert.alert(
-                    'Profile Photo',
-                    'Photo selection can be connected here later.'
-                  );
-                }}
-              >
-                {settings.profile.photoUri ? (
-                  <Image
-                    source={{ uri: settings.profile.photoUri }}
-                    style={styles.avatar}
-                  />
-                ) : (
-                  <Ionicons name="person-outline" size={24} />
-                )}
-              </TouchableOpacity>
-
-              <View style={styles.profileInfo}>
-                <ThemedText type="subtitle">
-                  {settings.profile.name}
-                </ThemedText>
-
-                <ThemedText style={styles.muted}>
-                  Manage your account photo
-                </ThemedText>
+              <View style={styles.avatarPlaceholder}>
+                <Ionicons name="person-outline" size={24} />
               </View>
 
-              <TouchableOpacity
-                onPress={() => {
-                  Alert.alert(
-                    'Profile Photo',
-                    'Photo selection can be connected here later.'
-                  );
-                }}
-              >
-                <ThemedText style={styles.link}>
-                  Change Photo
-                </ThemedText>
-              </TouchableOpacity>
+              <View style={styles.profileInfo}>
+                {isLoading ? (
+                  <ActivityIndicator />
+                ) : (
+                  <>
+                    <ThemedText type="subtitle">
+                      {profile
+                        ? savedName.trim() || 'Add your name below'
+                        : 'Profile unavailable'}
+                    </ThemedText>
+
+                    {user?.email ? (
+                      <ThemedText style={styles.muted}>
+                        {user.email}
+                      </ThemedText>
+                    ) : null}
+                  </>
+                )}
+              </View>
             </View>
           </Section>
 
           <Section title="Account Settings">
-            <EditableRow
-              label="Username"
-              value={settings.account.username}
-              onChangeText={(username) =>
-                updateSettings('account', { username })
-              }
-              placeholder="Enter username"
-              autoCapitalize="none"
-            />
+            {isLoading ? (
+              <View style={[styles.statusRow, styles.rowBorder]}>
+                <ActivityIndicator />
+              </View>
+            ) : !profile ? (
+              <View style={[styles.statusRow, styles.rowBorder]}>
+                <ThemedText style={styles.muted}>
+                  {error ?? 'Your profile could not be found.'}
+                </ThemedText>
 
-            <EditableRow
+                <TouchableOpacity onPress={refetch}>
+                  <ThemedText style={styles.link}>
+                    Try again
+                  </ThemedText>
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <EditableRow
+                label="Display Name"
+                value={displayName}
+                onChangeText={(text) => {
+                  if (user) setNameDraft({ userId: user.id, text });
+                }}
+                placeholder="Enter your name"
+                autoCapitalize="words"
+              />
+            )}
+
+            <ReadOnlyRow
               label="Email"
-              value={settings.account.email}
-              onChangeText={(email) =>
-                updateSettings('account', { email })
-              }
-              placeholder="Enter email"
-              keyboardType="email-address"
-              autoCapitalize="none"
-            />
-
-            <PasswordRow
-              value={settings.account.password}
-              showPassword={showPassword}
-              onToggleVisibility={() =>
-                setShowPassword((current) => !current)
-              }
-              onChangeText={(password) =>
-                updateSettings('account', { password })
-              }
-            />
-
-            <EditableRow
-              label="Phone Number"
-              value={settings.account.phoneNumber}
-              onChangeText={(phoneNumber) =>
-                updateSettings('account', { phoneNumber })
-              }
-              placeholder="Enter phone number"
-              keyboardType="phone-pad"
+              value={user?.email ?? 'Not available'}
               last
             />
           </Section>
@@ -314,14 +276,15 @@ export default function SettingsScreen() {
             />
           </Section>
 
-          {hasChanges && (
+          {hasNameChange && (
             <TouchableOpacity
-              style={styles.saveButton}
+              style={[styles.saveButton, saving && styles.saveButtonDisabled]}
               onPress={handleSave}
+              disabled={saving}
               activeOpacity={0.8}
             >
               <ThemedText style={styles.saveText}>
-                Save Changes
+                {saving ? 'Saving…' : 'Save Changes'}
               </ThemedText>
             </TouchableOpacity>
           )}
@@ -433,41 +396,24 @@ function EditableRow({
   );
 }
 
-function PasswordRow({
+function ReadOnlyRow({
+  label,
   value,
-  showPassword,
-  onToggleVisibility,
-  onChangeText,
+  last,
 }: {
+  label: string;
   value: string;
-  showPassword: boolean;
-  onToggleVisibility: () => void;
-  onChangeText: (value: string) => void;
+  last?: boolean;
 }) {
   return (
-    <View style={[styles.editableRow, styles.rowBorder]}>
+    <View style={[styles.editableRow, !last && styles.rowBorder]}>
       <ThemedText style={styles.inputLabel}>
-        Password
+        {label}
       </ThemedText>
 
-      <View style={styles.passwordContainer}>
-        <TextInput
-          value={value}
-          onChangeText={onChangeText}
-          secureTextEntry={!showPassword}
-          style={styles.passwordInput}
-          placeholder="Enter password"
-          placeholderTextColor="rgba(0,0,0,0.35)"
-        />
-
-        <TouchableOpacity onPress={onToggleVisibility}>
-          <Ionicons
-            name={showPassword ? 'eye-off-outline' : 'eye-outline'}
-            size={20}
-            opacity={0.6}
-          />
-        </TouchableOpacity>
-      </View>
+      <ThemedText style={styles.readOnlyValue}>
+        {value}
+      </ThemedText>
     </View>
   );
 }
@@ -611,11 +557,6 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
 
-  avatar: {
-    width: '100%',
-    height: '100%',
-  },
-
   profileInfo: {
     flex: 1,
   },
@@ -653,16 +594,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: 0,
   },
 
-  passwordContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-
-  passwordInput: {
-    flex: 1,
+  readOnlyValue: {
     fontSize: 15,
     paddingVertical: 2,
-    paddingHorizontal: 0,
+    opacity: 0.6,
+  },
+
+  statusRow: {
+    paddingVertical: 12,
+    gap: 8,
   },
 
   chevronValue: {
@@ -676,6 +616,10 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     paddingVertical: 16,
     alignItems: 'center',
+  },
+
+  saveButtonDisabled: {
+    opacity: 0.6,
   },
 
   saveText: {
