@@ -37,7 +37,8 @@ export class WardrobeController {
                 colour,
                 material,
                 tags,
-                price,
+                min_price,
+                max_price
             } = query;
 
         return this.wardrobeService.searchForItems(
@@ -49,7 +50,8 @@ export class WardrobeController {
             colour,
             material,
             tags,
-            price
+            min_price,
+            max_price
         );
     }
 

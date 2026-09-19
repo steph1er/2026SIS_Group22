@@ -139,5 +139,11 @@ export class SearchWardrobeItemDto {
     @Type(() => Number)
     @IsNumber()
     @Min(0)
-    price?: number;
+    min_price?: number;
+
+    @IsOptional()
+    @Type(() => Number)
+    @IsNumber()
+    @Min(0)
+    max_price?: number;
 }
