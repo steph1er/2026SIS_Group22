@@ -14,11 +14,16 @@ export type Profile = {
   body_type: string | null;
   size: string | null;
   created_at: string | null;
+  /** The only authoritative flag for whether onboarding is finished. */
+  onboarding_completed: boolean;
+  /** NULL for accounts that were backfilled as completed rather than finishing the quiz. */
+  onboarding_completed_at: string | null;
 };
 
 export type ProfileUpdate = Partial<Pick<Profile, 'display_name' | 'body_type' | 'size'>>;
 
-const PROFILE_COLUMNS = 'id, user_id, display_name, body_type, size, created_at';
+const PROFILE_COLUMNS =
+  'id, user_id, display_name, body_type, size, created_at, onboarding_completed, onboarding_completed_at';
 
 /** Load the profile whose user_id is the given auth.users.id. Returns null when none is visible. */
 export async function fetchProfile(userId: string): Promise<Profile | null> {

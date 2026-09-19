@@ -6,20 +6,16 @@ import { ThemedText } from '../../components/themed-text';
 import { PrimaryButton } from '../../components/primary-button';
 import { Link } from 'expo-router';
 import { useProfile } from '../../../src/profile/use-profile';
-
-// Shape of a completed style quiz summary, once onboarding answers are
-// persisted to the backend. Swap this stub for the real fetched value
-// (e.g. from Supabase) when that's wired up — the card below already
-// renders either state.
-type QuizResultsSummary = {
-  completedAt: string;
-  vibe: string;
-} | null;
-
-const quizResults: QuizResultsSummary = null;
+import { ProfileHeader } from '../../components/profile-header';
+import { describeStyleQuiz } from './style-summary';
 
 export default function ProfileScreen() {
-  const { user, profile, error, isLoading, refetch } = useProfile();
+  // Loads the profile (profiles.user_id) and the onboarding row (onboarding.user_id) for the
+  // signed-in user together, and again each time this screen is focused, so a finished retake shows up.
+  const { user, profile, onboarding, error, isLoading, refetch } = useProfile({ includeOnboarding: true });
+
+  // Completion comes from profiles.onboarding_completed. The onboarding row alone never decides it.
+  const quiz = profile && !error ? describeStyleQuiz(profile, onboarding) : null;
 
   return (
     <ThemedView style={{ flex: 1 }}>
@@ -34,31 +30,13 @@ export default function ProfileScreen() {
             </Link>
           </View>
 
-          <View style={styles.userRow}>
-            <View style={styles.avatar}>
-              <Ionicons name="person-outline" size={26} />
-            </View>
-            {isLoading ? (
-              <ActivityIndicator />
-            ) : profile ? (
-              <View style={{ flex: 1 }}>
-                <ThemedText type="subtitle">
-                  {profile.display_name?.trim() || 'Add your name in Settings'}
-                </ThemedText>
-                {user?.email ? <ThemedText style={styles.muted}>{user.email}</ThemedText> : null}
-              </View>
-            ) : (
-              <View style={{ flex: 1 }}>
-                <ThemedText type="subtitle">
-                  {error ? "Couldn't load your profile" : 'Profile not found'}
-                </ThemedText>
-                {error ? <ThemedText style={styles.muted}>{error}</ThemedText> : null}
-                <TouchableOpacity onPress={refetch}>
-                  <ThemedText style={styles.retry}>Try again</ThemedText>
-                </TouchableOpacity>
-              </View>
-            )}
-          </View>
+          <ProfileHeader
+            email={user?.email}
+            profile={profile}
+            isLoading={isLoading}
+            error={error}
+            onRetry={refetch}
+          />
 
           <View style={styles.tabSwitcher}>
             <View style={[styles.tab, styles.tabActive]}>
@@ -75,28 +53,38 @@ export default function ProfileScreen() {
             Wardrobe Details
           </ThemedText>
 
-          {/* Links back to the onboarding quiz. Once quiz answers are saved
-              to the backend, replace `quizResults` above with the real
-              value and this card will switch to showing a summary instead
-              of the "not saved yet" prompt — no layout changes needed. */}
-          <Link href="../onboarding" asChild>
-            <TouchableOpacity style={styles.quizCard}>
-              <View style={styles.rowCardIcon}>
-                <Ionicons name="clipboard-outline" size={20} />
-              </View>
-              <View style={{ flex: 1 }}>
-                <ThemedText type="subtitle">
-                  {quizResults ? 'Your Style Quiz Results' : 'Style Quiz Not Saved Yet'}
-                </ThemedText>
-                <ThemedText style={styles.muted}>
-                  {quizResults
-                    ? `Completed ${quizResults.completedAt} · ${quizResults.vibe}`
-                    : "Your onboarding answers aren't linked to your account yet. Tap to retake the quiz and update your preferences."}
-                </ThemedText>
-              </View>
-              <Ionicons name="chevron-forward" size={20} />
-            </TouchableOpacity>
-          </Link>
+          {/* The card opens the existing onboarding quiz: it retakes a finished quiz, resumes one in
+              progress, or starts one. Nothing is shown until the user's real status has loaded, and a
+              failed load shows the error (with retry) in the header instead of any quiz results. */}
+          {quiz ? (
+            <>
+              <Link href="../onboarding" asChild>
+                <TouchableOpacity style={styles.quizCard}>
+                  <View style={styles.rowCardIcon}>
+                    <Ionicons name="clipboard-outline" size={20} />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <ThemedText type="subtitle">{quiz.title}</ThemedText>
+                    <ThemedText style={styles.muted}>{quiz.message}</ThemedText>
+                    <ThemedText style={styles.muted}>{quiz.hint}</ThemedText>
+                  </View>
+                  <Ionicons name="chevron-forward" size={20} />
+                </TouchableOpacity>
+              </Link>
+
+              {quiz.details.length > 0 && (
+                <View>
+                  {quiz.details.map((detail) => (
+                    <DetailRow key={detail.label} label={detail.label} value={detail.value} />
+                  ))}
+                </View>
+              )}
+            </>
+          ) : isLoading ? (
+            <ActivityIndicator />
+          ) : (
+            <ThemedText style={styles.muted}>Your style quiz details couldn&apos;t be loaded.</ThemedText>
+          )}
 
           <View style={styles.analysisCard}>
             <View style={styles.analysisHeaderRow}>
@@ -135,7 +123,7 @@ function DetailRow({ label, value }: { label: string; value: string }) {
   return (
     <View style={styles.detailRow}>
       <ThemedText style={styles.muted}>{label}</ThemedText>
-      <ThemedText>{value}</ThemedText>
+      <ThemedText style={styles.detailValue}>{value}</ThemedText>
     </View>
   );
 }
@@ -151,28 +139,9 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-  userRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  avatar: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: 'rgba(0,0,0,0.08)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   muted: {
     opacity: 0.6,
     fontSize: 13,
-  },
-  retry: {
-    color: '#C97B63',
-    fontWeight: '600',
-    fontSize: 13,
-    marginTop: 4,
   },
   tabSwitcher: {
     flexDirection: 'row',
@@ -245,5 +214,10 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(0,0,0,0.06)',
+  },
+  detailValue: {
+    flex: 1,
+    textAlign: 'right',
+    marginLeft: 16,
   },
 });

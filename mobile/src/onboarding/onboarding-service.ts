@@ -176,6 +176,22 @@ export function answersFromRow(row: OnboardingRow, layout: OnboardingLayout): On
   return answers;
 }
 
+/**
+ * Load the onboarding row whose user_id is the given auth.users.id. Returns null when the
+ * user has none. A row can exist while onboarding is incomplete, so its existence does NOT
+ * mean onboarding is finished: only profiles.onboarding_completed says that.
+ */
+export async function fetchOnboardingRow(userId: string): Promise<OnboardingRow | null> {
+  const { data, error } = await requireSupabase()
+    .from('onboarding')
+    .select('*')
+    .eq('user_id', userId)
+    .maybeSingle();
+
+  if (error) throw new Error(error.message);
+  return (data as OnboardingRow | null) ?? null;
+}
+
 /** What a user's onboarding looks like right now, for both the profile and the answers table. */
 export type OnboardingState = {
   /** profiles.onboarding_completed, the only authoritative completion flag. */
@@ -190,24 +206,18 @@ export type OnboardingState = {
  * failure or unreadable completion flag, so callers never start a blank quiz by mistake.
  */
 export async function fetchOnboardingState(userId: string): Promise<OnboardingState> {
-  const supabase = requireSupabase();
-
-  const [profile, onboarding] = await Promise.all([
-    supabase.from('profiles').select('onboarding_completed').eq('user_id', userId).maybeSingle(),
-    supabase.from('onboarding').select('*').eq('user_id', userId).maybeSingle(),
+  const [profile, row] = await Promise.all([
+    requireSupabase().from('profiles').select('onboarding_completed').eq('user_id', userId).maybeSingle(),
+    fetchOnboardingRow(userId),
   ]);
 
   if (profile.error) throw new Error(profile.error.message);
-  if (onboarding.error) throw new Error(onboarding.error.message);
   if (!profile.data) throw new Error('Your profile could not be found.');
   if (typeof profile.data.onboarding_completed !== 'boolean') {
     throw new Error('Your onboarding status could not be read.');
   }
 
-  return {
-    isCompleted: profile.data.onboarding_completed,
-    row: (onboarding.data as OnboardingRow | null) ?? null,
-  };
+  return { isCompleted: profile.data.onboarding_completed, row };
 }
 
 /** Where the quiz should start and whether it should save as the user goes. */
