@@ -3,8 +3,8 @@ import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { signUp } from '../../src/auth/auth-service';
 import { useAuth } from '../../src/auth/auth-provider';
+import { signUp } from '../../src/auth/auth-service';
 import { BackButton } from '../components/back-button';
 import { OnboardingFormField } from '../components/onboarding-form-field';
 import { PrimaryButton } from '../components/primary-button';
@@ -36,7 +36,7 @@ export default function SignUpScreen() {
       setMessage('Check your email to confirm your account, then log in.');
       return;
     }
-    router.replace('/');
+    router.replace('./onboarding');
   }
 
   return (
@@ -72,8 +72,11 @@ export default function SignUpScreen() {
           </View>
 
           <View style={styles.footer}>
-            <PrimaryButton label={busy ? 'Creating account…' : 'Start Onboarding Quiz'} onPress={handleSignUp} disabled={busy || Boolean(configurationError)} />
-            {(configurationError || message) ? <Text accessibilityRole="alert" style={styles.status}>{configurationError || message}</Text> : null}
+            <PrimaryButton
+              label={busy ? 'Creating account…' : 'Start Onboarding Quiz'} 
+              onPress={handleSignUp} disabled={busy || Boolean(configurationError)} />
+              {(configurationError || message) ?
+                <Text accessibilityRole="alert" style={styles.status}>{configurationError || message}</Text> : null}
             <Text style={styles.terms}>By signing up, you agree to our Terms and Conditions</Text>
           </View>
         </ScrollView>

@@ -3,8 +3,8 @@ import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { resetPassword, signIn } from '../../src/auth/auth-service';
 import { useAuth } from '../../src/auth/auth-provider';
+import { resetPassword, signIn } from '../../src/auth/auth-service';
 import { BackButton } from '../components/back-button';
 import { OnboardingFormField } from '../components/onboarding-form-field';
 import { PrimaryButton } from '../components/primary-button';
@@ -24,13 +24,24 @@ export default function LoginScreen() {
     }
     setBusy(true);
     setMessage('');
-    const { error } = await signIn(email, password);
-    setBusy(false);
+
+    const { data, error } = await signIn(email, password);
+
     if (error) {
+      setBusy(false);
       setMessage(error.message);
       return;
     }
-    router.replace('/');
+
+    if (!data.user) {
+      setBusy(false);
+      setMessage('No user found. Please check your email and password.');
+      return;
+    }
+
+    // Temporary routing while backend onboarding status integration is not yet implemented
+    setBusy(false);  
+    router.replace('./onboarding');
   }
 
   async function handleResetPassword() {
