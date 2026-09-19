@@ -123,7 +123,9 @@ of identity. Mobile requests can use the existing
 - Reload restores the session; sign out returns to the form.
 - Login as a user with `onboarding_completed = true` opens the home screen; as a
   user with `false` it opens onboarding.
-- Restarting the app mid-onboarding (signed in, not finished) reopens onboarding;
+- Restarting the app mid-onboarding (signed in, not finished) reopens onboarding
+  on the furthest screen reached, with earlier answers still selected (saved in
+  `public.onboarding` after each screen, with `current_step`);
   restarting after finishing reopens the home screen.
 - A profile with no row opens the home screen (with a console warning); a failed
   profile check shows an error and a retry option instead of navigating.

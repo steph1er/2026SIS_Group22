@@ -4,12 +4,12 @@ import { requireSupabase } from '../auth/supabase-client';
 export type OnboardingAnswerMap = Record<string, string[] | string | number | boolean>;
 
 /**
- * A row of public.onboarding.
- *
- * `user_id` is the authenticated user's ID (auth.users.id). It is NOT profiles.id.
- * Column types are assumed: text[] for multi-select answers, text for
- * single-select answers and sizes, numeric/integer for height and prices.
+ * Index of the last onboarding screen. Screens are numbered from 0, and this matches
+ * the database CHECK on public.onboarding.current_step (0 to 4).
  */
+export const LAST_ONBOARDING_STEP = 4;
+
+/** A row of public.onboarding. `user_id` is auth.users.id. It is NOT profiles.id. */
 export type OnboardingRow = {
   user_id: string;
   primary_aesthetic: string | null;
@@ -35,7 +35,16 @@ export type OnboardingRow = {
   outerwear_max_price: number | null;
   accessories_min_price: number | null;
   accessories_max_price: number | null;
+  /** Furthest screen reached (0 to 4). Only meaningful while onboarding is not completed. */
+  current_step: number;
   updated_at: string;
+};
+
+/** What the quiz layout needs to tell the restore logic (kept out of here so this file does not import app code). */
+export type OnboardingLayout = {
+  /** Index of the price-range screen. A NULL price only means "skipped" once this screen has been passed. */
+  priceStepIndex: number;
+  priceFields: { id: string; min: number; max: number }[];
 };
 
 function text(value: OnboardingAnswerMap[string] | undefined): string | null {
@@ -51,8 +60,18 @@ function whole(value: OnboardingAnswerMap[string] | undefined): number | null {
   return typeof value === 'number' ? Math.round(value) : null;
 }
 
+/** Keep a step inside 0..LAST_ONBOARDING_STEP, the range the database accepts. */
+export function clampOnboardingStep(step: number): number {
+  if (!Number.isFinite(step)) return 0;
+  return Math.min(Math.max(Math.trunc(step), 0), LAST_ONBOARDING_STEP);
+}
+
 /** Translate the quiz's UI answer state into an onboarding table row for one user. */
-export function buildOnboardingRow(userId: string, answers: OnboardingAnswerMap): OnboardingRow {
+export function buildOnboardingRow(
+  userId: string,
+  answers: OnboardingAnswerMap,
+  currentStep: number,
+): OnboardingRow {
   const heightSkipped = Boolean(answers['height:skip']);
 
   // A skipped price range (or one never set) is stored as NULL.
@@ -89,19 +108,148 @@ export function buildOnboardingRow(userId: string, answers: OnboardingAnswerMap)
     accessories_min_price: price('accessories', 'min'),
     accessories_max_price: price('accessories', 'max'),
 
+    current_step: clampOnboardingStep(currentStep),
     updated_at: new Date().toISOString(),
   };
 }
 
 /**
- * Save the answers to public.onboarding. Upserting on the unique user_id keeps
- * a single row per user. RLS requires auth.uid() = user_id, so this only works
- * for the signed-in user's own row.
+ * The inverse of buildOnboardingRow: rebuild the quiz's answer state from a saved row.
+ *
+ * Empty values are left out so the quiz treats them as unanswered. A NULL price is
+ * ambiguous (unanswered or skipped), so it only becomes "skipped" once the saved
+ * current_step shows the price screen has already been passed.
  */
-async function saveOnboardingAnswers(userId: string, answers: OnboardingAnswerMap): Promise<void> {
+export function answersFromRow(row: OnboardingRow, layout: OnboardingLayout): OnboardingAnswerMap {
+  const answers: OnboardingAnswerMap = {};
+
+  const putText = (key: string, value: string | null | undefined) => {
+    if (value) answers[key] = value;
+  };
+  const putList = (key: string, value: string[] | null | undefined) => {
+    if (value && value.length > 0) answers[key] = [...value];
+  };
+
+  putText('aesthetic', row.primary_aesthetic);
+  putList('style-keywords', row.style_keywords);
+
+  putList('colour', row.colour_preferences);
+  putList('fit', row.fit_preferences);
+  putList('fashion-outlook', row.fashion_outlook);
+  putList('style-no-gos', row.style_no_gos);
+
+  if (row.prefer_not_say_height) {
+    answers['height:skip'] = true;
+  } else if (row.height_cm !== null && row.height_cm !== undefined) {
+    answers['height'] = Number(row.height_cm);
+  }
+  putText('body-type', row.body_type);
+  putText('typical-sizing:tops', row.top_size);
+  putText('typical-sizing:bottoms', row.bottom_size);
+  putText('typical-sizing:dresses', row.dress_size);
+  putList('fabric-sensitivities', row.fabric_sensitivities);
+
+  const columns = row as unknown as Record<string, unknown>;
+  const pricesPassed = row.current_step > layout.priceStepIndex;
+
+  for (const field of layout.priceFields) {
+    const min = columns[`${field.id}_min_price`];
+    const max = columns[`${field.id}_max_price`];
+
+    if (min !== null && min !== undefined && max !== null && max !== undefined) {
+      answers[`price-range:${field.id}:min`] = Number(min);
+      answers[`price-range:${field.id}:max`] = Number(max);
+    } else if (pricesPassed) {
+      answers[`price-range:${field.id}:skip`] = true;
+    }
+  }
+
+  // "Any price" is not stored. It is what the quiz shows when every category is at its full range.
+  const isAnyPrice =
+    layout.priceFields.length > 0 &&
+    layout.priceFields.every(
+      (field) =>
+        answers[`price-range:${field.id}:min`] === field.min && answers[`price-range:${field.id}:max`] === field.max,
+    );
+  if (isAnyPrice) answers['price-range:anyPrice'] = true;
+
+  return answers;
+}
+
+/** What a user's onboarding looks like right now, for both the profile and the answers table. */
+export type OnboardingState = {
+  /** profiles.onboarding_completed, the only authoritative completion flag. */
+  isCompleted: boolean;
+  /** The user's onboarding row, if any. Its existence does NOT mean onboarding is complete. */
+  row: OnboardingRow | null;
+};
+
+/**
+ * Load the signed-in user's onboarding state. `userId` is auth.users.id and is matched
+ * against profiles.user_id and onboarding.user_id (never profiles.id). Throws on any
+ * failure or unreadable completion flag, so callers never start a blank quiz by mistake.
+ */
+export async function fetchOnboardingState(userId: string): Promise<OnboardingState> {
+  const supabase = requireSupabase();
+
+  const [profile, onboarding] = await Promise.all([
+    supabase.from('profiles').select('onboarding_completed').eq('user_id', userId).maybeSingle(),
+    supabase.from('onboarding').select('*').eq('user_id', userId).maybeSingle(),
+  ]);
+
+  if (profile.error) throw new Error(profile.error.message);
+  if (onboarding.error) throw new Error(onboarding.error.message);
+  if (!profile.data) throw new Error('Your profile could not be found.');
+  if (typeof profile.data.onboarding_completed !== 'boolean') {
+    throw new Error('Your onboarding status could not be read.');
+  }
+
+  return {
+    isCompleted: profile.data.onboarding_completed,
+    row: (onboarding.data as OnboardingRow | null) ?? null,
+  };
+}
+
+/** Where the quiz should start and whether it should save as the user goes. */
+export type OnboardingProgress = {
+  initialAnswers: OnboardingAnswerMap;
+  initialStep: number;
+  /** Save after each screen. False for a completed user's retake, which saves only at Finish. */
+  persistProgress: boolean;
+};
+
+/**
+ * Decide the quiz's starting point.
+ *
+ * - Incomplete user with a saved row: restore the answers and resume at current_step.
+ * - Incomplete user with no row: blank, from screen 1, saving as they go.
+ * - Completed user (retake): blank, from screen 1, and no intermediate saving, so a
+ *   half-finished retake can never overwrite the answers they already completed.
+ */
+export function resolveOnboardingProgress(state: OnboardingState, layout: OnboardingLayout): OnboardingProgress {
+  if (state.isCompleted) return { initialAnswers: {}, initialStep: 0, persistProgress: false };
+  if (!state.row) return { initialAnswers: {}, initialStep: 0, persistProgress: true };
+
+  return {
+    initialAnswers: answersFromRow(state.row, layout),
+    initialStep: clampOnboardingStep(state.row.current_step),
+    persistProgress: true,
+  };
+}
+
+/**
+ * Save the answers and progress to public.onboarding. Upserting on the unique user_id
+ * keeps a single row per user. RLS requires auth.uid() = user_id, so this only works
+ * for the signed-in user's own row. This never touches profiles.onboarding_completed.
+ */
+export async function saveOnboardingProgress(
+  userId: string,
+  answers: OnboardingAnswerMap,
+  currentStep: number,
+): Promise<void> {
   const { error } = await requireSupabase()
     .from('onboarding')
-    .upsert(buildOnboardingRow(userId, answers), { onConflict: 'user_id' });
+    .upsert(buildOnboardingRow(userId, answers, currentStep), { onConflict: 'user_id' });
 
   if (error) throw new Error(error.message);
 }
@@ -136,11 +284,16 @@ async function markOnboardingCompleted(userId: string): Promise<void> {
 }
 
 /**
- * Finish onboarding: save the answers first, and only once that succeeds mark
- * the profile completed. If either step fails this throws, so callers must not
- * navigate on failure. Both steps are safe to retry.
+ * Finish onboarding: save the answers (with the latest progress) first, and only once
+ * that succeeds mark the profile completed. If either step fails this throws, so callers
+ * must not navigate on failure. If only the second step fails, the saved progress means
+ * the user can resume from the furthest screen. Both steps are safe to retry.
  */
-export async function completeOnboarding(userId: string, answers: OnboardingAnswerMap): Promise<void> {
-  await saveOnboardingAnswers(userId, answers);
+export async function completeOnboarding(
+  userId: string,
+  answers: OnboardingAnswerMap,
+  currentStep: number,
+): Promise<void> {
+  await saveOnboardingProgress(userId, answers, currentStep);
   await markOnboardingCompleted(userId);
 }
