@@ -4,7 +4,7 @@ import Animated, { runOnJS, useAnimatedStyle, useSharedValue, withSpring } from 
 import { styles } from './createOutfit';
 import { RecommendedItem, WardrobeItem } from './createOutfitTypes';
 
-// TODO: default to no selected item when reopening
+// TODO: default to no selected item when reopening createOutfit
 
 type Props = {
   item: WardrobeItem | RecommendedItem;

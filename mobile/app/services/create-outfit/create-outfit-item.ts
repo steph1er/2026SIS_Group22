@@ -4,24 +4,6 @@ import { StyleUTokens } from '../styleu-theme';
 const { colors } = StyleUTokens;
 
 export const itemStyles = StyleSheet.create ({
-  overlay: {
-    position: 'absolute' as const,
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.3)',
-    justifyContent: 'flex-end' as const,
-  },
-
-  popup: {
-    backgroundColor: 'white',
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    paddingHorizontal: 36,
-    minHeight: 600,
-  },
-
   topContainer: {
     paddingVertical: 12,
     flexDirection: 'row',

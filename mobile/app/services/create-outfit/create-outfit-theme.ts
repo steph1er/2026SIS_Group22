@@ -9,6 +9,24 @@ export const themeStyles = StyleSheet.create ({
     backgroundColor: colors.background,
   },
 
+    overlay: {
+    position: 'absolute' as const,
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+    justifyContent: 'flex-end' as const,
+  },
+
+  popup: {
+    backgroundColor: 'white',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingHorizontal: 36,
+    minHeight: 600,
+  },
+
   headerContainer: {
     flexDirection: 'row',
     width: '100%',
@@ -17,6 +35,7 @@ export const themeStyles = StyleSheet.create ({
     paddingTop: 16,
     paddingBottom: 16,
     paddingHorizontal: 16,
+    height: '8%',
   },
 
   title: {
@@ -35,6 +54,7 @@ export const themeStyles = StyleSheet.create ({
     backgroundColor: colors.backgroundElement,
     flex: 1,
     width: '100%',
+    height: '92%',
   },
 
   buttonContainer: {
@@ -46,8 +66,8 @@ export const themeStyles = StyleSheet.create ({
     flexDirection: 'row',
     justifyContent: 'center',
     gap: 12,
-    paddingTop: 16,
-    paddingBottom: 54,
+    height: '15%',
+    paddingBottom: 24,
   },
 
   buttonText: {

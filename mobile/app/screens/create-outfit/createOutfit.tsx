@@ -1,14 +1,14 @@
 import { useState } from 'react';
-import { Image, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { Image, ScrollView, Text, TouchableOpacity, useWindowDimensions, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import CreateOutfitItem from './createOutfitItem';
-// import CreateOutfitSave from './createOutfitSave';
+import CreateOutfitSave from './createOutfitSave';
 import { RecommendedItem, WardrobeItem } from './createOutfitTypes';
 
-import { router } from 'expo-router';
+import { saveStyles } from '@/services/create-outfit/create-outfit-save';
 import { catalogueStyles } from '../../services/create-outfit/create-outfit-catalogue';
 import { itemStyles } from '../../services/create-outfit/create-outfit-item';
 import { themeStyles } from '../../services/create-outfit/create-outfit-theme';
@@ -16,9 +16,16 @@ import { visualiserStyles } from '../../services/create-outfit/create-outfit-vis
 
 import { BackButton } from '../../components/back-button';
 
-export const styles = {...themeStyles, ...visualiserStyles, ...itemStyles, ...catalogueStyles};
+export const styles = {...themeStyles, ...visualiserStyles, ...itemStyles, ...catalogueStyles, ...saveStyles};
 
 export default function CreateOutfits() {
+
+  const { height: screenHeight } = useWindowDimensions();
+
+  // define snap points as fractions of screen height
+  const SNAP_DOWN = screenHeight * 0.4;   // was 370
+  const SNAP_UP = -screenHeight * 0.33;    // was -350
+  const DRAG_THRESHOLD = screenHeight * 0.18; // was 150
 
   const startY = useSharedValue(0);
   const translateY = useSharedValue(0);
@@ -27,24 +34,42 @@ export default function CreateOutfits() {
       startY.value = translateY.value;
     })
     .onUpdate((event) => {
-      const newY = startY.value + event.translationY;
-
-      translateY.value = Math.max(0, newY);
+      translateY.value = startY.value + event.translationY;
     })
     .onEnd(() => {
-      if (translateY.value > 150) {
-        translateY.value = withSpring(370);
-      // } else if (translateY.value < -150){
-      //   translateY.value = withSpring(0);
+      if (translateY.value > DRAG_THRESHOLD) {
+        translateY.value = withSpring(SNAP_DOWN);
+      } else if (translateY.value < -DRAG_THRESHOLD) {
+        translateY.value = withSpring(SNAP_UP);
       } else {
         translateY.value = withSpring(0);
       }
     });
+  // const startY = useSharedValue(0);
+  // const translateY = useSharedValue(0);
+  // const panGesture = Gesture.Pan()
+  //   .onStart(() => {
+  //     startY.value = translateY.value;
+  //   })
+  //   .onUpdate((event) => {
+  //     translateY.value = startY.value + event.translationY;
+  //   })
+  //   .onEnd(() => {
+  //     if (translateY.value > 150) {
+  //       translateY.value = withSpring(370);
+  //     } else if (translateY.value < -150){
+  //       translateY.value = withSpring(-350);
+  //     } else {
+  //       translateY.value = withSpring(0);
+  //     }
+  //   }); // FIX: needs to be relative to screen not hardcoded
+
 
   const animatedStyle = useAnimatedStyle(() => ({ transform: [{ translateY: translateY.value }] }));
 
   const [selectedItem, setSelectedItem] = useState<WardrobeItem | RecommendedItem | null>(null);
   const [selectedCategory, setSelectedCategory] = useState('Tops');
+  const [showSave, setShowSave] = useState(false);
 
   // TEMP FOR TESTING
   const categories = ['Tops', 'Pants','Shorts', 'Skirts', 'Dresses', 'Outerwear', 'Shoes', 'Accessories'];
@@ -79,31 +104,27 @@ export default function CreateOutfits() {
     },
   ];
 
-  const handleBack = () => {
-    router.replace('./home-dashboard')
-  }
-
   const handleItemSelect = (item: WardrobeItem | RecommendedItem) => {
     setSelectedItem(item);
     // TODO: handle open item details
   };
 
   const handleCloseItemDetails = () => {
-    // TODO: handle close item details
     setSelectedItem(null);
-  };
-
-  const handleAddItemToOutfit = (itemId: string) => {
-    // TODO: handle add item to outfit
   };
 
   // send item array and guard not null
   const handleSaveOutfit = () => {
-
+    setShowSave(true);
   };
 
   const handleCloseSave = () => {
+    setShowSave(false);
+  };
 
+  const handleConfirmSave = (outfitName: string) => {
+    // TODO: persist outfit to db
+    setShowSave(false);
   };
 
   const handleAddToWishlist = () => {
@@ -204,12 +225,12 @@ export default function CreateOutfits() {
           />
         )}
 
-        {/* this is breaking it... */}
-        {/* {save && (
+        {showSave && (
           <CreateOutfitSave
             onClose={handleCloseSave}
+            onConfirmSave={handleConfirmSave}
           />
-        )} */}
+        )}
       </View>
 
     </SafeAreaView>

@@ -13,6 +13,7 @@ export const catalogueStyles = StyleSheet.create ({
     backgroundColor: colors.background,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
+    height: '92%',
   },
 
   dragHandle: {
