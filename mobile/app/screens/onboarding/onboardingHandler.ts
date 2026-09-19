@@ -4,14 +4,21 @@ import { useEffect, useRef, useState } from 'react';
 import { ScrollView } from 'react-native';
 import { useAnimatedStyle, useSharedValue, withTiming, } from 'react-native-reanimated';
 
+import { useAuth } from '../../../src/auth/auth-provider';
+import { completeOnboarding } from '../../../src/onboarding/onboarding-service';
 import { onboardingSteps } from './onboardingData';
 import { OnboardingAnswers, QuestionSection } from './onboardingTypes';
 
 export function useOnboardingHandler() {
+  const { user } = useAuth();
   const [currentStep, setCurrentStep] = useState(0);
   const [answers, setAnswers] = useState<OnboardingAnswers>({});
   const [showErrors, setShowErrors] = useState(false);
   const [openSizeField, setOpenSizeField] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState('');
+  // A ref, not just state, so a rapid second tap is blocked before React re-renders.
+  const isSavingRef = useRef(false);
 
   const scrollViewRef = useRef<ScrollView>(null);
   const step = onboardingSteps[currentStep];
@@ -183,7 +190,38 @@ export function useOnboardingHandler() {
 
   const missingRequiredSections = step.sections?.filter((section) => !section.optional && !isSectionAnswered(section, answers)) ?? [];
 
+  // Runs for both "Finish Onboarding" and "Skip for now". Skipping only skips
+  // adding wardrobe items, so the answers are still saved and onboarding is completed.
+  const finishOnboarding = async () => {
+    if (isSavingRef.current) return;
+
+    if (!user) {
+      setSaveError('You need to be signed in to save your answers. Please log in and try again.');
+      return;
+    }
+
+    isSavingRef.current = true;
+    setIsSaving(true);
+    setSaveError('');
+
+    try {
+      // Saves the answers first, then marks the profile completed. Throws if either fails.
+      await completeOnboarding(user.id, answers);
+    } catch (error) {
+      console.error('Unable to finish onboarding:', error);
+      setSaveError("We couldn't save your answers. Please check your connection and try again.");
+      isSavingRef.current = false;
+      setIsSaving(false);
+      return;
+    }
+
+    // Saved and marked complete. The buttons stay disabled while navigating away.
+    router.replace('/home-dashboard');
+  };
+
   const handleContinue = () => {
+    if (isSavingRef.current) return;
+
     if (missingRequiredSections.length > 0) {
       setShowErrors(true);
       return;
@@ -192,9 +230,7 @@ export function useOnboardingHandler() {
     if (currentStep < onboardingSteps.length - 1) {
       setCurrentStep((prev) => prev + 1);
     } else {
-        // TODO:
-        // Save onboarding answers
-        router.replace('./home-dashboard');
+      void finishOnboarding();
     }
   };
 
@@ -205,6 +241,8 @@ export function useOnboardingHandler() {
   };
 
   return {
+    isSaving,
+    saveError,
     currentStep,
     answers,
     showErrors,

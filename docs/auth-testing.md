@@ -10,9 +10,9 @@
    Review the target before running: this changes the linked database.
 3. Start the mobile app (`npm run web` in `mobile`). Create a test account using
    an email you control. Email confirmation is currently disabled for
-   development, so signup stores the account and returns to the login screen.
-   Log in with the same credentials; successful login shows your email and Sign
-   out.
+   development, so signup keeps the new user signed in and opens the onboarding
+   quiz. To test login, sign out from Settings and log in with the same
+   credentials, which opens the home screen.
 
 ### Auth redirects
 
@@ -114,7 +114,8 @@ of identity. Mobile requests can use the existing
 
 ## Verification checklist
 
-- Email signup returns to login without sending a confirmation email.
+- Email signup keeps the user signed in and opens onboarding, without sending a
+  confirmation email.
 - A newly registered email account can log in immediately.
 - Wrong passwords show an error; correct login shows the account email.
 - Reload restores the session; sign out returns to the form.

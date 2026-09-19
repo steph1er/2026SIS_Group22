@@ -1,10 +1,11 @@
-import { ScrollView, View, Image, TouchableOpacity, Switch, StyleSheet } from 'react-native';
+import { ActivityIndicator, ScrollView, View, TouchableOpacity, Switch, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ThemedView } from '../../components/themed-view';
 import { ThemedText } from '../../components/themed-text';
 import { PrimaryButton } from '../../components/primary-button';
 import { Link } from 'expo-router';
+import { useProfile } from '../../../src/profile/use-profile';
 
 // Shape of a completed style quiz summary, once onboarding answers are
 // persisted to the backend. Swap this stub for the real fetched value
@@ -18,6 +19,8 @@ type QuizResultsSummary = {
 const quizResults: QuizResultsSummary = null;
 
 export default function ProfileScreen() {
+  const { user, profile, error, isLoading, refetch } = useProfile();
+
   return (
     <ThemedView style={{ flex: 1 }}>
       <SafeAreaView style={{ flex: 1 }} edges={['top']}>
@@ -32,14 +35,29 @@ export default function ProfileScreen() {
           </View>
 
           <View style={styles.userRow}>
-            <Image
-              source={{ uri: 'https://placehold.co/56x56' }}
-              style={styles.avatar}
-            />
-            <View>
-              <ThemedText type="subtitle">Amanda Smith</ThemedText>
-              <ThemedText style={styles.muted}>@amanda_designs</ThemedText>
+            <View style={styles.avatar}>
+              <Ionicons name="person-outline" size={26} />
             </View>
+            {isLoading ? (
+              <ActivityIndicator />
+            ) : profile ? (
+              <View style={{ flex: 1 }}>
+                <ThemedText type="subtitle">
+                  {profile.display_name?.trim() || 'Add your name in Settings'}
+                </ThemedText>
+                {user?.email ? <ThemedText style={styles.muted}>{user.email}</ThemedText> : null}
+              </View>
+            ) : (
+              <View style={{ flex: 1 }}>
+                <ThemedText type="subtitle">
+                  {error ? "Couldn't load your profile" : 'Profile not found'}
+                </ThemedText>
+                {error ? <ThemedText style={styles.muted}>{error}</ThemedText> : null}
+                <TouchableOpacity onPress={refetch}>
+                  <ThemedText style={styles.retry}>Try again</ThemedText>
+                </TouchableOpacity>
+              </View>
+            )}
           </View>
 
           <View style={styles.tabSwitcher}>
@@ -83,9 +101,6 @@ export default function ProfileScreen() {
           <View style={styles.analysisCard}>
             <View style={styles.analysisHeaderRow}>
               <ThemedText style={styles.analysisLabel}>AI COLOUR ANALYSIS</ThemedText>
-              <View style={styles.badge}>
-                <ThemedText style={styles.badgeText}>Soft Autumn</ThemedText>
-              </View>
             </View>
             <ThemedText type="subtitle">Your Personal Season Guide</ThemedText>
             <ThemedText style={styles.muted}>
@@ -145,10 +160,19 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
+    backgroundColor: 'rgba(0,0,0,0.08)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   muted: {
     opacity: 0.6,
     fontSize: 13,
+  },
+  retry: {
+    color: '#C97B63',
+    fontWeight: '600',
+    fontSize: 13,
+    marginTop: 4,
   },
   tabSwitcher: {
     flexDirection: 'row',
@@ -186,16 +210,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600',
     opacity: 0.7,
-  },
-  badge: {
-    backgroundColor: '#fff',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
-  },
-  badgeText: {
-    fontSize: 12,
-    fontWeight: '600',
   },
   rowCard: {
     flexDirection: 'row',

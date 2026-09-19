@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { signInWithGoogle, signOut, signUp } from '../../src/auth/auth-service';
+import { signInWithGoogle, signUp } from '../../src/auth/auth-service';
 import { useAuth } from '../../src/auth/auth-provider';
 import { BackButton } from '../components/back-button';
 import { OnboardingFormField } from '../components/onboarding-form-field';
@@ -26,22 +26,23 @@ export default function SignUpScreen() {
     }
     setBusy(true);
     setMessage('');
-    const { error } = await signUp({ email, password, fullName, phone });
+    const { data, error } = await signUp({ email, password, fullName, phone });
+    setBusy(false);
     if (error) {
-      setBusy(false);
       setMessage(error.message);
       return;
     }
 
-    // Email confirmation is disabled, so signup creates a session immediately.
-    // Clear it locally so the user can complete the requested login step.
-    const { error: signOutError } = await signOut('local');
-    setBusy(false);
-    if (signOutError) {
-      setMessage(signOutError.message);
+    // With email confirmation disabled, signup returns a session. Stay signed in
+    // and start onboarding: the new user's profile row already exists.
+    if (data.session) {
+      router.replace('/onboarding');
       return;
     }
-    router.replace({ pathname: '/login', params: { created: '1' } });
+
+    // No session means Supabase still needs the email confirmed, so the user is
+    // not authenticated yet and cannot start onboarding.
+    setMessage('Account created. Please confirm your email address, then log in to continue.');
   }
 
   async function handleGoogleSignIn() {

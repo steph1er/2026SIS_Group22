@@ -1,6 +1,7 @@
 import Slider from '@react-native-community/slider';
+import { Redirect } from 'expo-router';
 import { useState } from 'react';
-import { Image, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Image, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import RangeSlider from 'react-native-fast-range-slider';
 import Animated from 'react-native-reanimated';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
@@ -11,6 +12,7 @@ import { optionStyles } from '../../services/onboarding/onboarding-options';
 import { layoutStyles } from '../../services/onboarding/onboarding-theme';
 import { wardrobeStyles } from '../../services/onboarding/onboarding-wardrobe';
 import { StyleUTokens } from '../../services/styleu-theme';
+import { useAuth } from '../../../src/auth/auth-provider';
 import { useOnboardingHandler } from './onboardingHandler';
 
 const styles = { ...layoutStyles, ...optionStyles, ...inputStyles, ...wardrobeStyles };
@@ -21,7 +23,10 @@ const priceThumbSize = 18;
 const priceLabelWidth = 40;
 
 export default function OnboardingQuiz() {
+  const { user, isLoading: isAuthLoading } = useAuth();
   const {
+    isSaving,
+    saveError,
     currentStep,
     answers,
     showErrors,
@@ -48,6 +53,19 @@ export default function OnboardingQuiz() {
 
   const [priceSliderWidth, setPriceSliderWidth] = useState(defaultPriceSliderWidth);
   const [livePriceValues, setLivePriceValues] = useState<Record<string, [number, number]>>({});
+
+  // Onboarding answers are saved against the signed-in user, so there is nothing to do without one.
+  if (isAuthLoading) {
+    return (
+      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+        <ActivityIndicator color={StyleUTokens.colors.accent} size="large" />
+      </View>
+    );
+  }
+
+  if (!user) {
+    return <Redirect href="/login" />;
+  }
 
   return (
     <SafeAreaProvider>
@@ -562,19 +580,26 @@ export default function OnboardingQuiz() {
           </Text>
         )}
 
+        {saveError !== '' && (
+          <Text accessibilityRole="alert" style={styles.footerErrorText}>
+            {saveError}
+          </Text>
+        )}
+
         <TouchableOpacity
-          style={styles.continueButton}
+          style={[styles.continueButton, isSaving && { opacity: 0.6 }]}
           onPress={handleContinue}
+          disabled={isSaving}
         >
           <Text style={styles.continueText}>
             {currentStep < onboardingSteps.length - 2 && 'Next Step'}
             {currentStep === onboardingSteps.length - 2 && 'Save & Next'}
-            {currentStep === onboardingSteps.length - 1 && 'Finish Onboarding'}
+            {currentStep === onboardingSteps.length - 1 && (isSaving ? 'Saving…' : 'Finish Onboarding')}
           </Text>
         </TouchableOpacity>
 
         {currentStep === onboardingSteps.length - 1 && (
-          <TouchableOpacity onPress={handleContinue}>
+          <TouchableOpacity onPress={handleContinue} disabled={isSaving}>
             <Text style={styles.skipForNow}>
               Skip for now
             </Text>

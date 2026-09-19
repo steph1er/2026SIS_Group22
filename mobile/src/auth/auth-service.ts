@@ -108,7 +108,7 @@ export async function getPostAuthRoute(userId: string) {
   const { data, error } = await requireSupabase()
     .from('profiles')
     .select('onboarding_completed')
-    .eq('id', userId)
+    .eq('user_id', userId)
     .maybeSingle();
 
   if (error) {
