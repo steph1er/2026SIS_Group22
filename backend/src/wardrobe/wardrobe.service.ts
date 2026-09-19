@@ -72,8 +72,6 @@ export class WardrobeService {
 
         const {id, image_url, clothing_category, style, brand, size, colour, material, tags, modified_at, price} = updateWardrobeItemDto
 
-        // check how to authenticate user
-
         // check requested item exists
         await this.check_item_belongs_to_user(user_id, id);
 
