@@ -4,6 +4,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { ThemedView } from '../../components/themed-view';
 import { ThemedText } from '../../components/themed-text';
 import { Link } from 'expo-router';
+import { useProfile } from '../../../src/profile/use-profile';
+import { ProfileHeader } from '../../components/profile-header';
 
 type Collection = {
   id: string;
@@ -20,6 +22,8 @@ const COLLECTIONS: Collection[] = [
 ];
 
 export default function WishlistSavedScreen() {
+  const { user, profile, error, isLoading, refetch } = useProfile();
+
   return (
     <ThemedView style={{ flex: 1 }}>
       <SafeAreaView style={{ flex: 1 }} edges={['top']}>
@@ -34,19 +38,13 @@ export default function WishlistSavedScreen() {
             </Link>
           </View>
 
-          <View style={styles.userRow}>
-            <Image
-              source={{ uri: 'https://placehold.co/56x56' }}
-              style={styles.avatar}
-            />
-
-            <View>
-              <ThemedText type="subtitle">Amanda Smith</ThemedText>
-              <ThemedText style={styles.muted}>
-                @amanda_designs
-              </ThemedText>
-            </View>
-          </View>
+          <ProfileHeader
+            email={user?.email}
+            profile={profile}
+            isLoading={isLoading}
+            error={error}
+            onRetry={refetch}
+          />
 
           <View style={styles.tabSwitcher}>
             <Link href="./profile" asChild>

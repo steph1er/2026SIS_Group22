@@ -1,23 +1,22 @@
-import { ScrollView, View, Image, TouchableOpacity, Switch, StyleSheet } from 'react-native';
+import { ActivityIndicator, ScrollView, View, TouchableOpacity, Switch, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ThemedView } from '../../components/themed-view';
 import { ThemedText } from '../../components/themed-text';
 import { PrimaryButton } from '../../components/primary-button';
 import { Link } from 'expo-router';
-
-// Shape of a completed style quiz summary, once onboarding answers are
-// persisted to the backend. Swap this stub for the real fetched value
-// (e.g. from Supabase) when that's wired up — the card below already
-// renders either state.
-type QuizResultsSummary = {
-  completedAt: string;
-  vibe: string;
-} | null;
-
-const quizResults: QuizResultsSummary = null;
+import { useProfile } from '../../../src/profile/use-profile';
+import { ProfileHeader } from '../../components/profile-header';
+import { describeStyleQuiz } from './style-summary';
 
 export default function ProfileScreen() {
+  // Loads the profile (profiles.user_id) and the onboarding row (onboarding.user_id) for the
+  // signed-in user together, and again each time this screen is focused, so a finished retake shows up.
+  const { user, profile, onboarding, error, isLoading, refetch } = useProfile({ includeOnboarding: true });
+
+  // Completion comes from profiles.onboarding_completed. The onboarding row alone never decides it.
+  const quiz = profile && !error ? describeStyleQuiz(profile, onboarding) : null;
+
   return (
     <ThemedView style={{ flex: 1 }}>
       <SafeAreaView style={{ flex: 1 }} edges={['top']}>
@@ -31,16 +30,13 @@ export default function ProfileScreen() {
             </Link>
           </View>
 
-          <View style={styles.userRow}>
-            <Image
-              source={{ uri: 'https://placehold.co/56x56' }}
-              style={styles.avatar}
-            />
-            <View>
-              <ThemedText type="subtitle">Amanda Smith</ThemedText>
-              <ThemedText style={styles.muted}>@amanda_designs</ThemedText>
-            </View>
-          </View>
+          <ProfileHeader
+            email={user?.email}
+            profile={profile}
+            isLoading={isLoading}
+            error={error}
+            onRetry={refetch}
+          />
 
           <View style={styles.tabSwitcher}>
             <View style={[styles.tab, styles.tabActive]}>
@@ -57,35 +53,42 @@ export default function ProfileScreen() {
             Wardrobe Details
           </ThemedText>
 
-          {/* Links back to the onboarding quiz. Once quiz answers are saved
-              to the backend, replace `quizResults` above with the real
-              value and this card will switch to showing a summary instead
-              of the "not saved yet" prompt — no layout changes needed. */}
-          <Link href="../onboarding" asChild>
-            <TouchableOpacity style={styles.quizCard}>
-              <View style={styles.rowCardIcon}>
-                <Ionicons name="clipboard-outline" size={20} />
-              </View>
-              <View style={{ flex: 1 }}>
-                <ThemedText type="subtitle">
-                  {quizResults ? 'Your Style Quiz Results' : 'Style Quiz Not Saved Yet'}
-                </ThemedText>
-                <ThemedText style={styles.muted}>
-                  {quizResults
-                    ? `Completed ${quizResults.completedAt} · ${quizResults.vibe}`
-                    : "Your onboarding answers aren't linked to your account yet. Tap to retake the quiz and update your preferences."}
-                </ThemedText>
-              </View>
-              <Ionicons name="chevron-forward" size={20} />
-            </TouchableOpacity>
-          </Link>
+          {/* The card opens the existing onboarding quiz: it retakes a finished quiz, resumes one in
+              progress, or starts one. Nothing is shown until the user's real status has loaded, and a
+              failed load shows the error (with retry) in the header instead of any quiz results. */}
+          {quiz ? (
+            <>
+              <Link href="../onboarding" asChild>
+                <TouchableOpacity style={styles.quizCard}>
+                  <View style={styles.rowCardIcon}>
+                    <Ionicons name="clipboard-outline" size={20} />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <ThemedText type="subtitle">{quiz.title}</ThemedText>
+                    <ThemedText style={styles.muted}>{quiz.message}</ThemedText>
+                    <ThemedText style={styles.muted}>{quiz.hint}</ThemedText>
+                  </View>
+                  <Ionicons name="chevron-forward" size={20} />
+                </TouchableOpacity>
+              </Link>
+
+              {quiz.details.length > 0 && (
+                <View>
+                  {quiz.details.map((detail) => (
+                    <DetailRow key={detail.label} label={detail.label} value={detail.value} />
+                  ))}
+                </View>
+              )}
+            </>
+          ) : isLoading ? (
+            <ActivityIndicator />
+          ) : (
+            <ThemedText style={styles.muted}>Your style quiz details couldn&apos;t be loaded.</ThemedText>
+          )}
 
           <View style={styles.analysisCard}>
             <View style={styles.analysisHeaderRow}>
               <ThemedText style={styles.analysisLabel}>AI COLOUR ANALYSIS</ThemedText>
-              <View style={styles.badge}>
-                <ThemedText style={styles.badgeText}>Soft Autumn</ThemedText>
-              </View>
             </View>
             <ThemedText type="subtitle">Your Personal Season Guide</ThemedText>
             <ThemedText style={styles.muted}>
@@ -109,7 +112,7 @@ export default function ProfileScreen() {
             </View>
             <Ionicons name="chevron-forward" size={20} />
           </TouchableOpacity>
-          
+
         </ScrollView>
       </SafeAreaView>
     </ThemedView>
@@ -120,7 +123,7 @@ function DetailRow({ label, value }: { label: string; value: string }) {
   return (
     <View style={styles.detailRow}>
       <ThemedText style={styles.muted}>{label}</ThemedText>
-      <ThemedText>{value}</ThemedText>
+      <ThemedText style={styles.detailValue}>{value}</ThemedText>
     </View>
   );
 }
@@ -135,16 +138,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-  },
-  userRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  avatar: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
   },
   muted: {
     opacity: 0.6,
@@ -187,16 +180,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     opacity: 0.7,
   },
-  badge: {
-    backgroundColor: '#fff',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
-  },
-  badgeText: {
-    fontSize: 12,
-    fontWeight: '600',
-  },
   rowCard: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -231,5 +214,10 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(0,0,0,0.06)',
+  },
+  detailValue: {
+    flex: 1,
+    textAlign: 'right',
+    marginLeft: 16,
   },
 });
