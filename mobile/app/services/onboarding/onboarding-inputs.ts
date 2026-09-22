@@ -142,21 +142,21 @@ export const inputStyles = StyleSheet.create({
     fontSize: 13,
     color: colors.mutedText,
   },
-  
+
   priceCard: {
     padding: 12,
     paddingTop: 16,
     backgroundColor: colors.backgroundElement,
     borderRadius: 8,
   },
-  
+
   priceCardHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     marginBottom: 12,
   },
-  
+
   priceCardTitle: {
     fontSize: 14,
     fontWeight: '600',
@@ -172,12 +172,12 @@ export const inputStyles = StyleSheet.create({
     color: colors.mutedText,
     textAlign: 'right',
   },
-  
+
   priceCardSkipRow: {
     flexDirection: 'row',
     alignItems: 'center',
   },
-  
+
   priceSliderContainer: {
     alignItems: 'center',
     paddingTop: 20,

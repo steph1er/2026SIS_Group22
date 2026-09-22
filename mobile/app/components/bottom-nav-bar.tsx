@@ -2,6 +2,7 @@ import { Feather } from '@expo/vector-icons';
 import { Link, router, usePathname } from 'expo-router';
 import { useState } from 'react';
 import { Modal, Pressable, StyleSheet, View } from 'react-native';
+import { useAuth } from '../../src/auth/auth-provider';
 import { ThemedText } from './themed-text';
 
 const TABS = [
@@ -15,24 +16,24 @@ const RIGHT_TABS = [
 ] as const;
 
 const MENU_OPTIONS = [
-  { key: 'upload', label: 'Upload item', icon: 'upload' as const },
-  { key: 'create', label: 'Create outfit', icon: 'x-circle' as const },
-  { key: 'analysis', label: 'Colour analysis', icon: 'zap' as const },
+  { href: './upload-item', label: 'Upload item', icon: 'upload' as const },
+  { href: './create-outfit', label: 'Create outfit', icon: 'x-circle' as const },
+  { href: './colour-analysis', label: 'Colour analysis', icon: 'zap' as const },
 ];
 
 export function BottomNavBar() {
   const pathname = usePathname();
+  const { user } = useAuth();
   const [menuVisible, setMenuVisible] = useState(false);
 
-  const handleOptionPress = (key: string) => {
+  const handleOptionPress = (href: string) => {
     setMenuVisible(false);
-    // TODO: wire these up to your actual actions/navigation
-    console.log('Selected:', key);
-
-    if(key === 'create'){
-      router.push('./create-outfit')
-    }
+        router.push(href as never);
   };
+
+  // Only for signed-in users, so the Welcome, Login and Sign Up screens cannot open
+  // Home or Profile. Also hidden during onboarding so a new user cannot skip it.
+  if (!user || pathname.startsWith('/onboarding')) return null;
 
   return (
     <>
@@ -83,9 +84,9 @@ export function BottomNavBar() {
           <Pressable style={styles.popup} onPress={(e) => e.stopPropagation()}>
             {MENU_OPTIONS.map((option) => (
               <Pressable
-                key={option.key}
+                key={option.href}
                 style={styles.optionRow}
-                onPress={() => handleOptionPress(option.key)}
+                onPress={() => handleOptionPress(option.href)}
               >
                 <View style={styles.optionIconCircle}>
                   <Feather name={option.icon} size={18} color="#D98E73" />

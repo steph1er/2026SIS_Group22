@@ -1,9 +1,11 @@
 import { ScrollView, View, Image, TouchableOpacity, StyleSheet } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { ThemedView } from '../../components/themed-view';
 import { ThemedText } from '../../components/themed-text';
-import { BottomNavBar } from '../../components/bottom-nav-bar';
 import { Link } from 'expo-router';
+import { useProfile } from '../../../src/profile/use-profile';
+import { ProfileHeader } from '../../components/profile-header';
 
 type Collection = {
   id: string;
@@ -20,84 +22,101 @@ const COLLECTIONS: Collection[] = [
 ];
 
 export default function WishlistSavedScreen() {
+  const { user, profile, error, isLoading, refetch } = useProfile();
+
   return (
     <ThemedView style={{ flex: 1 }}>
-      <ScrollView contentContainerStyle={styles.content}>
-        {/* Header */}
-        <View style={styles.header}>
-          <ThemedText type="title">My Profile</ThemedText>
-          <Link href="./settings" asChild>
-            <TouchableOpacity>
-              <Ionicons name="settings-outline" size={22} />
-            </TouchableOpacity>
-          </Link>
-        </View>
+      <SafeAreaView style={{ flex: 1 }} edges={['top']}>
+        <ScrollView contentContainerStyle={styles.content}>
+          <View style={styles.header}>
+            <ThemedText type="title">My Profile</ThemedText>
 
-        {/* User row */}
-        <View style={styles.userRow}>
-          <Image
-            source={{ uri: 'https://placehold.co/56x56' }}
-            style={styles.avatar}
+            <Link href="./settings" asChild>
+              <TouchableOpacity>
+                <Ionicons name="settings-outline" size={22} />
+              </TouchableOpacity>
+            </Link>
+          </View>
+
+          <ProfileHeader
+            email={user?.email}
+            profile={profile}
+            isLoading={isLoading}
+            error={error}
+            onRetry={refetch}
           />
-          <View>
-            <ThemedText type="subtitle">Amanda Smith</ThemedText>
-            <ThemedText style={styles.muted}>@amanda_designs</ThemedText>
+
+          <View style={styles.tabSwitcher}>
+            <Link href="./profile" asChild>
+              <TouchableOpacity style={styles.tab}>
+                <ThemedText style={styles.tabText}>
+                  My Preferences
+                </ThemedText>
+              </TouchableOpacity>
+            </Link>
+
+            <View style={[styles.tab, styles.tabActive]}>
+              <ThemedText style={styles.tabTextActive}>
+                Saved
+              </ThemedText>
+            </View>
           </View>
-        </View>
 
-        {/* Tab switcher */}
-        <View style={styles.tabSwitcher}>
-          <Link href="./profile" asChild>
-            <TouchableOpacity style={styles.tab}>
-              <ThemedText style={styles.tabText}>My Preferences</ThemedText>
-            </TouchableOpacity>
-          </Link>
-          <View style={[styles.tab, styles.tabActive]}>
-            <ThemedText style={styles.tabTextActive}>Saved</ThemedText>
-          </View>
-        </View>
+          <View style={styles.sectionHeaderRow}>
+            <ThemedText type="subtitle">
+              Saved Collections
+            </ThemedText>
 
-        {/* Saved collections heading */}
-        <View style={styles.sectionHeaderRow}>
-          <ThemedText type="subtitle">Saved Collections</ThemedText>
-          <ThemedText style={styles.muted}>{COLLECTIONS.length} collections</ThemedText>
-        </View>
-
-        {/* Collections grid */}
-        <View style={styles.grid}>
-          {COLLECTIONS.map((collection) => (
-            <CollectionCard key={collection.id} collection={collection} />
-          ))}
-        </View>
-
-        {/* Create collection */}
-        <TouchableOpacity style={styles.createCard}>
-          <View style={styles.createIcon}>
-            <Ionicons name="add" size={20} />
-          </View>
-          <View style={{ flex: 1 }}>
-            <ThemedText type="subtitle">+ Create Collection</ThemedText>
             <ThemedText style={styles.muted}>
-              Build a new lookbook-style collection and add items and outfits.
+              {COLLECTIONS.length} collections
             </ThemedText>
           </View>
-        </TouchableOpacity>
 
-        {/* Outfit Builder Canvas row */}
-        <TouchableOpacity style={styles.rowCard}>
-          <View style={styles.rowCardIcon}>
-            <Ionicons name="sparkles-outline" size={20} />
+          <View style={styles.grid}>
+            {COLLECTIONS.map((collection) => (
+              <CollectionCard
+                key={collection.id}
+                collection={collection}
+              />
+            ))}
           </View>
-          <View style={{ flex: 1 }}>
-            <ThemedText type="subtitle">Outfit Builder Canvas</ThemedText>
-            <ThemedText style={styles.muted}>
-              Experiment with visual layouts & styling
-            </ThemedText>
-          </View>
-          <Ionicons name="chevron-forward" size={20} />
-        </TouchableOpacity>
-      </ScrollView>
-      <BottomNavBar />
+
+          <TouchableOpacity style={styles.createCard}>
+            <View style={styles.createIcon}>
+              <Ionicons name="add" size={20} />
+            </View>
+
+            <View style={{ flex: 1 }}>
+              <ThemedText type="subtitle">
+                + Create Collection
+              </ThemedText>
+
+              <ThemedText style={styles.muted}>
+                Build a new lookbook-style collection and add items
+                and outfits.
+              </ThemedText>
+            </View>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.rowCard}>
+            <View style={styles.rowCardIcon}>
+              <Ionicons name="sparkles-outline" size={20} />
+            </View>
+
+            <View style={{ flex: 1 }}>
+              <ThemedText type="subtitle">
+                Outfit Builder Canvas
+              </ThemedText>
+
+              <ThemedText style={styles.muted}>
+                Experiment with visual layouts & styling
+              </ThemedText>
+            </View>
+
+            <Ionicons name="chevron-forward" size={20} />
+          </TouchableOpacity>
+        </ScrollView>
+      </SafeAreaView>
     </ThemedView>
   );
 }

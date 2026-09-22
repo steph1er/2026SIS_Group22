@@ -4,9 +4,10 @@ import { AppService } from './app.service';
 import { WardrobeModule } from './wardrobe/wardrobe.module';
 import { ConfigModule } from '@nestjs/config';
 import { SupabaseModule } from './supabase/supabase.module';
+import { WishlistModule } from './wishlist/wishlist.module';
 
 @Module({
-  imports: [ConfigModule.forRoot({ isGlobal: true }), SupabaseModule, WardrobeModule],
+  imports: [ConfigModule.forRoot({ isGlobal: true }), SupabaseModule, WardrobeModule, WishlistModule],
   controllers: [AppController],
   providers: [AppService],
 })
