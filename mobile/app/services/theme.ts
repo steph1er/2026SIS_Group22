@@ -3,7 +3,7 @@
  * There are many other ways to style your app. For example, [Nativewind](https://www.nativewind.dev/), [Tamagui](https://tamagui.dev/), [unistyles](https://reactnativeunistyles.vercel.app), etc.
  */
 
-import '@/global.css';
+import '../global.css';
 
 import { Platform } from 'react-native';
 
@@ -25,6 +25,29 @@ export const Colors = {
 } as const;
 
 export type ThemeColor = keyof typeof Colors.light & keyof typeof Colors.dark;
+
+export const AccentColors = {
+  light: {
+    primary: '#E5B8AA',
+    chipSelectedBg: '#FBF0EC',
+    track: '#E9E7E4',
+    border: '#E3E1DE',
+    badgeBg: '#EFEEEC',
+    badgeText: '#6B6B6B',
+    errorRed: '#E53935',
+    buttonText: '#2B2320',
+  },
+  dark: {
+    primary: '#C98F7C',
+    chipSelectedBg: '#3A2E2A',
+    track: '#3A3A3A',
+    border: '#4A4542',
+    badgeBg: '#2A2A2A',
+    badgeText: '#B0B4BA',
+    errorRed: '#FF6B6B',
+    buttonText: '#1A1210',
+  },
+} as const;
 
 export const Fonts = Platform.select({
   ios: {

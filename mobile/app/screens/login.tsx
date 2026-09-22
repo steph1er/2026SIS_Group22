@@ -1,16 +1,17 @@
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { resetPassword, signIn } from '../../src/auth/auth-service';
 import { useAuth } from '../../src/auth/auth-provider';
+import { getPostAuthRoute, resetPassword, signIn } from '../../src/auth/auth-service';
 import { BackButton } from '../components/back-button';
 import { OnboardingFormField } from '../components/onboarding-form-field';
 import { PrimaryButton } from '../components/primary-button';
 import { StyleUTokens } from '../services/styleu-theme';
 
 export default function LoginScreen() {
+  const { created } = useLocalSearchParams<{ created?: string }>();
   const { configurationError } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -24,13 +25,32 @@ export default function LoginScreen() {
     }
     setBusy(true);
     setMessage('');
-    const { error } = await signIn(email, password);
-    setBusy(false);
+
+    const { data, error } = await signIn(email, password);
+
     if (error) {
+      setBusy(false);
       setMessage(error.message);
       return;
     }
-    router.replace('/');
+
+    if (!data.user) {
+      setBusy(false);
+      setMessage('No user found. Please check your email and password.');
+      return;
+    }
+
+    // Home for users who finished onboarding, onboarding for those who did not.
+    // The button stays busy until this resolves, and nothing navigates if the check fails.
+    const result = await getPostAuthRoute(data.user.id);
+    setBusy(false);
+
+    if (result.error) {
+      setMessage("You're signed in, but we couldn't check your account. Please check your connection and try again.");
+      return;
+    }
+
+    router.replace(result.route);
   }
 
   async function handleResetPassword() {
@@ -56,7 +76,11 @@ export default function LoginScreen() {
           <Pressable onPress={handleResetPassword} disabled={busy}>
             <Text style={styles.forgotPassword}>Forgot password?</Text>
           </Pressable>
-          {(configurationError || message) ? <Text accessibilityRole="alert" style={styles.status}>{configurationError || message}</Text> : null}
+          {(configurationError || message || created === '1') ? (
+            <Text accessibilityRole="alert" style={styles.status}>
+              {configurationError || message || 'Account created. Log in with your email and password.'}
+            </Text>
+          ) : null}
         </View>
 
         <View style={styles.footer}>

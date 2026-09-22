@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { signUp } from '../../src/auth/auth-service';
+import { signInWithGoogle, signUp } from '../../src/auth/auth-service';
 import { useAuth } from '../../src/auth/auth-provider';
 import { BackButton } from '../components/back-button';
 import { OnboardingFormField } from '../components/onboarding-form-field';
@@ -32,11 +32,31 @@ export default function SignUpScreen() {
       setMessage(error.message);
       return;
     }
-    if (!data.session) {
-      setMessage('Check your email to confirm your account, then log in.');
+
+    // With email confirmation disabled, signup returns a session. Stay signed in
+    // and start onboarding: the new user's profile row already exists.
+    if (data.session) {
+      router.replace('/onboarding');
       return;
     }
-    router.replace('/');
+
+    // No session means Supabase still needs the email confirmed, so the user is
+    // not authenticated yet and cannot start onboarding.
+    setMessage('Account created. Please confirm your email address, then log in to continue.');
+  }
+
+  async function handleGoogleSignIn() {
+    setBusy(true);
+    setMessage('');
+
+    try {
+      const sessionReady = await signInWithGoogle();
+      if (sessionReady) router.replace('/home-dashboard');
+    } catch (error: unknown) {
+      setMessage(error instanceof Error ? error.message : 'Unable to sign in with Google.');
+    } finally {
+      setBusy(false);
+    }
   }
 
   return (
@@ -46,8 +66,13 @@ export default function SignUpScreen() {
             <BackButton />
           <Text accessibilityRole="header" style={styles.title}>Create your account</Text>
 
-          <Pressable style={[styles.googleButton, styles.disabled]} disabled>
-            <Text style={styles.googleButtonLabel}>Continue with Google (coming soon)</Text>
+          <Pressable
+            accessibilityRole="button"
+            style={[styles.googleButton, busy || configurationError ? styles.disabled : null]}
+            disabled={busy || Boolean(configurationError)}
+            onPress={handleGoogleSignIn}
+          >
+            <Text style={styles.googleButtonLabel}>{busy ? 'Opening Google…' : 'Continue with Google'}</Text>
           </Pressable>
 
           <View style={styles.dividerRow}>
@@ -72,8 +97,11 @@ export default function SignUpScreen() {
           </View>
 
           <View style={styles.footer}>
-            <PrimaryButton label={busy ? 'Creating account…' : 'Start Onboarding Quiz'} onPress={handleSignUp} disabled={busy || Boolean(configurationError)} />
-            {(configurationError || message) ? <Text accessibilityRole="alert" style={styles.status}>{configurationError || message}</Text> : null}
+            <PrimaryButton
+              label={busy ? 'Creating account…' : 'Start Onboarding Quiz'}
+              onPress={handleSignUp} disabled={busy || Boolean(configurationError)} />
+              {(configurationError || message) ?
+                <Text accessibilityRole="alert" style={styles.status}>{configurationError || message}</Text> : null}
             <Text style={styles.terms}>By signing up, you agree to our Terms and Conditions</Text>
           </View>
         </ScrollView>

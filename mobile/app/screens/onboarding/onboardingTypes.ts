@@ -1,0 +1,55 @@
+export type OnboardingStep = {
+  id: string;
+  title: string;
+  subtitle?: string;
+  sections?: QuestionSection[];
+  type?: 'questions' | 'wardrobe';
+};
+
+export type Option = {
+  id: string;
+  label: string;
+  description?: string;
+  image?: string | number;
+  colour?: string;
+};
+
+export type SizeField = {
+  id: string;
+  label: string;
+  options: string[];
+};
+
+export type PriceField = {
+  id: string;
+  label: string;
+  min: number;
+  max: number;
+  step?: number;
+};
+
+export type QuestionSection = {
+  id: string;
+  title: string;
+  subtitle?: string;
+  type:
+    | 'multi-select'
+    | 'single-select'
+    | 'image-select'
+    | 'slider'
+    | 'size-select'
+    | 'price-select';
+  optional?: boolean;
+  options?: Option[];
+  fields?: SizeField[];
+  priceFields?: PriceField[];
+  min?: number;
+  max?: number;
+  defaultValue?: number;
+  unit?: string;
+};
+
+export type OnboardingAnswers = Record<
+  string,
+  string[] | string | number | boolean
+>;
