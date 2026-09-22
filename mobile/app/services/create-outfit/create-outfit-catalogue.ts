@@ -108,7 +108,7 @@ export const catalogueStyles = StyleSheet.create ({
   },
 
   scrollContent: {
-    paddingBottom: 100,
+    paddingBottom: '75%',
     gap: 12,
   },
 

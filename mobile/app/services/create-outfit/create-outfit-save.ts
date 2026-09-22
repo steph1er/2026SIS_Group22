@@ -5,7 +5,7 @@ const { colors } = StyleUTokens;
 
 export const saveStyles = StyleSheet.create ({
   saveHeader: {
-    fontSize: 32,
+    fontSize: 26,
     fontWeight: 700,
     paddingVertical: 14,
     color: colors.text,
@@ -20,7 +20,7 @@ export const saveStyles = StyleSheet.create ({
 
   outfitDetailsTitle: {
     color: colors.text,
-    fontSize: 24,
+    fontSize: 18,
     fontWeight: 500,
   },
 

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Text, TouchableOpacity, View } from 'react-native';
+import { Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, { runOnJS, useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { styles } from './createOutfit';
@@ -65,13 +65,37 @@ export default function CreateOutfitSave({ onClose, onConfirmSave }: Props) {
         {/* iterate through each category? */}
         <View style={styles.outfitDetailsContainer}>
           <View style={styles.outfitDetailsField}>
-            <Text style={styles.outfitDetailsCategory}>
-              Outfit Name
-            </Text>
-            <Text style={styles.outfitDetailsInput}>
-              placeholder
-            </Text>
-          </View>
+              <Text style={styles.outfitDetailsCategory}>
+                Outfit Name
+              </Text>
+              <TextInput
+                style={styles.outfitDetailsInput}
+                placeholder="Enter outfit name"
+                value={outfitName}
+                onChangeText={setOutfitName}
+              />
+            </View>
+
+            <View style={styles.outfitDetailsField}>
+              <Text style={styles.outfitDetailsCategory}>
+                Style
+              </Text>
+              {/* dropdown */}
+            </View>
+
+            <View style={styles.outfitDetailsField}>
+              <Text style={styles.outfitDetailsCategory}>
+                Season
+              </Text>
+              {/* dropdown */}
+            </View>
+
+            <View style={styles.outfitDetailsField}>
+              <Text style={styles.outfitDetailsCategory}>
+                Occasion
+              </Text>
+              {/* dropdown */}
+            </View>
           <View style={styles.detailSeparator} />
         </View>
 
