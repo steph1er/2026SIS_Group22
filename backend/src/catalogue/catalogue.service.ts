@@ -40,18 +40,18 @@ export class CatalogueService {
     ) {
         const supabase = this.supabaseService.client;
 
-         // check which category user is searching by
         let query = supabase.from('catalogue_items')
                             .select('*, brands!inner (*)');
 
-        // TODO how to check remove back for case (doesn't matter upper or lower etc.)
+        // TODO - case sensitivty for overlap functions
 
         if(item_name && item_name?.length !== 0){
-            query = query.eq('item_name', item_name);
+            query = query.ilike('item_name', item_name);
         }
         
         if(clothingcategory && clothingcategory?.length !== 0){
-            query = query.in('category', clothingcategory);
+            const clothingcategory_query = clothingcategory.map(item => `category.ilike.${item}`).join(',');
+            query = query.or(clothingcategory_query);
         }
 
         if(style && style?.length !== 0){
@@ -59,7 +59,8 @@ export class CatalogueService {
         }
 
         if(brand && brand?.length !== 0){
-            query = query.in('brands.brand_name', brand);
+            const brand_query = brand.map(item => `brand_name.ilike.${item}`).join(',');
+            query = query.or(brand_query, { referencedTable: 'brands' });
         }
 
         // TODO set up how different sizes are equal

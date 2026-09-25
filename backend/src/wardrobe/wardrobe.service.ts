@@ -118,15 +118,13 @@ export class WardrobeService {
 
         const user_id = await this.get_profile_id(id);
 
-        // check which category user is searching by
         let query = supabase.from('wardrobe_items')
                             .select('*')
                             .eq('user_id', user_id);
-
-        // TODO how to check remove back for case (doesn't matter upper or lower etc.)
         
         if(clothing_category && clothing_category?.length !== 0){
-            query = query.in('clothing_category', clothing_category);
+            const clothing_category_query = clothing_category.map(category => `clothing_category.ilike.${category}`).join(',');
+            query = query.or(clothing_category_query);
         }
 
         if(style && style?.length !== 0){
@@ -134,11 +132,14 @@ export class WardrobeService {
         }
 
         if(brand && brand?.length !== 0){
-            query = query.in('brand', brand);
+            const brand_query = brand.map(item => `brand.ilike.${item}`).join(',');
+            query = query.or(brand_query);
         }
 
+        // TODO set up how different sizes are equal
         if(size && size?.length !== 0){
-            query = query.in('size', size);
+            const size_query = size.map(item => `size.ilike.${item}`).join(',');
+            query = query.or(size_query);
         }
 
         if(colour && colour?.length !== 0){
