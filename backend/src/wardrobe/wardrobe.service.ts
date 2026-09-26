@@ -70,9 +70,15 @@ export class WardrobeService {
 
         const user_id = await this.get_profile_id(auth_id);
 
-        const {id, image_url, clothing_category, style, brand, size, colour, material, tags, modified_at, price} = updateWardrobeItemDto
+        let {id, image_url, clothing_category, style, brand, size, colour, material, tags, modified_at, price} = updateWardrobeItemDto
 
-        // check how to authenticate user
+        clothing_category = clothing_category.toLowerCase();
+        style = style.map((item) => item.toLowerCase());
+        brand = brand.toLowerCase();
+        size = size.toLowerCase();
+        colour = colour.map((item) => item.toLowerCase());
+        material = material.map((item) => item.toLowerCase());
+        tags = tags.map((item) => item.toLowerCase());
 
         // check requested item exists
         await this.check_item_belongs_to_user(user_id, id);

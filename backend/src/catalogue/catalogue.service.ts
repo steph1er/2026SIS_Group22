@@ -43,8 +43,6 @@ export class CatalogueService {
         let query = supabase.from('catalogue_items')
                             .select('*, brands!inner (*)');
 
-        // TODO - case sensitivty for overlap functions
-
         if(item_name && item_name?.length !== 0){
             query = query.ilike('item_name', item_name);
         }
