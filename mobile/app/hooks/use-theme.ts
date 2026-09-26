@@ -16,6 +16,6 @@ export function useTheme() {
 export function useAccentColors() {
   const scheme = useColorScheme();
   const theme = scheme === 'unspecified' ? 'light' : scheme;
- 
+
   return AccentColors[theme];
 }
