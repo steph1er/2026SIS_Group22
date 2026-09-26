@@ -1,7 +1,11 @@
 import { Transform, Type } from "class-transformer";
 import { IsArray, IsNumber, IsOptional, IsString, Min } from "class-validator";
 
-export class SearchWardrobeItemDto {
+export class SearchCatalogueItemDto {
+    @IsOptional()
+    @IsString({ each: true })
+    item_name?: string;
+
     @IsOptional()
     @IsArray()
     @IsString({ each: true })
@@ -115,25 +119,6 @@ export class SearchWardrobeItemDto {
         return [value];
     })
     material?: string[];
-
-    @IsOptional()
-    @IsArray()
-    @IsString({ each: true })
-    @Transform(({ value }) => {
-        // check if value is already an array
-        if(Array.isArray(value)){
-            return value;
-        }
-
-        // check if empty
-        if(!value) {
-            return [];
-        }
-
-        // check if only one item in array
-        return [value];
-    })
-    tags?: string[];
 
     @IsOptional()
     @Type(() => Number)

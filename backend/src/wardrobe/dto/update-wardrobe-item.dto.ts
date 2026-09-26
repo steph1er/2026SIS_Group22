@@ -15,7 +15,7 @@ export class UpdateWardrobeItemDto {
 
     @IsArray()
     @IsOptional()
-    style: string;
+    style: string[];
 
     @IsString()
     @IsOptional()
