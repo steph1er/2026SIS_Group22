@@ -59,6 +59,38 @@ export const catalogueStyles = StyleSheet.create ({
     color: colors.background,
   },
 
+  catalogueToggleContainer: {
+    alignSelf: 'center',
+    backgroundColor: colors.mutedAccentContent,
+    height: 42,
+    borderRadius: 20,
+    width: '80%',
+    flexDirection: 'row',
+    padding: 4,
+    alignItems: 'center',
+    position: 'relative',
+  },
+
+  catalogueToggleActive: {
+    position: 'absolute',
+    left: 4,
+    top: 4,
+    bottom: 4,
+    width: '50%',
+    backgroundColor: colors.background,
+    borderRadius: 20,
+  },
+
+  catalogueToggleButton: {
+    flex: 1,
+    backgroundColor: 'transparent',
+    paddingVertical: 8,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 1,
+  },
+
   suggestedContainer: {
     backgroundColor: colors.mutedAccent,
     width: '90%',
@@ -84,7 +116,7 @@ export const catalogueStyles = StyleSheet.create ({
 
   itemCard: {
     width: 100,
-    backgroundColor: colors.backgroundElement,
+    backgroundColor: colors.mutedBackground,
     borderRadius: 16,
     overflow: 'hidden',
     alignItems: 'center',

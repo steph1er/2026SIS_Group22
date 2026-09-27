@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Image, ScrollView, Text, TouchableOpacity, useWindowDimensions, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
-import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
+import Animated, { useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import CreateOutfitItem from './createOutfitItem';
@@ -13,6 +13,7 @@ import { catalogueStyles } from '../../services/create-outfit/create-outfit-cata
 import { itemStyles } from '../../services/create-outfit/create-outfit-item';
 import { themeStyles } from '../../services/create-outfit/create-outfit-theme';
 import { visualiserStyles } from '../../services/create-outfit/create-outfit-visualiser';
+import { StyleUTokens } from '../../services/styleu-theme';
 
 import { BackButton } from '../../components/back-button';
 
@@ -20,12 +21,14 @@ export const styles = {...themeStyles, ...visualiserStyles, ...itemStyles, ...ca
 
 export default function CreateOutfits() {
 
-  const { height: screenHeight } = useWindowDimensions();
+  const { height: screenHeight, width: screenWidth } = useWindowDimensions();
 
-  // define snap points as fractions of screen height
-  const SNAP_DOWN = screenHeight * 0.4;   // was 370
-  const SNAP_UP = -screenHeight * 0.33;    // was -350
-  const DRAG_THRESHOLD = screenHeight * 0.18; // was 150
+  const toggleWidth = screenWidth * 0.8;
+  const toggleMove = (toggleWidth - 8) / 2;
+
+  const SNAP_DOWN = screenHeight * 0.4;
+  const SNAP_UP = -screenHeight * 0.33;
+  const DRAG_THRESHOLD = screenHeight * 0.18;
 
   const startY = useSharedValue(0);
   const translateY = useSharedValue(0);
@@ -45,34 +48,17 @@ export default function CreateOutfits() {
         translateY.value = withSpring(0);
       }
     });
-  // const startY = useSharedValue(0);
-  // const translateY = useSharedValue(0);
-  // const panGesture = Gesture.Pan()
-  //   .onStart(() => {
-  //     startY.value = translateY.value;
-  //   })
-  //   .onUpdate((event) => {
-  //     translateY.value = startY.value + event.translationY;
-  //   })
-  //   .onEnd(() => {
-  //     if (translateY.value > 150) {
-  //       translateY.value = withSpring(370);
-  //     } else if (translateY.value < -150){
-  //       translateY.value = withSpring(-350);
-  //     } else {
-  //       translateY.value = withSpring(0);
-  //     }
-  //   }); // FIX: needs to be relative to screen not hardcoded
-
 
   const animatedStyle = useAnimatedStyle(() => ({ transform: [{ translateY: translateY.value }] }));
 
   const [selectedItem, setSelectedItem] = useState<WardrobeItem | RecommendedItem | null>(null);
+  const [itemsCategory, setItemsCategory] = useState('Wardrobe'); // wardrobe or wishlist
+  const togglePosition = useSharedValue(1);
+
   const [selectedCategory, setSelectedCategory] = useState('Tops');
   const [showSave, setShowSave] = useState(false);
 
-  // TEMP FOR TESTING
-  const categories = ['Tops', 'Pants','Shorts', 'Skirts', 'Dresses', 'Outerwear', 'Shoes', 'Accessories'];
+  const categories = ['Tops', 'Bottoms', 'Shoes', 'Accessories', 'Other'];
   const placeholderItems: RecommendedItem[] = [
     {
       id: '1',
@@ -106,14 +92,12 @@ export default function CreateOutfits() {
 
   const handleItemSelect = (item: WardrobeItem | RecommendedItem) => {
     setSelectedItem(item);
-    // TODO: handle open item details
   };
 
   const handleCloseItemDetails = () => {
     setSelectedItem(null);
   };
 
-  // send item array and guard not null
   const handleSaveOutfit = () => {
     setShowSave(true);
   };
@@ -123,12 +107,12 @@ export default function CreateOutfits() {
   };
 
   const handleConfirmSave = (outfitName: string) => {
-    // TODO: persist outfit to db
+    // TODO: save outfit
     setShowSave(false);
   };
 
   const handleAddToWishlist = () => {
-    // TODO: add to wishlist
+    // TODO: add to wishlist and clear outfit builder
   };
 
   return (
@@ -146,7 +130,7 @@ export default function CreateOutfits() {
       <View style={styles.contentContainer}>
         {/* outfit */}
         <View style={styles.visualiserContainer}>
-          {/* TO DO: show outfit  */}
+          {/* TODO: show outfit  */}
         </View>
 
         <Animated.View style={[styles.catalogueContainer, animatedStyle]}>
@@ -172,14 +156,58 @@ export default function CreateOutfits() {
                     </Text>
                   </TouchableOpacity>
                 ))}
-                {/* TODO: pull categories from database*/}
               </View>
             </ScrollView>
+
+            {/* TODO: add search bar */}
 
             {/* recommended items */}
             <View style={styles.suggestedContainer}>
               <Text style={styles.suggestionText}>Items you might like...</Text>
               {/* TODO: pull from db */}
+              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                <View style={styles.suggestedItemsGrid}>
+                  {placeholderItems.map((item) => (
+                    <TouchableOpacity key={item.id} style={styles.itemCard} onPress={() => handleItemSelect(item)}>
+                      <Image source={{ uri: item.image_url }} style={styles.itemImage}/>
+                      <Text style={styles.itemName}>{item.name}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </ScrollView>
+            </View>
+
+            {/* wishlist or wardrobe toggle */}
+            <View style={styles.catalogueToggleContainer}>
+              <Animated.View style={[styles.catalogueToggleActive,
+                useAnimatedStyle(() => ({
+                  transform: [{translateX: togglePosition.value * toggleMove}]
+                }))
+              ]}/>
+
+              <TouchableOpacity
+                onPress={() => {
+                  setItemsCategory('Wardrobe');
+                  togglePosition.value = withTiming(0);
+                }}
+                style={styles.catalogueToggleButton}
+              >
+                <Text>Wardrobe</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => {
+                  setItemsCategory('Wishlist');
+                  togglePosition.value = withTiming(1);
+                }}
+                style={styles.catalogueToggleButton}
+              >
+                <Text>Wishlist</Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* suggested for you container */}
+            <View style={[styles.suggestedContainer, {backgroundColor: StyleUTokens.colors.backgroundElement}]}>
+              <Text style={styles.suggestionText}>Suggested for you</Text>
               <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                 <View style={styles.suggestedItemsGrid}>
                   {placeholderItems.map((item) => (
@@ -208,6 +236,7 @@ export default function CreateOutfits() {
         </Animated.View>
 
         {/* bottom bar */}
+        {/* TODO: disable buttons when no item selected */}
         <View style={styles.buttonContainer}>
           <TouchableOpacity onPress={handleAddToWishlist} style={styles.wishlistButton}>
             <Text style={styles.buttonText}>Add to Wishlist</Text>

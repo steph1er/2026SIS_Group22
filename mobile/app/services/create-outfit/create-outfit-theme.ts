@@ -9,7 +9,7 @@ export const themeStyles = StyleSheet.create ({
     backgroundColor: colors.background,
   },
 
-    overlay: {
+  overlay: {
     position: 'absolute' as const,
     top: 0,
     left: 0,

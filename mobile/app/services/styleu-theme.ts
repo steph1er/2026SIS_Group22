@@ -19,6 +19,10 @@ export const StyleUTokens = {
     badgeText: '#6B6B6B',
     errorRed: '#982422',
     buttonText: '#2B2320',
+
+    // create outfits
+    mutedBackground: '#faf5f2f1',
+    mutedAccentContent: '#eadfdb52',
   },
   radius: { field: 16, button: 22 },
 } as const;

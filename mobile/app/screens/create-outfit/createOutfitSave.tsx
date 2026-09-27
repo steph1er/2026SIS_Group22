@@ -62,7 +62,6 @@ export default function CreateOutfitSave({ onClose, onConfirmSave }: Props) {
           Outfit Details
         </Text>
 
-        {/* iterate through each category? */}
         <View style={styles.outfitDetailsContainer}>
           <View style={styles.outfitDetailsField}>
               <Text style={styles.outfitDetailsCategory}>

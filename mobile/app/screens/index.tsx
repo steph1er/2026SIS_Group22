@@ -51,14 +51,6 @@ export default function WelcomeScreen() {
   return (
     <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
       <View style={styles.content}>
-
-
-        {/* FOR VISUAL TESTING */}
-        <Link href="/create-outfit" asChild>
-            <PrimaryButton label="Create Outfits UI Test" />
-          </Link>
-
-
         <View style={styles.hero}>
           <Text accessibilityRole="header" style={styles.logo}>
             Style<Text style={styles.logoAccent}>U</Text>

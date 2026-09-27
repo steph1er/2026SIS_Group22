@@ -128,8 +128,8 @@ export default function CreateOutfitItem({ item, onClose }: Props) {
 
         {/* Close */}
         <View style={styles.buttonContainer}>
-          <TouchableOpacity style={[styles.saveButton, {bottom: 0}]} onPress={onClose}>
-            <Text style={styles.buttonText} onPress={handleAddToOutfit}>Add to Outfit</Text>
+          <TouchableOpacity style={[styles.saveButton, {bottom: 0}]} onPress={handleAddToOutfit}>
+            <Text style={styles.buttonText}>Add to Outfit</Text>
           </TouchableOpacity>
 
           <TouchableOpacity style={[styles.wishlistButton, {bottom: 0}]} onPress={onClose}>
