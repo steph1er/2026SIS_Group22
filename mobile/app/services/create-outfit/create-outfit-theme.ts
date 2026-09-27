@@ -99,4 +99,8 @@ export const themeStyles = StyleSheet.create ({
     alignSelf: 'center',
     width: '42%',
   },
+
+  saveButtonDisabled: {
+    opacity: 0.4,
+  },
 })

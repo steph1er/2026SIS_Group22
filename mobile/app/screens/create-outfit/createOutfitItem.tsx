@@ -4,18 +4,13 @@ import Animated, { runOnJS, useAnimatedStyle, useSharedValue, withSpring } from 
 import { styles } from './createOutfit';
 import { RecommendedItem, WardrobeItem } from './createOutfitTypes';
 
-// TODO: default to no selected item when reopening createOutfit
-
 type Props = {
   item: WardrobeItem | RecommendedItem;
   onClose: () => void;
+  onAddToOutfit: (item: WardrobeItem | RecommendedItem) => void;
 };
 
-const handleAddToOutfit = () => {
-  // TODO: add to outfit
-};
-
-export default function CreateOutfitItem({ item, onClose }: Props) {
+export default function CreateOutfitItem({ item, onClose, onAddToOutfit }: Props) {
   const startY = useSharedValue(0);
   const translateY = useSharedValue(0);
   const panGesture = Gesture.Pan()
@@ -128,7 +123,7 @@ export default function CreateOutfitItem({ item, onClose }: Props) {
 
         {/* Close */}
         <View style={styles.buttonContainer}>
-          <TouchableOpacity style={[styles.saveButton, {bottom: 0}]} onPress={handleAddToOutfit}>
+          <TouchableOpacity style={[styles.saveButton, {bottom: 0}]} onPress={() => onAddToOutfit(item)}>
             <Text style={styles.buttonText}>Add to Outfit</Text>
           </TouchableOpacity>
 

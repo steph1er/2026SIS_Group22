@@ -6,7 +6,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import CreateOutfitItem from './createOutfitItem';
 import CreateOutfitSave from './createOutfitSave';
-import { RecommendedItem, WardrobeItem } from './createOutfitTypes';
+import { OutfitItem, RecommendedItem, WardrobeItem } from './createOutfitTypes';
+import CreateOutfitVisualiserItem from './createOutfitVisualiserItem';
 
 import { saveStyles } from '@/services/create-outfit/create-outfit-save';
 import { catalogueStyles } from '../../services/create-outfit/create-outfit-catalogue';
@@ -55,6 +56,9 @@ export default function CreateOutfits() {
   const [itemsCategory, setItemsCategory] = useState('Wardrobe'); // wardrobe or wishlist
   const togglePosition = useSharedValue(1);
 
+  const [outfitItems, setOutfitItems] = useState<OutfitItem[]>([]);
+  const hasOutfitItems = outfitItems.length > 0;
+
   const [selectedCategory, setSelectedCategory] = useState('Tops');
   const [showSave, setShowSave] = useState(false);
 
@@ -90,6 +94,24 @@ export default function CreateOutfits() {
     },
   ];
 
+  const handleAddToOutfit = (item: WardrobeItem | RecommendedItem) => {
+    setOutfitItems((prev) => [
+      ...prev,
+      {
+        instanceId: `${item.id}-${Date.now()}`, item,
+        // stagger so they dont land  on top of each other
+        // TODO: set top bottoms etc template?
+        x: 20 + (prev.length % 4) * 24,
+        y: 20 + (prev.length % 4) * 24,
+      },
+    ]);
+    setSelectedItem(null);
+  };
+
+  const handleRemoveFromOutfit = (instanceId: string) => {
+    setOutfitItems((prev) => prev.filter((outfitItem) => outfitItem.instanceId !== instanceId));
+  };
+
   const handleItemSelect = (item: WardrobeItem | RecommendedItem) => {
     setSelectedItem(item);
   };
@@ -99,6 +121,7 @@ export default function CreateOutfits() {
   };
 
   const handleSaveOutfit = () => {
+    if (!hasOutfitItems) return;
     setShowSave(true);
   };
 
@@ -112,6 +135,7 @@ export default function CreateOutfits() {
   };
 
   const handleAddToWishlist = () => {
+    if (!hasOutfitItems) return;
     // TODO: add to wishlist and clear outfit builder
   };
 
@@ -130,7 +154,15 @@ export default function CreateOutfits() {
       <View style={styles.contentContainer}>
         {/* outfit */}
         <View style={styles.visualiserContainer}>
-          {/* TODO: show outfit  */}
+          {hasOutfitItems ? (
+            outfitItems.map((outfitItem) => (
+              <CreateOutfitVisualiserItem
+                key={outfitItem.instanceId}
+                outfitItem={outfitItem}
+                onRemove={handleRemoveFromOutfit}
+              />
+            ))
+          ) : ( <Text style={styles.visualiserEmptyText}>Add items to build your outfit</Text> )}
         </View>
 
         <Animated.View style={[styles.catalogueContainer, animatedStyle]}>
@@ -236,12 +268,20 @@ export default function CreateOutfits() {
         </Animated.View>
 
         {/* bottom bar */}
-        {/* TODO: disable buttons when no item selected */}
         <View style={styles.buttonContainer}>
-          <TouchableOpacity onPress={handleAddToWishlist} style={styles.wishlistButton}>
+          <TouchableOpacity
+            onPress={handleAddToWishlist}
+            disabled={!hasOutfitItems}
+            style={[styles.wishlistButton, !hasOutfitItems && styles.wishlistButtonDisabled]}
+          >
             <Text style={styles.buttonText}>Add to Wishlist</Text>
           </TouchableOpacity>
-          <TouchableOpacity onPress={handleSaveOutfit} style={styles.saveButton}>
+
+          <TouchableOpacity
+            onPress={handleSaveOutfit}
+            disabled={!hasOutfitItems}
+            style={[styles.saveButton, !hasOutfitItems && styles.saveButtonDisabled]}
+          >
             <Text style={styles.buttonText}>Save Outfit</Text>
           </TouchableOpacity>
         </View>
@@ -251,6 +291,7 @@ export default function CreateOutfits() {
           <CreateOutfitItem
             item={selectedItem}
             onClose={handleCloseItemDetails}
+            onAddToOutfit={handleAddToOutfit}
           />
         )}
 

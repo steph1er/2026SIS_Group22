@@ -23,3 +23,10 @@ export type RecommendedItem = {
   tags?: string[];
   materials?: string;
 };
+
+export type OutfitItem = {
+  instanceId: string;
+  item: WardrobeItem | RecommendedItem;
+  x: number;
+  y: number;
+};
