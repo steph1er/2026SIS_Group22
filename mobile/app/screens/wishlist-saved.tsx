@@ -1,11 +1,11 @@
 import { ScrollView, View, Image, TouchableOpacity, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { ThemedView } from '../../components/themed-view';
-import { ThemedText } from '../../components/themed-text';
+import { ThemedView } from '../components/themed-view';
+import { ThemedText } from '../components/themed-text';
 import { Link } from 'expo-router';
-import { useProfile } from '../../../src/profile/use-profile';
-import { ProfileHeader } from '../../components/profile-header';
+import { useProfile } from '../../src/profile/use-profile';
+import { ProfileHeader } from '../components/profile-header';
 
 type Collection = {
   id: string;
@@ -29,37 +29,13 @@ export default function WishlistSavedScreen() {
       <SafeAreaView style={{ flex: 1 }} edges={['top']}>
         <ScrollView contentContainerStyle={styles.content}>
           <View style={styles.header}>
-            <ThemedText type="title">My Profile</ThemedText>
+            <ThemedText type="title">My Collections</ThemedText>
 
             <Link href="./settings" asChild>
               <TouchableOpacity>
                 <Ionicons name="settings-outline" size={22} />
               </TouchableOpacity>
             </Link>
-          </View>
-
-          <ProfileHeader
-            email={user?.email}
-            profile={profile}
-            isLoading={isLoading}
-            error={error}
-            onRetry={refetch}
-          />
-
-          <View style={styles.tabSwitcher}>
-            <Link href="./profile" asChild>
-              <TouchableOpacity style={styles.tab}>
-                <ThemedText style={styles.tabText}>
-                  My Preferences
-                </ThemedText>
-              </TouchableOpacity>
-            </Link>
-
-            <View style={[styles.tab, styles.tabActive]}>
-              <ThemedText style={styles.tabTextActive}>
-                Saved
-              </ThemedText>
-            </View>
           </View>
 
           <View style={styles.sectionHeaderRow}>

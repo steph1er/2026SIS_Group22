@@ -1,1 +1,1 @@
-export { default } from './screens/profile/wishlist-saved';
+export { default } from './screens/wishlist-saved';
