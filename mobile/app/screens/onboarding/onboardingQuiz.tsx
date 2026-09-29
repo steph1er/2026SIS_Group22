@@ -5,17 +5,17 @@ import { ActivityIndicator, Image, ScrollView, Text, TouchableOpacity, View } fr
 import RangeSlider from 'react-native-fast-range-slider';
 import Animated from 'react-native-reanimated';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
-import { onboardingSteps } from './onboardingData';
+import { onboardingSteps } from '../../services/onboarding/onboardingData';
 
-import { inputStyles } from '../../services/onboarding/onboarding-inputs';
-import { optionStyles } from '../../services/onboarding/onboarding-options';
-import { layoutStyles } from '../../services/onboarding/onboarding-theme';
-import { wardrobeStyles } from '../../services/onboarding/onboarding-wardrobe';
-import { StyleUTokens } from '../../services/styleu-theme';
 import { useAuth } from '../../../src/auth/auth-provider';
 import type { OnboardingLayout, OnboardingProgress } from '../../../src/onboarding/onboarding-service';
 import { useOnboardingProgress } from '../../../src/onboarding/use-onboarding-progress';
-import { useOnboardingHandler } from './onboardingHandler';
+import { useOnboardingHandler } from '../../services/onboarding/onboardingHandler';
+import { inputStyles } from '../../services/onboarding/style/onboarding-inputs';
+import { optionStyles } from '../../services/onboarding/style/onboarding-options';
+import { layoutStyles } from '../../services/onboarding/style/onboarding-theme';
+import { wardrobeStyles } from '../../services/onboarding/style/onboarding-wardrobe';
+import { StyleUTokens } from '../../services/styleu-theme';
 
 const styles = { ...layoutStyles, ...optionStyles, ...inputStyles, ...wardrobeStyles };
 

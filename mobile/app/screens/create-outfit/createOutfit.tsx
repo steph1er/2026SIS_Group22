@@ -4,16 +4,16 @@ import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { OutfitItem, RecommendedItem, WardrobeItem } from '../../services/create-outfit/createOutfitTypes';
 import CreateOutfitItem from './createOutfitItem';
 import CreateOutfitSave from './createOutfitSave';
-import { OutfitItem, RecommendedItem, WardrobeItem } from './createOutfitTypes';
 import CreateOutfitVisualiserItem from './createOutfitVisualiserItem';
 
-import { saveStyles } from '@/services/create-outfit/create-outfit-save';
-import { catalogueStyles } from '../../services/create-outfit/create-outfit-catalogue';
-import { itemStyles } from '../../services/create-outfit/create-outfit-item';
-import { themeStyles } from '../../services/create-outfit/create-outfit-theme';
-import { visualiserStyles } from '../../services/create-outfit/create-outfit-visualiser';
+import { saveStyles } from '@/services/create-outfit/style/create-outfit-save';
+import { catalogueStyles } from '../../services/create-outfit/style/create-outfit-catalogue';
+import { itemStyles } from '../../services/create-outfit/style/create-outfit-item';
+import { themeStyles } from '../../services/create-outfit/style/create-outfit-theme';
+import { visualiserStyles } from '../../services/create-outfit/style/create-outfit-visualiser';
 import { StyleUTokens } from '../../services/styleu-theme';
 
 import { BackButton } from '../../components/back-button';

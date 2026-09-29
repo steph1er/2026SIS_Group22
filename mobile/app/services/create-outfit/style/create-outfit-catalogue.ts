@@ -1,5 +1,5 @@
 import { StyleSheet } from 'react-native';
-import { StyleUTokens } from '../styleu-theme';
+import { StyleUTokens } from '../../styleu-theme';
 
 const { colors } = StyleUTokens;
 

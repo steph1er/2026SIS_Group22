@@ -1,8 +1,8 @@
 import { Text, TouchableOpacity, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, { runOnJS, useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
+import { RecommendedItem, WardrobeItem } from '../../services/create-outfit/createOutfitTypes';
 import { styles } from './createOutfit';
-import { RecommendedItem, WardrobeItem } from './createOutfitTypes';
 
 type Props = {
   item: WardrobeItem | RecommendedItem;

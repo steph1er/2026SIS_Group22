@@ -2,8 +2,8 @@ import { useState } from 'react';
 import { Image, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, { runOnJS, useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
+import { OutfitItem } from '../../services/create-outfit/createOutfitTypes';
 import { styles } from './createOutfit';
-import { OutfitItem } from './createOutfitTypes';
 
 // WardrobeItem has no `name` field, so fall back to its category for the label
 const getItemLabel = (outfitItem: OutfitItem) =>
