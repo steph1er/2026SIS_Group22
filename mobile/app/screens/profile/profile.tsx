@@ -38,17 +38,6 @@ export default function ProfileScreen() {
             onRetry={refetch}
           />
 
-          <View style={styles.tabSwitcher}>
-            <View style={[styles.tab, styles.tabActive]}>
-              <ThemedText style={styles.tabTextActive}>My Preferences</ThemedText>
-            </View>
-            <Link href="./wishlist-saved" asChild>
-              <TouchableOpacity style={styles.tab}>
-                <ThemedText style={styles.tabText}>Saved</ThemedText>
-              </TouchableOpacity>
-            </Link>
-          </View>
-
           <ThemedText type="subtitle" style={styles.sectionTitle}>
             Wardrobe Details
           </ThemedText>
