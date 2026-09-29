@@ -22,10 +22,10 @@ const GRID_GAP = 14;
 
 // Cover photos for collections that are not backed by the API yet (they keep placeholder counts).
 const COVERS = {
-  uploads: require('../../assets/onboarding/minimalist.jpg'),
-  wishlist: require('../../assets/onboarding/bohemian.jpg'),
-  outfits: require('../../assets/onboarding/classy.jpg'),
-  casual: require('../../assets/onboarding/casual.jpg'),
+  uploads: require('../../../assets/onboarding/minimalist.jpg'),
+  wishlist: require('../../../assets/onboarding/bohemian.jpg'),
+  outfits: require('../../../assets/onboarding/classy.jpg'),
+  casual: require('../../../assets/onboarding/casual.jpg'),
 };
 
 type Collection = {
