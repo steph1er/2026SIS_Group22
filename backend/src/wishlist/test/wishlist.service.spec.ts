@@ -19,7 +19,8 @@ describe('WishlistContoller', () => {
                             from: jest.fn(),
                             select: jest.fn(),
                             eq: jest.fn(),
-                            insert: jest.fn()
+                            insert: jest.fn(),
+                            delete: jest.fn()
                         }
                     }
                 }
@@ -424,13 +425,6 @@ describe('WishlistContoller', () => {
                 "onboarding_completed_at": null
             }];
 
-            const errorMock = {
-                code: "error code",
-                details: "error details",
-                hint: "hint to solve error",
-                message: "error message"
-            };
-
             // mock for get profile
             jest.spyOn(supabaseClient.client, 'from').mockReturnValueOnce({
                 select: jest.fn().mockReturnValueOnce({
@@ -462,6 +456,240 @@ describe('WishlistContoller', () => {
             } as any);
 
             expect(await wishlistService.addItem(mockAddWishlistItemDto, id)).toBe(mockAddWishlistItemDto);
+        });
+    });
+
+    describe('Get Wishlist item by id', () => {
+        it('HttpException trying to get item from wishlist table', async () => {
+            const user_id = 'user id';
+            const item_id = 'item id'
+
+            const getProfileMock = [{
+                "id": "profile id",
+                "display_name": "user",
+                "body_type": null,
+                "size": "M",
+                "created_at": "time",
+                "onboarding_completed": false,
+                "onboarding_completed_at": null
+            }];
+
+            const errorMock = {
+                code: "error code",
+                details: "error details",
+                hint: "hint to solve error",
+                message: "error message"
+            };
+
+            // mock for get profile
+            jest.spyOn(supabaseClient.client, 'from').mockReturnValueOnce({
+                select: jest.fn().mockReturnValueOnce({
+                    eq: jest.fn().mockReturnValueOnce({ data: getProfileMock, error: null })
+                })
+            } as any);
+
+            // mock check item exists in wihslist
+            jest.spyOn(supabaseClient.client, 'from').mockReturnValueOnce({
+                select: jest.fn().mockReturnValueOnce({
+                    eq: jest.fn().mockReturnValueOnce({
+                        eq: jest.fn().mockReturnValueOnce({ data: null, error: errorMock })
+                    })
+                })
+            } as any);
+
+            await expect(wishlistService.getWishlistItem(item_id, user_id)).rejects.toThrow(HttpException);
+        });
+
+        it('NotFoundException when no item matching id in wishlist', async () => {
+            const user_id = 'user id';
+            const item_id = 'item id'
+
+            const getProfileMock = [{
+                "id": "profile id",
+                "display_name": "user",
+                "body_type": null,
+                "size": "M",
+                "created_at": "time",
+                "onboarding_completed": false,
+                "onboarding_completed_at": null
+            }];
+
+            // mock for get profile
+            jest.spyOn(supabaseClient.client, 'from').mockReturnValueOnce({
+                select: jest.fn().mockReturnValueOnce({
+                    eq: jest.fn().mockReturnValueOnce({ data: getProfileMock, error: null })
+                })
+            } as any);
+
+            // mock check item exists in wihslist
+            jest.spyOn(supabaseClient.client, 'from').mockReturnValueOnce({
+                select: jest.fn().mockReturnValueOnce({
+                    eq: jest.fn().mockReturnValueOnce({
+                        eq: jest.fn().mockReturnValueOnce({ data: [], error: null })
+                    })
+                })
+            } as any);
+
+            await expect(wishlistService.getWishlistItem(item_id, user_id)).rejects.toThrow(NotFoundException);
+        });
+
+        it('successfully gets item with matching id from wishlist', async () => {
+            const user_id = 'user id';
+            const item_id = 'item id'
+
+            const getProfileMock = [{
+                "id": "profile id",
+                "display_name": "user",
+                "body_type": null,
+                "size": "M",
+                "created_at": "time",
+                "onboarding_completed": false,
+                "onboarding_completed_at": null
+            }];
+
+            const expectedResult = [{
+                "id": "wishlist item id",
+                "user_id": "user id",
+                "catalogue_item_id": "catalogue item id",
+                "created_at": "2026-09-19T01:18:00+00:00",
+                "catalogue_items": {
+                    "id": "catalogue item id",
+                    "price": 15,
+                    "style": ["Fitted", "3/4 Sleeve", "Boat Neckline"],
+                    "colour": ["Brown"],
+                    "brand_id": "brand id",
+                    "category": "Tops",
+                    "image_url": "image url",
+                    "item_name": "Sleek Ziggy 3/4 Sleeve Top",
+                    "materials": ["Polyamide", "Elastane"],
+                    "created_at": "2026-09-18T03:41:23.638604+00:00",
+                    "product_url": "product url",
+                    "available_sizes": ["3XS", "2XS", "XS", "S", "M", "L", "XL"]
+                }
+            }];
+
+            // mock for get profile
+            jest.spyOn(supabaseClient.client, 'from').mockReturnValueOnce({
+                select: jest.fn().mockReturnValueOnce({
+                    eq: jest.fn().mockReturnValueOnce({ data: getProfileMock, error: null })
+                })
+            } as any);
+
+            // mock check item exists in wihslist
+            jest.spyOn(supabaseClient.client, 'from').mockReturnValueOnce({
+                select: jest.fn().mockReturnValueOnce({
+                    eq: jest.fn().mockReturnValueOnce({
+                        eq: jest.fn().mockReturnValueOnce({ data: expectedResult, error: null })
+                    })
+                })
+            } as any);
+
+            expect(await wishlistService.getWishlistItem(item_id, user_id)).toBe(expectedResult);
+        });
+    });
+
+    describe('Delete wishlist item', () => {
+        it('item does not belong to user returns not found exception', async () => {
+            const user_id = 'user id';
+            const item_id = 'item id'
+
+            const getProfileMock = [{
+                "id": "profile id",
+                "display_name": "user",
+                "body_type": null,
+                "size": "M",
+                "created_at": "time",
+                "onboarding_completed": false,
+                "onboarding_completed_at": null
+            }];
+
+            // mock for get profile
+            jest.spyOn(supabaseClient.client, 'from').mockReturnValueOnce({
+                select: jest.fn().mockReturnValueOnce({
+                    eq: jest.fn().mockReturnValueOnce({ data: getProfileMock, error: null })
+                })
+            } as any);
+
+            // mock check item belongs to user
+            jest.spyOn(supabaseClient.client, 'from').mockReturnValueOnce({
+                select: jest.fn().mockReturnValueOnce({
+                    eq: jest.fn().mockReturnValueOnce({
+                        eq: jest.fn().mockReturnValueOnce({ data: [], error: null })
+                    })
+                })
+            } as any);
+
+            await expect(wishlistService.removeItem(item_id, user_id)).rejects.toThrow(NotFoundException);
+        });
+
+        it('successfully deletes wishlist item', async () => {
+            const user_id = 'user id';
+            const item_id = 'item id'
+
+            const getProfileMock = [{
+                "id": "profile id",
+                "display_name": "user",
+                "body_type": null,
+                "size": "M",
+                "created_at": "time",
+                "onboarding_completed": false,
+                "onboarding_completed_at": null
+            }];
+
+            const item = [{
+                "id": "wishlist item id",
+                "user_id": "user id",
+                "catalogue_item_id": "catalogue item id",
+                "created_at": "2026-09-19T01:18:00+00:00",
+                "catalogue_items": {
+                    "id": "catalogue item id",
+                    "price": 15,
+                    "style": ["Fitted", "3/4 Sleeve", "Boat Neckline"],
+                    "colour": ["Brown"],
+                    "brand_id": "brand id",
+                    "category": "Tops",
+                    "image_url": "image url",
+                    "item_name": "Sleek Ziggy 3/4 Sleeve Top",
+                    "materials": ["Polyamide", "Elastane"],
+                    "created_at": "2026-09-18T03:41:23.638604+00:00",
+                    "product_url": "product url",
+                    "available_sizes": ["3XS", "2XS", "XS", "S", "M", "L", "XL"]
+                }
+            }];
+
+            const expectedResult ={
+                "success": true,
+                "error": null,
+                "data": null,
+                "count": null,
+                "status": 204,
+                "statusText": "No Content"
+            };
+
+            // mock for get profile
+            jest.spyOn(supabaseClient.client, 'from').mockReturnValueOnce({
+                select: jest.fn().mockReturnValueOnce({
+                    eq: jest.fn().mockReturnValueOnce({ data: getProfileMock, error: null })
+                })
+            } as any);
+
+            // mock check item belongs to user
+            jest.spyOn(supabaseClient.client, 'from').mockReturnValueOnce({
+                select: jest.fn().mockReturnValueOnce({
+                    eq: jest.fn().mockReturnValueOnce({
+                        eq: jest.fn().mockReturnValueOnce({ data: item, error: null })
+                    })
+                })
+            } as any);
+
+            // mock delete item from wishlist
+            jest.spyOn(supabaseClient.client, 'from').mockReturnValueOnce({
+                delete: jest.fn().mockReturnValueOnce({
+                    eq: jest.fn().mockReturnValueOnce(expectedResult)
+                })
+            } as any);
+
+            expect(await wishlistService.removeItem(item_id, user_id)).toBe(expectedResult);
         });
     });
 });
