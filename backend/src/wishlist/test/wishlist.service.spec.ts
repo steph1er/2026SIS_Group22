@@ -1,7 +1,8 @@
 import { Test } from "@nestjs/testing";
 import { WishlistService } from "../wishlist.service";
 import { SupabaseService } from "../../supabase/supabase.service";
-import { HttpException, NotFoundException } from "@nestjs/common";
+import { ConflictException, HttpException, NotFoundException } from "@nestjs/common";
+import { AddWishlistItemDto } from "../dto/add-wishlist-item.dto";
 
 describe('WishlistContoller', () => {
     let wishlistService: WishlistService;
@@ -17,7 +18,8 @@ describe('WishlistContoller', () => {
                         client: {
                             from: jest.fn(),
                             select: jest.fn(),
-                            eq: jest.fn()
+                            eq: jest.fn(),
+                            insert: jest.fn()
                         }
                     }
                 }
@@ -170,6 +172,296 @@ describe('WishlistContoller', () => {
             } as any);
 
             await expect(wishlistService.getWishlist(id)).rejects.toThrow(NotFoundException);
+        });
+    });
+
+    describe('Add Item', () => {
+        it('HttpException when getting catalogue items', async () => {
+            const id = 'user id';
+
+            const mockAddWishlistItemDto: AddWishlistItemDto = {
+                item_id: 'item id',
+                created_at: new Date(2026, 8, 29)
+            };
+
+            const getProfileMock = [{
+                "id": "profile id",
+                "display_name": "user",
+                "body_type": null,
+                "size": "M",
+                "created_at": "time",
+                "onboarding_completed": false,
+                "onboarding_completed_at": null
+            }];
+
+            const errorMock = {
+                code: "error code",
+                details: "error details",
+                hint: "hint to solve error",
+                message: "error message"
+            };
+
+            // mock for get profile
+            jest.spyOn(supabaseClient.client, 'from').mockReturnValueOnce({
+                select: jest.fn().mockReturnValueOnce({
+                    eq: jest.fn().mockReturnValueOnce({ data: getProfileMock, error: null })
+                })
+            } as any);
+
+            // mock check item exists in catalogue
+            jest.spyOn(supabaseClient.client, 'from').mockReturnValueOnce({
+                select: jest.fn().mockReturnValueOnce({
+                    eq: jest.fn().mockReturnValueOnce({ data: null, error: errorMock })
+                })
+            } as any);
+
+            await expect(wishlistService.addItem(mockAddWishlistItemDto, id)).rejects.toThrow(HttpException);
+        });
+
+        it('NotFoundException when trying to add item that doesnt exist', async () => {
+            const id = 'user id';
+
+            const mockAddWishlistItemDto: AddWishlistItemDto = {
+                item_id: 'item id',
+                created_at: new Date(2026, 8, 29)
+            };
+
+            const getProfileMock = [{
+                "id": "profile id",
+                "display_name": "user",
+                "body_type": null,
+                "size": "M",
+                "created_at": "time",
+                "onboarding_completed": false,
+                "onboarding_completed_at": null
+            }];
+
+            // mock for get profile
+            jest.spyOn(supabaseClient.client, 'from').mockReturnValueOnce({
+                select: jest.fn().mockReturnValueOnce({
+                    eq: jest.fn().mockReturnValueOnce({ data: getProfileMock, error: null })
+                })
+            } as any);
+
+            // mock check item exists in catalogue
+            jest.spyOn(supabaseClient.client, 'from').mockReturnValueOnce({
+                select: jest.fn().mockReturnValueOnce({
+                    eq: jest.fn().mockReturnValueOnce({ data: [], error: null })
+                })
+            } as any);
+
+            await expect(wishlistService.addItem(mockAddWishlistItemDto, id)).rejects.toThrow(NotFoundException);
+        });
+
+        it('HttpException when checking item isnt already in wishlist', async () => {
+            const id = 'user id';
+
+            const mockAddWishlistItemDto: AddWishlistItemDto = {
+                item_id: 'item id',
+                created_at: new Date(2026, 8, 29)
+            };
+
+            const getProfileMock = [{
+                "id": "profile id",
+                "display_name": "user",
+                "body_type": null,
+                "size": "M",
+                "created_at": "time",
+                "onboarding_completed": false,
+                "onboarding_completed_at": null
+            }];
+
+            const errorMock = {
+                code: "error code",
+                details: "error details",
+                hint: "hint to solve error",
+                message: "error message"
+            };
+
+            // mock for get profile
+            jest.spyOn(supabaseClient.client, 'from').mockReturnValueOnce({
+                select: jest.fn().mockReturnValueOnce({
+                    eq: jest.fn().mockReturnValueOnce({ data: getProfileMock, error: null })
+                })
+            } as any);
+
+            // mock check item exists in catalogue
+            jest.spyOn(supabaseClient.client, 'from').mockReturnValueOnce({
+                select: jest.fn().mockReturnValueOnce({
+                    eq: jest.fn().mockReturnValueOnce({ data: [{id: "id"}], error: null })
+                })
+            } as any);
+
+            // mock check item not already in catalogue
+            jest.spyOn(supabaseClient.client, 'from').mockReturnValueOnce({
+                select: jest.fn().mockReturnValueOnce({
+                    eq: jest.fn().mockReturnValueOnce({
+                        eq: jest.fn().mockReturnValueOnce({ data: null, error: errorMock })
+                    })
+                })
+            } as any);
+
+            await expect(wishlistService.addItem(mockAddWishlistItemDto, id)).rejects.toThrow(HttpException);
+        });
+
+        it('ConflictException when item is already in wishlist', async () => {
+            const id = 'user id';
+
+            const mockAddWishlistItemDto: AddWishlistItemDto = {
+                item_id: 'item id',
+                created_at: new Date(2026, 8, 29)
+            };
+
+            const getProfileMock = [{
+                "id": "profile id",
+                "display_name": "user",
+                "body_type": null,
+                "size": "M",
+                "created_at": "time",
+                "onboarding_completed": false,
+                "onboarding_completed_at": null
+            }];
+
+            // mock for get profile
+            jest.spyOn(supabaseClient.client, 'from').mockReturnValueOnce({
+                select: jest.fn().mockReturnValueOnce({
+                    eq: jest.fn().mockReturnValueOnce({ data: getProfileMock, error: null })
+                })
+            } as any);
+
+            // mock check item exists in catalogue
+            jest.spyOn(supabaseClient.client, 'from').mockReturnValueOnce({
+                select: jest.fn().mockReturnValueOnce({
+                    eq: jest.fn().mockReturnValueOnce({ data: [{id: "id"}], error: null })
+                })
+            } as any);
+
+            // mock check item not already in catalogue
+            jest.spyOn(supabaseClient.client, 'from').mockReturnValueOnce({
+                select: jest.fn().mockReturnValueOnce({
+                    eq: jest.fn().mockReturnValueOnce({
+                        eq: jest.fn().mockReturnValueOnce({ data: [{id: "id"}], error: null })
+                    })
+                })
+            } as any);
+
+            await expect(wishlistService.addItem(mockAddWishlistItemDto, id)).rejects.toThrow(ConflictException);
+        });
+
+        it('HttpException when trying to add item to db wishlist table', async () => {
+            const id = 'user id';
+
+            const mockAddWishlistItemDto: AddWishlistItemDto = {
+                item_id: 'item id',
+                created_at: new Date(2026, 8, 29)
+            };
+
+            const getProfileMock = [{
+                "id": "profile id",
+                "display_name": "user",
+                "body_type": null,
+                "size": "M",
+                "created_at": "time",
+                "onboarding_completed": false,
+                "onboarding_completed_at": null
+            }];
+
+            const errorMock = {
+                code: "error code",
+                details: "error details",
+                hint: "hint to solve error",
+                message: "error message"
+            };
+
+            // mock for get profile
+            jest.spyOn(supabaseClient.client, 'from').mockReturnValueOnce({
+                select: jest.fn().mockReturnValueOnce({
+                    eq: jest.fn().mockReturnValueOnce({ data: getProfileMock, error: null })
+                })
+            } as any);
+
+            // mock check item exists in catalogue
+            jest.spyOn(supabaseClient.client, 'from').mockReturnValueOnce({
+                select: jest.fn().mockReturnValueOnce({
+                    eq: jest.fn().mockReturnValueOnce({ data: [{id: "id"}], error: null })
+                })
+            } as any);
+
+            // mock check item not already in catalogue
+            jest.spyOn(supabaseClient.client, 'from').mockReturnValueOnce({
+                select: jest.fn().mockReturnValueOnce({
+                    eq: jest.fn().mockReturnValueOnce({
+                        eq: jest.fn().mockReturnValueOnce({ data: [], error: null })
+                    })
+                })
+            } as any);
+
+            // mock insert item to wishlist
+            jest.spyOn(supabaseClient.client, 'from').mockReturnValueOnce({
+                insert: jest.fn().mockReturnValueOnce({
+                    select: jest.fn().mockReturnValueOnce({ data: null, error: errorMock })
+                })
+            } as any);
+
+            await expect(wishlistService.addItem(mockAddWishlistItemDto, id)).rejects.toThrow(HttpException);
+        });
+
+        it('successfully adding item to wishlist table', async () => {
+            const id = 'user id';
+
+            const mockAddWishlistItemDto: AddWishlistItemDto = {
+                item_id: 'item id',
+                created_at: new Date(2026, 8, 29)
+            };
+
+            const getProfileMock = [{
+                "id": "profile id",
+                "display_name": "user",
+                "body_type": null,
+                "size": "M",
+                "created_at": "time",
+                "onboarding_completed": false,
+                "onboarding_completed_at": null
+            }];
+
+            const errorMock = {
+                code: "error code",
+                details: "error details",
+                hint: "hint to solve error",
+                message: "error message"
+            };
+
+            // mock for get profile
+            jest.spyOn(supabaseClient.client, 'from').mockReturnValueOnce({
+                select: jest.fn().mockReturnValueOnce({
+                    eq: jest.fn().mockReturnValueOnce({ data: getProfileMock, error: null })
+                })
+            } as any);
+
+            // mock check item exists in catalogue
+            jest.spyOn(supabaseClient.client, 'from').mockReturnValueOnce({
+                select: jest.fn().mockReturnValueOnce({
+                    eq: jest.fn().mockReturnValueOnce({ data: [{id: "id"}], error: null })
+                })
+            } as any);
+
+            // mock check item not already in catalogue
+            jest.spyOn(supabaseClient.client, 'from').mockReturnValueOnce({
+                select: jest.fn().mockReturnValueOnce({
+                    eq: jest.fn().mockReturnValueOnce({
+                        eq: jest.fn().mockReturnValueOnce({ data: [], error: null })
+                    })
+                })
+            } as any);
+
+            // mock insert item to wishlist
+            jest.spyOn(supabaseClient.client, 'from').mockReturnValueOnce({
+                insert: jest.fn().mockReturnValueOnce({
+                    select: jest.fn().mockReturnValueOnce({ data: mockAddWishlistItemDto, error: null })
+                })
+            } as any);
+
+            expect(await wishlistService.addItem(mockAddWishlistItemDto, id)).toBe(mockAddWishlistItemDto);
         });
     });
 });
