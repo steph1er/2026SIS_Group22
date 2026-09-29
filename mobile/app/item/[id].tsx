@@ -1,1 +1,1 @@
-export { default } from '../screens/item-detail/item-detail';
+export { default } from '../components/item-detail';

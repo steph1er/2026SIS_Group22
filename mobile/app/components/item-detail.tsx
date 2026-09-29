@@ -14,11 +14,11 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 
-import { ThemedView } from '../../components/themed-view';
-import { ThemedText } from '../../components/themed-text';
-import { useWishlist } from '../../hooks/use-wishlist';
-import { fetchCatalogueItem, fetchSimilarItems, itemDetailHref } from '../../services/catalogue/catalogue-service';
-import type { CatalogueItem } from '../../services/wishlist/wishlist-types';
+import { ThemedView } from './themed-view';
+import { ThemedText } from './themed-text';
+import { useWishlist } from '../hooks/use-wishlist';
+import { fetchCatalogueItem, fetchSimilarItems, itemDetailHref } from '../services/catalogue/catalogue-service';
+import type { CatalogueItem } from '../services/wishlist/wishlist-types';
 
 const ACCENT = '#D98E73';
 const TEXT = '#22201F';
