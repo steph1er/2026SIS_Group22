@@ -4,7 +4,7 @@ import { CatalogueService } from "./catalogue.service";
 import type { User } from "@supabase/supabase-js";
 import { AuthenticatedUser } from "../auth/authenticated-user.decorator";
 import { SearchCatalogueItemDto } from "./dto/search-catalogue-item.dto";
-import { GetReccomendationsDto } from "./dto/get-reccomendations.dto";
+import { GetRecomendationsDto } from "./dto/get-recommendations.dto";
 
 @Controller('catalogue')
 @UseGuards(SupabaseAuthGuard)
@@ -12,7 +12,7 @@ export class CatalogueController {
     constructor(private catalogueService: CatalogueService) {}
 
     @Get('reccomendations')
-    getCatalogueReccomendations(@Query() query: GetReccomendationsDto, @AuthenticatedUser() user: User) {
+    getCatalogueReccomendations(@Query() query: GetRecomendationsDto, @AuthenticatedUser() user: User) {
         return this.catalogueService.getCatalogueReccomendations(user.id, query.limit ?? 20, query.offset ?? 0);
     }
 

@@ -1,7 +1,7 @@
 import { Type } from "class-transformer";
 import { IsInt, IsOptional, Max, Min } from "class-validator";
 
-export class GetReccomendationsDto {
+export class GetRecomendationsDto {
     // number of items to return (one page of the feed)
     @IsOptional()
     @Type(() => Number)

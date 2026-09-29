@@ -13,7 +13,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 
 import { ThemedView } from '../components/themed-view';
 import { ThemedText } from '../components/themed-text';
@@ -134,6 +134,14 @@ export default function HomeDashboardScreen() {
   useEffect(() => {
     if (userId) void loadFeed(userId);
   }, [userId, loadFeed]);
+
+  // If the first load failed (e.g. the backend was restarting), try again when the user comes back to Home.
+  const failedWithNothingShown = Boolean(feed?.userId === userId && feed?.error && feed.items.length === 0);
+  useFocusEffect(
+    useCallback(() => {
+      if (userId && failedWithNothingShown) void loadFeed(userId);
+    }, [userId, failedWithNothingShown, loadFeed]),
+  );
 
   const refresh = async () => {
     if (!userId) return;
