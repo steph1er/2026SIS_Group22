@@ -1,1 +1,1 @@
-export { default } from './screens/upload-item';
+export { default } from './components/upload-item';

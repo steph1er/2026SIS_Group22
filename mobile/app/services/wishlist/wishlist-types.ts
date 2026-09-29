@@ -19,6 +19,9 @@ export type CatalogueItem = {
   styles: string[];
   sizes: string[];
   materials: string[];
+  description: string | null;
+  // catalogue_items.product_url — the shop's page for the item, used when sharing.
+  productUrl: string | null;
 };
 
 // One entry on the signed-in user's wishlist (a row of public.wishlist).

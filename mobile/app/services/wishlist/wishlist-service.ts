@@ -6,7 +6,6 @@ import type { CatalogueItem, WishlistEntry } from './wishlist-types';
  *
  *   GET    /wishlist              -> the user's wishlist rows joined with catalogue_items (404 when empty)
  *   POST   /wishlist/add          -> body { item_id, created_at }            (409 if already added)
- *   GET    /wishlist/:id          -> one wishlist row joined with catalogue_items
  *   DELETE /wishlist/delete/:id   -> removes one wishlist row (id = wishlist.id, not the catalogue id)
  *
  * and GET /catalogue/reccomendations (spelled as in the backend) for the ML recommendations.
@@ -73,6 +72,8 @@ export function normaliseCatalogueItem(raw: unknown): CatalogueItem {
     styles: asStringArray(row.style),
     sizes: asStringArray(firstOf(row, ['available_sizes', 'sizes', 'size'])),
     materials: asStringArray(firstOf(row, ['materials', 'material'])),
+    description: asString(firstOf(row, ['description', 'item_description'])),
+    productUrl: asString(firstOf(row, ['product_url', 'url'])),
   };
 }
 
@@ -116,7 +117,7 @@ async function readErrorMessage(response: Response): Promise<string> {
   return `Request failed (${response.status}).`;
 }
 
-async function requestJson(path: string, options: RequestInit = {}): Promise<unknown> {
+export async function requestJson(path: string, options: RequestInit = {}): Promise<unknown> {
   let response: Response;
   try {
     response = await authenticatedApiRequest(path, options);
@@ -147,7 +148,7 @@ async function requestJson(path: string, options: RequestInit = {}): Promise<unk
   return text ? (JSON.parse(text) as unknown) : null;
 }
 
-function toArray(value: unknown): unknown[] {
+export function toArray(value: unknown): unknown[] {
   return Array.isArray(value) ? value : value ? [value] : [];
 }
 
@@ -171,12 +172,6 @@ export async function fetchWishlist(): Promise<WishlistEntry[]> {
   }
 }
 
-/** One wishlist entry by its wishlist.id (used for the item details view). */
-export async function fetchWishlistEntry(wishlistId: string): Promise<WishlistEntry> {
-  const rows = toArray(await requestJson(`wishlist/${encodeURIComponent(wishlistId)}`));
-  if (rows.length === 0) throw new WishlistApiError('This item is no longer on your wishlist.', 404);
-  return normaliseWishlistEntry(rows[0]);
-}
 
 // Add a catalogue item to the wishlist. `catalogueItemId` is catalogue_items.id.
 export async function addToWishlist(catalogueItemId: string): Promise<void> {

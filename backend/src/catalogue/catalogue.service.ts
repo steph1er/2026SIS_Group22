@@ -107,9 +107,9 @@ export class CatalogueService {
     async getCatalogueItem(id: string){
         const supabase = this.supabaseService.client;
         
-        // get item by id 
+        // get item by id, with its brand (left join so items without a brand are still returned)
         const { data, error } = await supabase.from('catalogue_items')
-                                                .select('*')
+                                                .select('*, brands (*)')
                                                 .eq('id', id);
 
         // if error return error message

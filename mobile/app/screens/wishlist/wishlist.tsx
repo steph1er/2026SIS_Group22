@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Image,
@@ -17,7 +17,7 @@ import { router } from 'expo-router';
 import { ThemedView } from '../../components/themed-view';
 import { ThemedText } from '../../components/themed-text';
 import { useWishlist } from '../../hooks/use-wishlist';
-import { fetchWishlistEntry } from '../../services/wishlist/wishlist-service';
+import { itemDetailHref } from '../../services/catalogue/catalogue-service';
 import type { CatalogueItem, WishlistEntry } from '../../services/wishlist/wishlist-types';
 
 const ACCENT = '#D98E73';
@@ -60,7 +60,6 @@ export default function WishlistScreen() {
   const [category, setCategory] = useState<string | null>(null);
   const [sortOrder, setSortOrder] = useState<SortOrder>('newest');
   const [menuVisible, setMenuVisible] = useState(false);
-  const [selectedEntry, setSelectedEntry] = useState<WishlistEntry | null>(null);
 
   const categories = useMemo(() => {
     const seen = new Map<string, string>();
@@ -192,7 +191,7 @@ export default function WishlistScreen() {
                         entry={entry}
                         imageHeight={heights[index % heights.length]}
                         isPending={wishlist.isPending(entry.catalogueItemId)}
-                        onPress={() => setSelectedEntry(entry)}
+                        onPress={() => router.push(itemDetailHref(entry.catalogueItemId))}
                         onRemove={() => void wishlist.remove(entry)}
                       />
                     );
@@ -229,6 +228,7 @@ export default function WishlistScreen() {
                     isSaved={wishlist.isSaved(item.id)}
                     isPending={wishlist.isPending(item.id)}
                     onToggleSaved={() => void wishlist.toggle(item)}
+                    onPress={() => router.push(itemDetailHref(item.id))}
                   />
                 ))}
               </ScrollView>
@@ -248,16 +248,6 @@ export default function WishlistScreen() {
         onSort={(order) => {
           setMenuVisible(false);
           setSortOrder(order);
-        }}
-      />
-
-      <WishlistItemModal
-        entry={selectedEntry}
-        isPending={selectedEntry ? wishlist.isPending(selectedEntry.catalogueItemId) : false}
-        onClose={() => setSelectedEntry(null)}
-        onRemove={(entry) => {
-          setSelectedEntry(null);
-          void wishlist.remove(entry);
         }}
       />
     </ThemedView>
@@ -307,13 +297,14 @@ type RecommendationCardProps = {
   isSaved: boolean;
   isPending: boolean;
   onToggleSaved: () => void;
+  onPress: () => void;
 };
 
-function RecommendationCard({ item, isSaved, isPending, onToggleSaved }: RecommendationCardProps) {
+function RecommendationCard({ item, isSaved, isPending, onToggleSaved, onPress }: RecommendationCardProps) {
   const price = formatPrice(item.price);
 
   return (
-    <View style={styles.recCard}>
+    <Pressable style={styles.recCard} onPress={onPress}>
       <Image source={{ uri: item.imageUrl ?? PLACEHOLDER_IMAGE }} style={styles.recImage} />
       <TouchableOpacity
         style={styles.heartButton}
@@ -333,7 +324,7 @@ function RecommendationCard({ item, isSaved, isPending, onToggleSaved }: Recomme
       <ThemedText style={styles.tileSubtitle} numberOfLines={1}>
         {[item.brand, price].filter(Boolean).join(' • ')}
       </ThemedText>
-    </View>
+    </Pressable>
   );
 }
 
@@ -361,92 +352,6 @@ function OptionsMenu({ visible, sortOrder, onClose, onRefresh, onSort }: Options
               <ThemedText style={styles.menuText}>{SORT_LABELS[order]}</ThemedText>
             </TouchableOpacity>
           ))}
-        </Pressable>
-      </Pressable>
-    </Modal>
-  );
-}
-
-type WishlistItemModalProps = {
-  entry: WishlistEntry | null;
-  isPending: boolean;
-  onClose: () => void;
-  onRemove: (entry: WishlistEntry) => void;
-};
-
-/** Item details. Shows the cached entry at once, then refreshes it from GET /wishlist/:id. */
-function WishlistItemModal({ entry, isPending, onClose, onRemove }: WishlistItemModalProps) {
-  const [details, setDetails] = useState<WishlistEntry | null>(null);
-  const [error, setError] = useState<{ id: string; message: string } | null>(null);
-  const entryId = entry?.id ?? null;
-
-  useEffect(() => {
-    if (!entryId) return;
-    let cancelled = false;
-    fetchWishlistEntry(entryId)
-      .then((fresh) => {
-        if (!cancelled) setDetails(fresh);
-      })
-      .catch((reason: unknown) => {
-        if (!cancelled) {
-          setError({ id: entryId, message: reason instanceof Error ? reason.message : 'Could not refresh details.' });
-        }
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [entryId]);
-
-  const errorMessage = error && error.id === entryId ? error.message : null;
-  const shown = details && details.id === entry?.id ? details : entry;
-  if (!shown) return null;
-
-  const { item } = shown;
-  const price = formatPrice(item.price);
-  const facts: [string, string][] = [
-    ['Category', item.category ? titleCase(item.category) : ''],
-    ['Colour', item.colours.join(', ')],
-    ['Style', item.styles.join(', ')],
-    ['Sizes', item.sizes.join(', ')],
-    ['Material', item.materials.join(', ')],
-    ['Saved', shown.createdAt ? new Date(shown.createdAt).toLocaleDateString() : ''],
-  ].filter((fact): fact is [string, string] => fact[1].length > 0);
-
-  return (
-    <Modal visible transparent animationType="fade" onRequestClose={onClose}>
-      <Pressable style={styles.modalOverlay} onPress={onClose}>
-        <Pressable style={styles.modalCard} onPress={(event) => event.stopPropagation()}>
-          <Image source={{ uri: item.imageUrl ?? PLACEHOLDER_IMAGE }} style={styles.modalImage} />
-          <TouchableOpacity style={styles.modalClose} onPress={onClose} accessibilityLabel="Close">
-            <Ionicons name="close" size={20} color={TEXT} />
-          </TouchableOpacity>
-
-          <View style={styles.modalBody}>
-            <ThemedText style={[styles.modalTitle, styles.modalText]}>{item.name}</ThemedText>
-            {item.brand || price ? (
-              <ThemedText style={[styles.tileSubtitle, styles.modalText]}>
-                {[item.brand, price].filter(Boolean).join(' · ')}
-              </ThemedText>
-            ) : null}
-
-            {facts.map(([label, value]) => (
-              <View key={label} style={styles.factRow}>
-                <ThemedText style={styles.factLabel}>{label}</ThemedText>
-                <ThemedText style={[styles.factValue, styles.modalText]}>{value}</ThemedText>
-              </View>
-            ))}
-
-            {errorMessage ? <ThemedText style={styles.factLabel}>{errorMessage}</ThemedText> : null}
-
-            <TouchableOpacity
-              style={[styles.removeButton, isPending && { opacity: 0.5 }]}
-              disabled={isPending}
-              onPress={() => onRemove(shown)}
-            >
-              <Ionicons name="heart-dislike-outline" size={18} color="#fff" />
-              <ThemedText style={styles.removeButtonText}>Remove from wishlist</ThemedText>
-            </TouchableOpacity>
-          </View>
         </Pressable>
       </Pressable>
     </Modal>
@@ -704,75 +609,5 @@ const styles = StyleSheet.create({
     height: 1,
     backgroundColor: '#EFEDEB',
     marginVertical: 4,
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'center',
-    padding: 20,
-  },
-  modalCard: {
-    backgroundColor: '#fff',
-    borderRadius: 20,
-    overflow: 'hidden',
-    maxWidth: 480,
-    width: '100%',
-    alignSelf: 'center',
-  },
-  modalImage: {
-    width: '100%',
-    height: 280,
-    backgroundColor: '#F2EFEC',
-  },
-  modalClose: {
-    position: 'absolute',
-    top: 12,
-    right: 12,
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  modalBody: {
-    padding: 18,
-    gap: 8,
-  },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-  },
-  // The modal card is always white, so keep its text dark in dark mode too.
-  modalText: {
-    color: TEXT,
-  },
-  factRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    gap: 12,
-  },
-  factLabel: {
-    fontSize: 13,
-    color: MUTED,
-  },
-  factValue: {
-    fontSize: 13,
-    flexShrink: 1,
-    textAlign: 'right',
-  },
-  removeButton: {
-    marginTop: 8,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    backgroundColor: ACCENT,
-    borderRadius: 24,
-    paddingVertical: 12,
-  },
-  removeButtonText: {
-    color: '#fff',
-    fontWeight: '600',
   },
 });
