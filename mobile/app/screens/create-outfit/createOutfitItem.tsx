@@ -8,9 +8,10 @@ type Props = {
   item: WardrobeItem | RecommendedItem;
   onClose: () => void;
   onAddToOutfit: (item: WardrobeItem | RecommendedItem) => void;
+  alreadyAdded: boolean;
 };
 
-export default function CreateOutfitItem({ item, onClose, onAddToOutfit }: Props) {
+export default function CreateOutfitItem({ item, onClose, onAddToOutfit, alreadyAdded }: Props) {
   const startY = useSharedValue(0);
   const translateY = useSharedValue(0);
   const panGesture = Gesture.Pan()
@@ -123,8 +124,12 @@ export default function CreateOutfitItem({ item, onClose, onAddToOutfit }: Props
 
         {/* Close */}
         <View style={styles.buttonContainer}>
-          <TouchableOpacity style={[styles.saveButton, {bottom: 0}]} onPress={() => onAddToOutfit(item)}>
-            <Text style={styles.buttonText}>Add to Outfit</Text>
+          <TouchableOpacity 
+            style={[styles.saveButton, {bottom: 0}, alreadyAdded && styles.saveButtonDisabled]} 
+            onPress={() => onAddToOutfit(item)}
+            disabled={alreadyAdded}
+          >
+            <Text style={styles.buttonText}>{alreadyAdded ? 'Added to Outfit' : 'Add to Outfit'}</Text>
           </TouchableOpacity>
 
           <TouchableOpacity style={[styles.wishlistButton, {bottom: 0}]} onPress={onClose}>

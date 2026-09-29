@@ -13,9 +13,14 @@ export const saveStyles = StyleSheet.create ({
 
   // image
 
-  outfitContainer: {
-    color: colors.backgroundElement,
-    height: '40%',
+  // TODO: fix popup scroll after image feature added
+
+  itemsInOutfitContainer: {
+    backgroundColor: colors.mutedAccent,
+    width: '100%',
+    alignSelf: 'center',
+    borderRadius: 16,
+    paddingVertical: 8,
   },
 
   outfitDetailsTitle: {
@@ -53,5 +58,5 @@ export const saveStyles = StyleSheet.create ({
     width: '100%',
     alignSelf: 'center',
     marginVertical: 10,
-  }
+  },
 })

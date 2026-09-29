@@ -1,15 +1,21 @@
 import { useState } from 'react';
-import { Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Image, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, { runOnJS, useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { styles } from './createOutfit';
+import { OutfitItem } from './createOutfitTypes';
+
+// WardrobeItem has no `name` field, so fall back to its category for the label
+const getItemLabel = (outfitItem: OutfitItem) =>
+  'name' in outfitItem.item ? outfitItem.item.name : outfitItem.item.clothing_category;
 
 type Props = {
   onClose: () => void;
   onConfirmSave: (outfitName: string) => void;
+  outfitItems: OutfitItem[];
 };
 
-export default function CreateOutfitSave({ onClose, onConfirmSave }: Props) {
+export default function CreateOutfitSave({ onClose, onConfirmSave, outfitItems }: Props) {
   const [outfitName, setOutfitName] = useState('');
 
   const startY = useSharedValue(0);
@@ -49,56 +55,73 @@ export default function CreateOutfitSave({ onClose, onConfirmSave }: Props) {
           </View>
         </GestureDetector>
 
-        <Text style={styles.saveHeader}>
-          Outfit Description
-        </Text>
+        <ScrollView showsVerticalScrollIndicator={false}>
+          <Text style={styles.saveHeader}>
+            Outfit Description
+          </Text>
 
-        {/* image */}
-        <View style={styles.outfitContainer}>
-          {/* temp */}
-        </View>
+          {/* image */}
 
-        <Text style={styles.outfitDetailsTitle}>
-          Outfit Details
-        </Text>
+          <Text style={styles.outfitDetailsTitle}>
+            Outfit Details
+          </Text>
 
-        <View style={styles.outfitDetailsContainer}>
-          <View style={styles.outfitDetailsField}>
-              <Text style={styles.outfitDetailsCategory}>
-                Outfit Name
-              </Text>
-              <TextInput
-                style={styles.outfitDetailsInput}
-                placeholder="Enter outfit name"
-                value={outfitName}
-                onChangeText={setOutfitName}
-              />
-            </View>
-
+          <View style={styles.outfitDetailsContainer}>
             <View style={styles.outfitDetailsField}>
-              <Text style={styles.outfitDetailsCategory}>
-                Style
-              </Text>
-              {/* dropdown */}
-            </View>
+                <Text style={styles.outfitDetailsCategory}>
+                  Outfit Name
+                </Text>
+                <TextInput
+                  style={styles.outfitDetailsInput}
+                  placeholder="Enter outfit name"
+                  value={outfitName}
+                  onChangeText={setOutfitName}
+                />
+              </View>
 
-            <View style={styles.outfitDetailsField}>
-              <Text style={styles.outfitDetailsCategory}>
-                Season
-              </Text>
-              {/* dropdown */}
-            </View>
+              <View style={styles.outfitDetailsField}>
+                <Text style={styles.outfitDetailsCategory}>
+                  Style
+                </Text>
+                {/* dropdown */}
+              </View>
 
-            <View style={styles.outfitDetailsField}>
-              <Text style={styles.outfitDetailsCategory}>
-                Occasion
-              </Text>
-              {/* dropdown */}
-            </View>
-          <View style={styles.detailSeparator} />
-        </View>
+              <View style={styles.outfitDetailsField}>
+                <Text style={styles.outfitDetailsCategory}>
+                  Season
+                </Text>
+                {/* dropdown */}
+              </View>
 
-        {/* items in outfit */}
+              <View style={styles.outfitDetailsField}>
+                <Text style={styles.outfitDetailsCategory}>
+                  Occasion
+                </Text>
+                {/* dropdown */}
+              </View>
+            <View style={styles.detailSeparator} />
+          </View>
+
+          <View style={styles.itemsInOutfitContainer}>
+            {/* items in outfit */}
+            <Text style={styles.suggestionText}>Items in Outfit</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+              <View style={styles.suggestedItemsGrid}>
+                {outfitItems.map((outfitItem) => (
+                  <View key={outfitItem.instanceId} style={styles.itemCard}>
+                    <Image source={{ uri: outfitItem.item.image_url }} style={styles.itemImage} />
+                    <Text style={styles.itemName} numberOfLines={1}>
+                      {getItemLabel(outfitItem)}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+            </ScrollView>
+          </View>
+
+          <View style={{ height: 100 }} />
+
+        </ScrollView>
 
         <View style={styles.buttonContainer}>
           <TouchableOpacity

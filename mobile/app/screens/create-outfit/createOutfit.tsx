@@ -292,6 +292,7 @@ export default function CreateOutfits() {
             item={selectedItem}
             onClose={handleCloseItemDetails}
             onAddToOutfit={handleAddToOutfit}
+            alreadyAdded={outfitItems.some((outfitItem) => outfitItem.item.id === selectedItem.id)}
           />
         )}
 
@@ -299,6 +300,7 @@ export default function CreateOutfits() {
           <CreateOutfitSave
             onClose={handleCloseSave}
             onConfirmSave={handleConfirmSave}
+            outfitItems={outfitItems}
           />
         )}
       </View>
