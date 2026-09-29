@@ -193,10 +193,18 @@ export async function removeFromWishlist(wishlistId: string): Promise<void> {
   }
 }
 
-// Items the ML recommender suggests adding to the wishlist. No recommendations (404) returns [].
-export async function fetchRecommendations(): Promise<CatalogueItem[]> {
+// Items the ML recommender suggests adding to the wishlist, excluding ones already saved, with brands
+// mixed together. Pass `offset` to load the next page, with the same `seed` so pages continue one order.
+// No (more) recommendations (404) returns [].
+export async function fetchRecommendations({
+  limit = 20,
+  offset = 0,
+  seed,
+}: { limit?: number; offset?: number; seed?: string } = {}): Promise<CatalogueItem[]> {
   try {
-    const rows = toArray(await requestJson('catalogue/reccomendations'));
+    const query = new URLSearchParams({ limit: String(limit), offset: String(offset) });
+    if (seed) query.set('seed', seed);
+    const rows = toArray(await requestJson(`catalogue/reccomendations?${query.toString()}`));
     return rows.map(normaliseCatalogueItem).filter((item) => item.id);
   } catch (error) {
     if (error instanceof WishlistApiError && error.status === 404) return [];

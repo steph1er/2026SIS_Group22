@@ -1,30 +1,78 @@
 import { HttpException, HttpStatus, Injectable, NotFoundException } from "@nestjs/common";
 import { SupabaseService } from "../supabase/supabase.service";
+import { mixedFeedOrder } from "./feed-order";
 
 @Injectable()
 export class CatalogueService {
     constructor(private readonly supabaseService: SupabaseService) {}
 
-    async getCatalogueReccomendations(user_id: string) {
-        // TODO - implement properly with machine learning logic - for now just getting first 10 catalogue items
+    async getCatalogueReccomendations(user_id: string, limit: number, offset: number, seed?: string) {
+        // TODO - implement properly with machine learning logic - for now returning catalogue items in a mixed order
         const supabase = this.supabaseService.client;
 
+        const profile_id = await this.get_profile_id(user_id);
+
+        // items already on the user's wishlist are not reccomended again
+        const { data: wishlist, error: wishlist_error } = await supabase.from('wishlist')
+                                                                        .select('catalogue_item_id')
+                                                                        .eq('user_id', profile_id);
+
+        if(wishlist_error){
+            throw new HttpException(wishlist_error.message, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+
+        const { data: catalogue, error: catalogue_error } = await supabase.from('catalogue_items')
+                                                                          .select('id, brand_id');
+
+        if(catalogue_error){
+            throw new HttpException(catalogue_error.message, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+
+        // mix brands together. The order covers the whole catalogue and only depends on the seed, so each
+        // page (offset) continues where the last one ended. Without a seed the order changes daily per user.
+        const feed_seed = seed ?? `${user_id}-${new Date().toISOString().slice(0, 10)}`;
+        const saved_ids = new Set(wishlist.map(row => row.catalogue_item_id));
+        const page_ids = mixedFeedOrder(catalogue, feed_seed)
+            .filter(id => !saved_ids.has(id))
+            .slice(offset, offset + limit);
+
+        // if no item throw not found exception
+        if(page_ids.length === 0){
+            throw new NotFoundException('No reccomended catalogue items found.');
+        }
+
+        // include each item's brand (left join so items without a brand are still returned)
         const { data, error } = await supabase.from('catalogue_items')
-                                                .select('*')
-                                                .limit(10);
+                                              .select('*, brands (*)')
+                                              .in('id', page_ids);
 
         // if error return error message
         if(error){
             throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
-        // if no item throw not found exception
-        if(data.length === 0){
-            throw new NotFoundException('No reccomended catalogue items found.');
+        // return the items in feed order
+        const position = new Map(page_ids.map((id, index) => [id, index]));
+        return data.sort((a, b) => position.get(a.id)! - position.get(b.id)!);
+    }
+
+    private async get_profile_id(user_id: string){
+        const supabase = this.supabaseService.client;
+
+        const { data, error } = await supabase.from('profiles')
+                                              .select('id')
+                                              .eq('user_id', user_id);
+
+        if(error){
+            throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
-        // otherwise item
-        return data;
+        // if no user throw not found exception
+        if(data.length === 0){
+            throw new NotFoundException('No user found');
+        }
+
+        return data[0].id;
     }
 
     async searchCatalogueItems(
