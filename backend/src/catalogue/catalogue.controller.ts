@@ -13,7 +13,7 @@ export class CatalogueController {
 
     @Get('reccomendations')
     getCatalogueReccomendations(@Query() query: GetReccomendationsDto, @AuthenticatedUser() user: User) {
-        return this.catalogueService.getCatalogueReccomendations(user.id, query.limit ?? 20, query.offset ?? 0, query.seed);
+        return this.catalogueService.getCatalogueReccomendations(user.id, query.limit ?? 20, query.offset ?? 0);
     }
 
     @Get('search')

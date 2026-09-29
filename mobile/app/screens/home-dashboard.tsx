@@ -49,13 +49,7 @@ function formatPrice(price: number | null) {
   return Number.isInteger(price) ? `$${price}` : `$${price.toFixed(2)}`;
 }
 
-// `seed` fixes the mixed order for this feed, so every page continues the same sequence.
-type Feed = { userId: string; seed: string; items: CatalogueItem[]; error: string | null; hasMore: boolean };
-
-/** A new seed on every load and pull-to-refresh gives a freshly mixed feed. */
-function newSeed() {
-  return Math.random().toString(36).slice(2, 12);
-}
+type Feed = { userId: string; items: CatalogueItem[]; error: string | null; hasMore: boolean };
 
 type PlacedItem = { item: CatalogueItem; imageHeight: number };
 
@@ -95,18 +89,18 @@ export default function HomeDashboardScreen() {
   const isLoadingMoreRef = useRef(false);
 
   const loadFeed = useCallback(async (forUser: string) => {
-    const seed = newSeed();
     try {
-      const items = await fetchRecommendations({ limit: PAGE_SIZE, seed });
-      setFeed({ userId: forUser, seed, items, error: null, hasMore: items.length === PAGE_SIZE });
+      const items = await fetchRecommendations({ limit: PAGE_SIZE });
+      setFeed({ userId: forUser, items, error: null, hasMore: items.length === PAGE_SIZE });
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unable to load your feed.';
       // Keep what was already shown if a refresh fails.
-      setFeed((previous) =>
-        previous?.userId === forUser
-          ? { ...previous, error: message }
-          : { userId: forUser, seed, items: [], error: message, hasMore: false },
-      );
+      setFeed((previous) => ({
+        userId: forUser,
+        items: previous?.userId === forUser ? previous.items : [],
+        error: message,
+        hasMore: previous?.userId === forUser ? previous.hasMore : false,
+      }));
     }
   }, []);
 
@@ -115,7 +109,7 @@ export default function HomeDashboardScreen() {
     isLoadingMoreRef.current = true;
     setIsLoadingMore(true);
     try {
-      const page = await fetchRecommendations({ limit: PAGE_SIZE, offset: feed.items.length, seed: feed.seed });
+      const page = await fetchRecommendations({ limit: PAGE_SIZE, offset: feed.items.length });
       setFeed((previous) =>
         previous && previous.userId === userId
           ? { ...previous, items: appendUnique(previous.items, page), error: null, hasMore: page.length === PAGE_SIZE }
