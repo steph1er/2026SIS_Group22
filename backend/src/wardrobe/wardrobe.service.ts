@@ -70,7 +70,15 @@ export class WardrobeService {
 
         const user_id = await this.get_profile_id(auth_id);
 
-        const {id, image_url, clothing_category, style, brand, size, colour, material, tags, modified_at, price} = updateWardrobeItemDto
+        let {id, image_url, clothing_category, style, brand, size, colour, material, tags, modified_at, price} = updateWardrobeItemDto
+
+        clothing_category = clothing_category.toLowerCase();
+        style = style.map((item) => item.toLowerCase());
+        brand = brand.toLowerCase();
+        size = size.toLowerCase();
+        colour = colour.map((item) => item.toLowerCase());
+        material = material.map((item) => item.toLowerCase());
+        tags = tags.map((item) => item.toLowerCase());
 
         // check requested item exists
         await this.check_item_belongs_to_user(user_id, id);
@@ -109,61 +117,62 @@ export class WardrobeService {
         colour? : string[],
         material? : string[],
         tags? : string[],
-        price? : number
+        min_price? : number,
+        max_price? : number
     ){
         const supabase = this.supabaseService.client;
 
         const user_id = await this.get_profile_id(id);
 
-        // check which category user is searching by
         let query = supabase.from('wardrobe_items')
                             .select('*')
                             .eq('user_id', user_id);
         
-        let query_string = ''
-        
         if(clothing_category && clothing_category?.length !== 0){
-            query_string += `${query_string ? ',' : ''}clothing_category.in.(${clothing_category})`;
+            const clothing_category_query = clothing_category.map(category => `clothing_category.ilike.${category}`).join(',');
+            query = query.or(clothing_category_query);
         }
 
         if(style && style?.length !== 0){
-            const formattedArray = `{${style.map(item => `\"${item}\"`).join(',')}}`;
-            query_string += `${query_string ? ',' : ''}style.ov.${formattedArray}`;
+            query= query.overlaps('style', style);
         }
 
         if(brand && brand?.length !== 0){
-            query_string += `${query_string ? ',' : ''}brand.in.(${brand})`;
+            const brand_query = brand.map(item => `brand.ilike.${item}`).join(',');
+            query = query.or(brand_query);
         }
 
+        // TODO set up how different sizes are equal
         if(size && size?.length !== 0){
-            query_string += `${query_string ? ',' : ''}size.in.(${size})`;
+            const size_query = size.map(item => `size.ilike.${item}`).join(',');
+            query = query.or(size_query);
         }
 
         if(colour && colour?.length !== 0){
-            const formattedArray = `{${colour.map(item => `\"${item}\"`).join(',')}}`;
-            query_string += `${query_string ? ',' : ''}colour.ov.${formattedArray}`;
+            query= query.overlaps('colour', colour);
         }
 
         if(material && material?.length !== 0){
-            const formattedArray = `{${material.map(item => `\"${item}\"`).join(',')}}`;
-            query_string += `${query_string ? ',' : ''}material.ov.${formattedArray}`;
+            query= query.overlaps('material', material);
         }
 
         if(tags && tags?.length !== 0){
-            const formattedArray = `{${tags.map(item => `\"${item}\"`).join(',')}}`;
-            query_string += `${query_string ? ',' : ''}tags.ov.${formattedArray}`;
+            query= query.overlaps('tags', tags);
         }
 
-        if(price && price > 0){
-            // TODO check with frontend how they will use price here
-            query_string += `${query_string ? ',' : ''}price.eq.${price}`;
-        }
+        if(max_price && max_price > 0){
+            if(min_price){
+                // finds rows where value is less than or equal to max price
+                query = query.lte('price', max_price);
 
-        if(!query_string || query_string.trim().length === 0) {
-            throw new NotFoundException('No item found matching criteria');
+                // finds rows where value is greater than or equal to min price
+                query = query.gte('price', min_price);
+            }
+            else {
+                // if no min price assume min price as 0 therefore no need to set greater than
+                query = query.lte('price', max_price);
+            }
         }
-
-        query = query.or(query_string);
 
         // find any items in their wardrobe that match
         const { data, error } = await query;

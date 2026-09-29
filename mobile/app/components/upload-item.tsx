@@ -9,8 +9,8 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { ThemedText } from '../components/themed-text';
-import PhotoPreviewSection from '../components/photo-preview';
+import { ThemedText } from './themed-text';
+import PhotoPreviewSection from './photo-preview';
 
 
 export default function Camera() {

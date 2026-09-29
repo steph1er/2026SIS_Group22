@@ -32,8 +32,9 @@ export function BottomNavBar() {
   };
 
   // Only for signed-in users, so the Welcome, Login and Sign Up screens cannot open
-  // Home or Profile. Also hidden during onboarding so a new user cannot skip it.
-  if (!user || pathname.startsWith('/onboarding')) return null;
+  // Home or Profile. Also hidden during onboarding so a new user cannot skip it, and
+  // on item details, which has its own action bar.
+  if (!user || pathname.startsWith('/onboarding') || pathname.startsWith('/item/')) return null;
 
   return (
     <>
