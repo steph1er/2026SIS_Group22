@@ -33,18 +33,12 @@ CATEGORY_LABELS = [
     "bag", "hat", "beanie", "scarf", "belt",
 ]
 
-# Style is fuzzier than category (a jacket is objectively a jacket, but
-# "streetwear" vs "casual" can overlap
 STYLE_LABELS = [
     "streetwear", "coquette", "workwear", "casual", "goth", "alternative",
     "formal", "athleisure", "preppy", "minimalist",
 ]
 
-# Colour names a wardrobe item can be tagged with. Matching is nearest-in-Lab,
-# so each entry claims the region of colour space closest to it: add a name
-# only if it is a colour users would actually call something, and keep it
-# perceptually distinct from its neighbours. Black/white/grey are also caught
-# earlier by the neutral check in nearest_colour_name.
+# Matched by nearest Lab distance, so keep entries perceptually distinct.
 NAMED_COLOURS = {
     # neutrals
     "black": (0, 0, 0), "white": (255, 255, 255), "grey": (128, 128, 128),
@@ -71,18 +65,7 @@ NAMED_COLOURS = {
 
 
 def zero_shot_classify(image: Image.Image, labels: list[str]) -> tuple[str, float]:
-    """Score an image against an arbitrary label list and return the
-    best match plus its confidence. Category and style both call this
-    with a different `labels` list, same underlying mechanism.
-
-    Confidence comes from the model itself: it embeds the image and
-    every label into the same vector space, scores each label by how
-    close it is to the image (cosine similarity, scaled by 100), then
-    runs softmax across those scores. The number returned is the
-    probability mass assigned to the winning label *relative to the
-    other labels in this call* — it is not an absolute certainty, and
-    it will change if you add, remove, or reword labels.
-    """
+    """Return the best-matching label and its softmax confidence relative to the other labels."""
     image_input = preprocess(image).unsqueeze(0)
     text_inputs = tokenizer(labels)
     with torch.no_grad():
@@ -94,8 +77,7 @@ def zero_shot_classify(image: Image.Image, labels: list[str]) -> tuple[str, floa
 
 
 def get_embedding(image: Image.Image) -> list[float]:
-    """Same model, reused for outfit matching and recommendations later,
-    so category tagging and embeddings come from one forward pass."""
+    """Return the normalised image embedding used for outfit matching."""
     image_input = preprocess(image).unsqueeze(0)
     with torch.no_grad():
         features = model.encode_image(image_input, normalize=True)
@@ -103,8 +85,7 @@ def get_embedding(image: Image.Image) -> list[float]:
 
 
 def rgb_to_lab(rgb) -> np.ndarray:
-    """Convert one 0-255 RGB triple to CIE Lab, where Euclidean distance
-    roughly matches perceived colour difference (unlike raw RGB)."""
+    """Convert a 0-255 RGB triple to CIE Lab for perceptual distance."""
     pixel = np.array(rgb, dtype=np.float32).reshape(1, 1, 3) / 255.0
     return cv2.cvtColor(pixel, cv2.COLOR_RGB2LAB).reshape(3)
 
@@ -112,9 +93,7 @@ def rgb_to_lab(rgb) -> np.ndarray:
 NEUTRAL_NAMES = {"black", "white", "grey"}
 NAMED_COLOURS_LAB = {name: rgb_to_lab(rgb) for name, rgb in NAMED_COLOURS.items()}
 
-# Below these saturation/brightness levels a colour is treated as a neutral
-# (black/grey/white) by brightness alone. Photographed black fabric is rarely
-# pure (0,0,0); it typically lands around RGB 40-70 with a slight tint.
+# Neutral thresholds; photographed black fabric is usually ~RGB 40-70, not pure black.
 NEUTRAL_SATURATION = 0.12
 BLACK_MAX_VALUE = 0.30
 WHITE_MIN_VALUE = 0.85
@@ -126,8 +105,7 @@ def nearest_colour_name(rgb: np.ndarray) -> str:
     value = max(r, g, b) / 255.0
     saturation = 0.0 if value == 0 else (max(r, g, b) - min(r, g, b)) / max(r, g, b)
 
-    # Neutral check first: low-saturation colours are decided by brightness,
-    # so a dark charcoal pixel can't be pulled toward a tinted palette entry.
+    # Low-saturation colours are named by brightness alone.
     if value < VERY_DARK_VALUE:
         return "black"
     if saturation < NEUTRAL_SATURATION:
@@ -137,8 +115,7 @@ def nearest_colour_name(rgb: np.ndarray) -> str:
             return "white"
         return "grey"
 
-    # Clearly tinted at this point, so only chromatic names are candidates:
-    # a very dark wine-red should become maroon, not black.
+    # Tinted, so only match chromatic names (e.g. dark wine-red -> maroon, not black).
     lab = rgb_to_lab(rgb)
     return min(
         (name for name in NAMED_COLOURS_LAB if name not in NEUTRAL_NAMES),
@@ -146,9 +123,7 @@ def nearest_colour_name(rgb: np.ndarray) -> str:
     )
 
 def extract_dominant_colour(foreground: Image.Image, k: int = 3) -> str:
-    """Cluster only the actual garment pixels (alpha > 128), not the
-    white padding strip_background flattens transparency onto — otherwise
-    a garment that doesn't fill the frame gets outvoted by the padding."""
+    """Return the dominant colour name of the garment, ignoring transparent pixels."""
     rgba = np.array(foreground.convert("RGBA")).reshape(-1, 4)
     opaque_pixels = rgba[rgba[:, 3] > 128, :3].astype(np.float32)
     if len(opaque_pixels) == 0:
@@ -166,9 +141,7 @@ def extract_dominant_colour(foreground: Image.Image, k: int = 3) -> str:
 def strip_background(image_bytes: bytes) -> tuple[Image.Image, Image.Image]:
     no_bg_bytes = remove(image_bytes)
     foreground = Image.open(io.BytesIO(no_bg_bytes)).convert("RGBA")
-    # Flatten onto white so category/embedding steps, which expect RGB,
-    # don't get thrown off by transparent pixels. Colour extraction uses
-    # `foreground`'s alpha channel instead, so it isn't skewed by the padding.
+    # Flatten onto white for the model; colour extraction uses the alpha channel instead.
     white_bg = Image.new("RGBA", foreground.size, (255, 255, 255, 255))
     flattened = Image.alpha_composite(white_bg, foreground).convert("RGB")
     return flattened, foreground
