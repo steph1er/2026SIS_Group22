@@ -1,11 +1,13 @@
 # ml-service
 
 Python service for the wardrobe app's image analysis. Given a clothing
-photo, it strips the background, identifies the category and dominant
-colour, and returns an embedding vector for later similarity search
-(outfit matching, recommendations).
+photo, it strips the background, identifies the category, style and
+dominant colour, and returns an embedding vector for later similarity
+search (outfit matching, recommendations).
 
 ## Setup
+
+Requires Python 3.9+.
 
 ```bash
 cd ml-service
@@ -14,9 +16,8 @@ source venv/bin/activate      # Windows: venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-The first run downloads two sets of model weights (rembg's segmentation
-model and Marqo-FashionCLIP), roughly 1-2 GB combined. Do this well
-before a demo
+The first run downloads rembg's segmentation model and
+Marqo-FashionCLIP, so do this well before a demo.
 
 ## Run
 
@@ -24,73 +25,79 @@ before a demo
 uvicorn main:app --reload --port 8000
 ```
 
+`GET /health` returns `{"status": "ok"}` once the models have loaded.
+
 ## Test it
 
-```bash
-curl.exe -X POST -F "file=@ml-service\uniqlo_jeans.png" http://localhost:8000/analyze-item
+From `ml-service/` (use `curl.exe` in PowerShell):
 
+```bash
+curl -X POST -F "file=@images-temp/uniqlo_jeans.png" http://localhost:8000/analyze-item
 ```
 
 Expected response shape:
 
 ```json
 {
-  "category": "t-shirt",
+  "category": "jeans",
   "category_confidence": 0.87,
-  "colour": "navy",
+  "style": "casual",
+  "style_confidence": 0.42,
+  "colour": "denim blue",
   "embedding": [0.0123, -0.0456, ...]
 }
 ```
 
-Check `len(embedding)` on a real response and confirm it matches the
-`vector(N)` dimension used in the Supabase schema (see
-`supabase/wardrobe_items.sql`). It should be 512 for this model, but
-worth verifying before wiring up storage.
+- Confidences are relative to the other labels in `CATEGORY_LABELS` /
+  `STYLE_LABELS`, so they shift if those lists change.
+- `embedding` is 512 floats for this model.
+
+## Storing results in Supabase
+
+Map the response onto `wardrobe_items` when saving:
+
+- `category` → `clothing_category`
+- `colour` → `colour: [colour]` (`text[]`)
+- `style` → `style: [style]` (`text[]`)
+- `embedding` → `embedding` (`vector(512)`, added in
+  `supabase/migrations/20261001000000_add_wardrobe_item_embeddings.sql`)
 
 ## Calling this from the NestJS backend
 
-The upload handler in the backend should call this service after the
-image lands in Supabase Storage, then save the returned fields
-alongside the item record.
+`WardrobeService.addItem()` in `backend/src/wardrobe/wardrobe.service.ts`
+is still a stub. Once the image is uploaded, it should call this service
+and save the returned fields on the item. Node's built-in `fetch` and
+`FormData` are enough, so no extra packages are needed:
 
 ```typescript
-// wardrobe.service.ts
-import { Injectable } from '@nestjs/common';
-import axios from 'axios';
-import FormData from 'form-data';
+const ML_SERVICE_URL = process.env.ML_SERVICE_URL ?? 'http://localhost:8000';
 
-const ML_SERVICE_URL = process.env.ML_SERVICE_URL || 'http://localhost:8000';
+async analyzeItem(imageBuffer: Buffer, filename: string) {
+  const form = new FormData();
+  form.append('file', new Blob([imageBuffer]), filename);
 
-@Injectable()
-export class WardrobeService {
-  async analyzeItem(imageBuffer: Buffer, filename: string) {
-    const form = new FormData();
-    form.append('file', imageBuffer, filename);
-
-    const { data } = await axios.post(
-      `${ML_SERVICE_URL}/analyze-item`,
-      form,
-      { headers: form.getHeaders() },
-    );
-
-    return data; // { category, colour, embedding, category_confidence }
+  const res = await fetch(`${ML_SERVICE_URL}/analyze-item`, {
+    method: 'POST',
+    body: form,
+  });
+  if (!res.ok) {
+    throw new HttpException('ML service failed', HttpStatus.BAD_GATEWAY);
   }
+  return res.json();
 }
 ```
 
-Add `ML_SERVICE_URL=http://localhost:8000` to the backend's `.env` so
-it's not hardcoded.
+Add `ML_SERVICE_URL=http://localhost:8000` to the backend's `.env`.
 
 ## Suggested build order
 
-1. Get `/analyze-item` returning sensible results on a handful of test
-   photos, adjust `CATEGORY_LABELS` and `NAMED_COLOURS` to match what
-   the app actually needs to support.
-2. Wire the NestJS upload flow to call this service and store the
-   result (category, colour, embedding) against the wardrobe item.
-3. Once embeddings are being stored for a few items, outfit matching
-   becomes a `pgvector` similarity query
-   against `wardrobe_items`, no new model needed.
-4. Shopping recommendations and colour analysis (personal palette) are
-   separate, later pieces, they can reuse this service but don't block
-   on it.
+1. Get `/analyze-item` returning sensible results on the photos in
+   `images-temp/`, and adjust `CATEGORY_LABELS`, `STYLE_LABELS` and
+   `NAMED_COLOURS` to match what the app needs to support.
+2. Apply the `embedding` column migration (see above).
+3. Wire `addItem()` to call this service and store the results against
+   the wardrobe item.
+4. Once embeddings are stored, outfit matching becomes a `pgvector`
+   similarity query against `wardrobe_items`, with no new model needed.
+5. Shopping recommendations and personal colour analysis are separate,
+   later pieces. They can reuse this service but don't depend on it.
