@@ -24,7 +24,7 @@
       "expo-image",
       "expo-sqlite",
       "expo-web-browser",
-      "expo-asset", 
+      "expo-asset",
        [
         "expo-camera",
         {
@@ -34,7 +34,7 @@
           "barcodeScannerEnabled": true
         }
       ]
-    ], 
+    ],
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true

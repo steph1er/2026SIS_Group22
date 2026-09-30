@@ -1,6 +1,7 @@
 import Slider from '@react-native-community/slider';
+import { Redirect } from 'expo-router';
 import { useState } from 'react';
-import { Image, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Image, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import RangeSlider from 'react-native-fast-range-slider';
 import Animated from 'react-native-reanimated';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
@@ -11,17 +12,83 @@ import { optionStyles } from '../../services/onboarding/onboarding-options';
 import { layoutStyles } from '../../services/onboarding/onboarding-theme';
 import { wardrobeStyles } from '../../services/onboarding/onboarding-wardrobe';
 import { StyleUTokens } from '../../services/styleu-theme';
+import { useAuth } from '../../../src/auth/auth-provider';
+import type { OnboardingLayout, OnboardingProgress } from '../../../src/onboarding/onboarding-service';
+import { useOnboardingProgress } from '../../../src/onboarding/use-onboarding-progress';
 import { useOnboardingHandler } from './onboardingHandler';
 
 const styles = { ...layoutStyles, ...optionStyles, ...inputStyles, ...wardrobeStyles };
+
+// Tells the restore logic which screen holds the price ranges and what their full ranges are.
+const priceStepIndex = onboardingSteps.findIndex((step) => step.sections?.some((section) => section.type === 'price-select'));
+const onboardingLayout: OnboardingLayout = {
+  priceStepIndex,
+  priceFields:
+    onboardingSteps[priceStepIndex]?.sections?.find((section) => section.type === 'price-select')?.priceFields ?? [],
+};
 const defaultPriceSliderWidth = 280;
 const minPriceSliderWidth = 120;
 const priceSliderLayoutPadding = 40;
 const priceThumbSize = 18;
 const priceLabelWidth = 40;
 
+// Loads where this user's onboarding should start before showing the quiz. Nothing is shown
+// (and nothing can be saved) until that is known, and a failed load never falls back to a blank quiz.
 export default function OnboardingQuiz() {
+  const { user, isLoading: isAuthLoading } = useAuth();
+  const { progress, error, isLoading, retry } = useOnboardingProgress(onboardingLayout);
+
+  // Onboarding answers are saved against the signed-in user, so there is nothing to do without one.
+  if (isAuthLoading) {
+    return (
+      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+        <ActivityIndicator color={StyleUTokens.colors.accent} size="large" />
+      </View>
+    );
+  }
+
+  if (!user) {
+    return <Redirect href="/login" />;
+  }
+
+  if (error) {
+    return (
+      <View
+        style={{
+          flex: 1,
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 20,
+          paddingHorizontal: 28,
+          backgroundColor: StyleUTokens.colors.background,
+        }}
+      >
+        <Text accessibilityRole="alert" style={styles.footerErrorText}>
+          {"We couldn't load your onboarding progress. Please check your connection and try again."}
+        </Text>
+        <TouchableOpacity style={[styles.continueButton, { alignSelf: 'stretch' }]} onPress={retry}>
+          <Text style={styles.continueText}>Try Again</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
+  if (isLoading || !progress) {
+    return (
+      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+        <ActivityIndicator color={StyleUTokens.colors.accent} size="large" />
+      </View>
+    );
+  }
+
+  // Keyed by user so a different account can never reuse another's quiz state.
+  return <OnboardingQuizContent key={user.id} initial={progress} />;
+}
+
+function OnboardingQuizContent({ initial }: { initial: OnboardingProgress }) {
   const {
+    isSaving,
+    saveError,
     currentStep,
     answers,
     showErrors,
@@ -44,7 +111,7 @@ export default function OnboardingQuiz() {
     isSectionAnswered,
     handleContinue,
     handleBack,
-  } = useOnboardingHandler();
+  } = useOnboardingHandler(initial);
 
   const [priceSliderWidth, setPriceSliderWidth] = useState(defaultPriceSliderWidth);
   const [livePriceValues, setLivePriceValues] = useState<Record<string, [number, number]>>({});
@@ -69,12 +136,12 @@ export default function OnboardingQuiz() {
                   <Text style={styles.backChevronText}>‹</Text>
                 </TouchableOpacity>
               )}
-  
+
               <Text style={styles.stepLabel}>
                 STEP {currentStep + 1} OF {onboardingSteps.length}
               </Text>
             </View>
-  
+
             <Text style={styles.percentLabel}>
               {Math.round(progress * 100)}% COMPLETE
             </Text>
@@ -104,14 +171,14 @@ export default function OnboardingQuiz() {
                     const fieldKey = `${section.id}:${field.id}`;
                     return Boolean(answers[`${fieldKey}:skip`]);
                   });
-  
+
                 return (
                   <View key={section.id} style={styles.section}>
                     <View style={styles.sectionHeader}>
                       <Text style={[styles.sectionTitle, showError && styles.sectionTitleError]}>
                         {section.title}
                       </Text>
-  
+
                       {/* optional, subtitle and error display */}
 
                       {section.optional && (
@@ -122,13 +189,13 @@ export default function OnboardingQuiz() {
                         </View>
                       )}
                     </View>
-  
+
                     {section.subtitle && (
                       <Text style={styles.sectionSubtitle}>
                         {section.subtitle}
                       </Text>
                     )}
-  
+
                     {showError && (
                       <Text style={styles.errorText}>
                         Please make a selection to continue
@@ -467,7 +534,7 @@ export default function OnboardingQuiz() {
                               }
                             }}
                           >
-                            
+
                             {isColour && (
                               <View
                                 style={[
@@ -554,7 +621,7 @@ export default function OnboardingQuiz() {
       </ScrollView>
 
       {/* footer */}
-      
+
       <View style={styles.footer}>
         {showErrors && missingRequiredSections.length > 0 && (
           <Text style={styles.footerErrorText}>
@@ -562,19 +629,27 @@ export default function OnboardingQuiz() {
           </Text>
         )}
 
+        {saveError !== '' && (
+          <Text accessibilityRole="alert" style={styles.footerErrorText}>
+            {saveError}
+          </Text>
+        )}
+
         <TouchableOpacity
-          style={styles.continueButton}
+          style={[styles.continueButton, isSaving && { opacity: 0.6 }]}
           onPress={handleContinue}
+          disabled={isSaving}
         >
           <Text style={styles.continueText}>
-            {currentStep < onboardingSteps.length - 2 && 'Next Step'}
-            {currentStep === onboardingSteps.length - 2 && 'Save & Next'}
-            {currentStep === onboardingSteps.length - 1 && 'Finish Onboarding'}
+            {isSaving && 'Saving…'}
+            {!isSaving && currentStep < onboardingSteps.length - 2 && 'Next Step'}
+            {!isSaving && currentStep === onboardingSteps.length - 2 && 'Save & Next'}
+            {!isSaving && currentStep === onboardingSteps.length - 1 && 'Finish Onboarding'}
           </Text>
         </TouchableOpacity>
 
         {currentStep === onboardingSteps.length - 1 && (
-          <TouchableOpacity onPress={handleContinue}>
+          <TouchableOpacity onPress={handleContinue} disabled={isSaving}>
             <Text style={styles.skipForNow}>
               Skip for now
             </Text>
