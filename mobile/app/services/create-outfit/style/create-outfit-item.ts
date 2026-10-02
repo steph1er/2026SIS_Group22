@@ -10,6 +10,14 @@ export const itemStyles = StyleSheet.create ({
     justifyContent: 'space-between',
   },
 
+  itemPopUpImage: {
+    width: '100%',
+    height: 200,
+    resizeMode: 'contain',
+    borderRadius: 16,
+    backgroundColor: colors.mutedBackground,
+  },
+
   itemPopUpName: {
     fontSize: 26,
     fontWeight: 600,
@@ -55,7 +63,8 @@ export const itemStyles = StyleSheet.create ({
   },
 
   descriptionCardSymbol: {
-
+    color: colors.mutedText,
+    marginBottom: 8,
   },
 
   descriptionCardText: {
@@ -65,6 +74,7 @@ export const itemStyles = StyleSheet.create ({
 
   descriptionTagsContainer: {
     flexDirection: 'row',
+    gap: 8,
   },
 
   descriptionTags: {

@@ -1,5 +1,3 @@
-export type OutfitCategory = 'tops' | 'bottoms' | 'shoes' | 'jewelry';
-
 export type WardrobeItem = {
   id: string;
   image_url: string;
@@ -22,6 +20,9 @@ export type RecommendedItem = {
   description?: string;
   tags?: string[];
   materials?: string;
+  category?: string;
+  colours?: string[];
+  source?: 'Wishlist' | 'Catalogue';
 };
 
 export type OutfitItem = {

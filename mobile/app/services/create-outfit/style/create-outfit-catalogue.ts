@@ -107,6 +107,14 @@ export const catalogueStyles = StyleSheet.create ({
     paddingVertical: 8,
   },
 
+  emptyText: {
+    color: colors.mutedText,
+    fontSize: 14,
+    fontWeight: 300,
+    paddingVertical: 20,
+    alignSelf: 'center',
+  },
+
   suggestedItemsGrid: {
     flexDirection: 'row',
     gap: 12,

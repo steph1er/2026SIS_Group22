@@ -1,8 +1,10 @@
-import { useState } from 'react';
-import { Image, ScrollView, Text, TouchableOpacity, useWindowDimensions, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import { ActivityIndicator, Image, ScrollView, Text, TouchableOpacity, useWindowDimensions, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
+
+import { fetchBuilderItems, fetchGeneralRecommendations, getItemLabel, type BuilderItem } from '../../services/create-outfit/create-outfit-service';
 
 import { OutfitItem, RecommendedItem, WardrobeItem } from '../../services/create-outfit/createOutfitTypes';
 import CreateOutfitItem from './createOutfitItem';
@@ -54,7 +56,7 @@ export default function CreateOutfits() {
 
   const [selectedItem, setSelectedItem] = useState<WardrobeItem | RecommendedItem | null>(null);
   const [itemsCategory, setItemsCategory] = useState('Wardrobe'); // wardrobe or wishlist
-  const togglePosition = useSharedValue(1);
+  const togglePosition = useSharedValue(0);
 
   const [outfitItems, setOutfitItems] = useState<OutfitItem[]>([]);
   const hasOutfitItems = outfitItems.length > 0;
@@ -62,37 +64,58 @@ export default function CreateOutfits() {
   const [selectedCategory, setSelectedCategory] = useState('Tops');
   const [showSave, setShowSave] = useState(false);
 
-  const categories = ['Tops', 'Bottoms', 'Shoes', 'Accessories', 'Other'];
-  const placeholderItems: RecommendedItem[] = [
-    {
-      id: '1',
-      name: 'placeholder',
-      brand: 'Placeholder Brand',
-      price: '$00.00',
-      image_url: 'https://placehold.net/7.png',
-    },
-    {
-      id: '2',
-      name: 'placeholder',
-      brand: 'Placeholder Brand',
-      price: '$00.00',
-      image_url: 'https://placehold.net/3.png',
-    },
-    {
-      id: '3',
-      name: 'placeholder',
-      brand: 'Placeholder Brand',
-      price: '$00.00',
-      image_url: 'https://placehold.net/2.png',
-    },
-    {
-      id: '4',
-      name: 'placeholder name',
-      brand: 'Placeholder Brand',
-      price: '$00.00',
-      image_url: 'https://placehold.net/1.png',
-    },
-  ];
+  const categories = ['Tops', 'Bottoms', 'Outerwear', 'Dresses', 'Shoes', 'Other'];
+
+  // general recommendations: load once
+  const [generalRecs, setGeneralRecs] = useState<RecommendedItem[]>([]);
+  const [generalLoading, setGeneralLoading] = useState(true);
+  const [generalError, setGeneralError] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetchGeneralRecommendations()
+      .then(setGeneralRecs)
+      .catch((e) => setGeneralError(e.message ?? 'Could not load recommendations.'))
+      .finally(() => setGeneralLoading(false));
+  }, []);
+
+  // wardrobe/wishlist items: reload on toggle or category change
+  const [suggested, setSuggested] = useState<BuilderItem[]>([]);
+  const [gridItems, setGridItems] = useState<BuilderItem[]>([]);
+
+  const [loading, setLoading] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    setLoadError(null);
+
+    fetchBuilderItems(itemsCategory as 'Wardrobe' | 'Wishlist', selectedCategory)
+      .then(({ recommendations, items }) => {
+        if (cancelled) return;
+          setSuggested(recommendations);
+          setGridItems(items);
+      })
+      .catch((e) => { if (!cancelled) setLoadError(e.message ?? 'Could not load items.'); })
+      .finally(() => { if (!cancelled) setLoading(false); });
+
+    return () => { cancelled = true; };
+  }, [itemsCategory, selectedCategory]);
+
+  // don't repeat anything already shown in "Suggested for you" or the grid
+  const shownIds = new Set([...suggested, ...gridItems].map((i) => i.id));
+  const youMightLike = generalRecs.filter((i) => !shownIds.has(i.id));
+
+  const renderCard = (item: BuilderItem, width?: number) => (
+    <TouchableOpacity
+      key={item.id}
+      style={[styles.itemCard, width ? { width } : null]}
+      onPress={() => handleItemSelect(item)}
+    >
+      <Image source={{ uri: item.image_url }} style={styles.itemImage} />
+      <Text style={styles.itemName} numberOfLines={2}>{getItemLabel(item)}</Text>
+    </TouchableOpacity>
+  );
 
   const handleAddToOutfit = (item: WardrobeItem | RecommendedItem) => {
     setOutfitItems((prev) => [
@@ -196,17 +219,18 @@ export default function CreateOutfits() {
             {/* recommended items */}
             <View style={styles.suggestedContainer}>
               <Text style={styles.suggestionText}>Items you might like...</Text>
-              {/* TODO: pull from db */}
-              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                <View style={styles.suggestedItemsGrid}>
-                  {placeholderItems.map((item) => (
-                    <TouchableOpacity key={item.id} style={styles.itemCard} onPress={() => handleItemSelect(item)}>
-                      <Image source={{ uri: item.image_url }} style={styles.itemImage}/>
-                      <Text style={styles.itemName}>{item.name}</Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              </ScrollView>
+
+              {generalLoading ? (
+                <ActivityIndicator style={{ paddingVertical: 24 }} />
+              ) : generalError ? (
+                <Text style={styles.suggestionText}>{generalError}</Text>
+              ) : youMightLike.length === 0 ? (
+                <Text style={styles.emptyText}>No recommendations yet.</Text>
+              ) : (
+                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                  <View style={styles.suggestedItemsGrid}>{youMightLike.map((i) => renderCard(i))}</View>
+                </ScrollView>
+              )}
             </View>
 
             {/* wishlist or wardrobe toggle */}
@@ -240,29 +264,26 @@ export default function CreateOutfits() {
             {/* suggested for you container */}
             <View style={[styles.suggestedContainer, {backgroundColor: StyleUTokens.colors.backgroundElement}]}>
               <Text style={styles.suggestionText}>Suggested for you</Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                <View style={styles.suggestedItemsGrid}>
-                  {placeholderItems.map((item) => (
-                    <TouchableOpacity key={item.id} style={styles.itemCard} onPress={() => handleItemSelect(item)}>
-                      <Image source={{ uri: item.image_url }} style={styles.itemImage}/>
-                      <Text style={styles.itemName}>{item.name}</Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              </ScrollView>
+              {loading ? (
+                <ActivityIndicator style={{ paddingVertical: 24 }} />
+              ) : loadError ? (
+                <Text style={styles.suggestionText}>{loadError}</Text>
+              ) : suggested.length === 0 ? (
+                <Text style={styles.emptyText}>
+                  No {selectedCategory.toLowerCase()} in your {itemsCategory.toLowerCase()} yet.
+                </Text>
+              ) : (
+                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                  <View style={styles.suggestedItemsGrid}>{suggested.map((i) => renderCard(i))}</View>
+                </ScrollView>
+              )}
             </View>
 
-            {/* wardrobe */}
+            {/* wardrobe / wishlist grid */}
             <View style={styles.wardrobeContainer}>
-              {/* TODO: link to db */}
-              <View style={styles.wardrobeItemsGrid}>
-                {placeholderItems.map((item) => (
-                    <TouchableOpacity key={item.id} style={[styles.itemCard, { width: 120 }]} onPress={() => handleItemSelect(item)}>
-                      <Image source={{ uri: item.image_url }} style={styles.itemImage}/>
-                      <Text style={styles.itemName}>{item.name}</Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
+              {!loading && !loadError && gridItems.length > 0 && (
+                <View style={styles.wardrobeItemsGrid}>{gridItems.map((i) => renderCard(i, 120))}</View>
+              )}
             </View>
           </ScrollView>
         </Animated.View>

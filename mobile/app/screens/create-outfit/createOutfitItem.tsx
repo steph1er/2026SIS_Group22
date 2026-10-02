@@ -1,6 +1,8 @@
-import { Text, TouchableOpacity, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { Image, Text, TouchableOpacity, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, { runOnJS, useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
+import { getItemDetails, SOURCE_ICONS } from '../../services/create-outfit/create-outfit-service';
 import { RecommendedItem, WardrobeItem } from '../../services/create-outfit/createOutfitTypes';
 import { styles } from './createOutfit';
 
@@ -37,6 +39,12 @@ export default function CreateOutfitItem({ item, onClose, onAddToOutfit, already
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: translateY.value }],
   }));
+
+  const details = getItemDetails(item);
+  const subtitle = [
+    details.material && `Material: ${details.material}`,
+    details.size && `Size: ${details.size}`,
+  ].filter(Boolean).join(' | ');
     
   return (
     <View style={styles.overlay}>
@@ -50,43 +58,33 @@ export default function CreateOutfitItem({ item, onClose, onAddToOutfit, already
         </GestureDetector>
 
         {/* Item image */}
-        <View>
-          {/* Image goes here */}
-        </View>
+        <Image source={{ uri: details.imageUrl }} style={styles.itemPopUpImage} />
 
         <View style={styles.topContainer}>
           <Text style={styles.brandName}>
-            {/* make it all caps */}
-            BRAND
+            {details.brand?.toUpperCase() ?? ''}
           </Text>
 
           <Text style={styles.price}>
-            $00.00
+            {details.price ?? ''}
           </Text>
         </View>
 
         {/* Item name */}
         <Text style={styles.itemPopUpName}>
-          Item Name
+          {details.name}
         </Text>
 
         <View style={styles.descriptionContainer}>
-          <Text style={styles.descriptionSubtitle}>
-            {/* material and size */}
-            Material: Something | Size: L
-          </Text>
-          <Text style={styles.descriptionText}>
-            {/* item description */}
-            placeholder random words blahd qoidiohoc doiahdh djiajd ak jaqwpojdi
-          </Text>
+          {subtitle ? <Text style={styles.descriptionSubtitle}>{subtitle}</Text> : null}
+          {details.description ? <Text style={styles.descriptionText}>{details.description}</Text> : null}
           <View style={styles.descriptionCardContainer}>
             <View style={styles.descriptionCard}>
               <Text style={styles.descriptionCardSymbol}>
                 {/* symbol */}
               </Text>
               <Text style={styles.descriptionCardText}>
-                {/* desc card */}
-                Colour
+                {details.colour ?? 'Colour: n/a'}
               </Text>
             </View>
 
@@ -95,29 +93,27 @@ export default function CreateOutfitItem({ item, onClose, onAddToOutfit, already
                 {/* symbol */}
               </Text>
               <Text style={styles.descriptionCardText}>
-                {/* desc card */}
-                Category
+                {details.category ?? 'Category: n/a'}
               </Text>
             </View>
 
             <View style={styles.descriptionCard}>
               <Text style={styles.descriptionCardSymbol}>
-                {/* symbol */}
+                <Ionicons style={styles.descriptionCardSymbol} name={SOURCE_ICONS[details.source]} size={20} />
               </Text>
               <Text style={styles.descriptionCardText}>
-                {/* desc card */}
-                Season?
+                {/* wardrobe/wishlist/catalogue */}
+                {details.source}
               </Text>
             </View>
           </View>
 
           <View style={styles.descriptionTagsContainer}>
-            <View style={styles.descriptionTags}>
-              <Text style={styles.descriptionTagsText}>
-                {/* tag */}
-                example
-              </Text>
-            </View>
+            {details.tags.map((tag) => (
+              <View key={tag} style={styles.descriptionTags}>
+                <Text style={styles.descriptionTagsText}>{tag}</Text>
+              </View>
+            ))}
           </View>
 
         </View>
