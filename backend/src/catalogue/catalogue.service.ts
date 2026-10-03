@@ -93,6 +93,7 @@ export class CatalogueService {
         }
 
         if(style && style?.length !== 0){
+            // todo to lower
             query= query.overlaps('style', style);
         }
 
@@ -107,10 +108,12 @@ export class CatalogueService {
         }
 
         if(colour && colour?.length !== 0){
+            // todo to lower
             query= query.overlaps('colour', colour);
         }
 
         if(material && material?.length !== 0){
+            // todo to lower
             query= query.overlaps('materials', material);
         }
 
