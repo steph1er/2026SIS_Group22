@@ -134,6 +134,7 @@ export class WardrobeService {
         }
 
         if(style && style?.length !== 0){
+            style = style.map((item) => item.toLowerCase());
             query= query.overlaps('style', style);
         }
 
@@ -149,10 +150,12 @@ export class WardrobeService {
         }
 
         if(colour && colour?.length !== 0){
+            colour = colour.map((item) => item.toLowerCase());
             query= query.overlaps('colour', colour);
         }
 
         if(material && material?.length !== 0){
+            material = material.map((item) => item.toLowerCase());
             query= query.overlaps('material', material);
         }
 

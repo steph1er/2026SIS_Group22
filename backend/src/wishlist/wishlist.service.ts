@@ -150,7 +150,7 @@ export class WishlistService {
         }
 
         if(style && style?.length !== 0){
-            // todo to lower
+            style = style.map((item) => item.toLowerCase());
             query= query.overlaps('catalogue_items.style', style);
         }
 
@@ -165,12 +165,12 @@ export class WishlistService {
         }
 
         if(colour && colour?.length !== 0){
-            // todo to lower
+            colour = colour.map((item) => item.toLowerCase());
             query= query.overlaps('catalogue_items.colour', colour);
         }
 
         if(material && material?.length !== 0){
-            // todo to lower
+            material = material.map((item) => item.toLowerCase());
             query= query.overlaps('catalogue_items.materials', material);
         }
 
