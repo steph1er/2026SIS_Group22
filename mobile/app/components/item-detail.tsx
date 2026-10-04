@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Image,
+  Linking,
   Pressable,
   ScrollView,
   Share,
@@ -124,11 +125,24 @@ export default function ItemDetailScreen() {
     );
   };
 
+  // Opens the retailer's product page in the device's default browser.
+  const openProductPage = () => {
+    if (!shown.productUrl) return;
+    Linking.openURL(shown.productUrl).catch(() => setNotice("Couldn't open the product page."));
+  };
+
   return (
     <ThemedView style={{ flex: 1 }}>
       <ScrollView contentContainerStyle={{ paddingBottom: 110 + insets.bottom }}>
         <View>
-          <Image source={{ uri: shown.imageUrl ?? PLACEHOLDER_IMAGE }} style={[styles.hero, { height: screenWidth * 0.95 }]} resizeMode="cover" />
+          <Pressable
+            onPress={openProductPage}
+            disabled={!shown.productUrl}
+            accessibilityRole="link"
+            accessibilityLabel={`View ${shown.name} on the retailer's site`}
+          >
+            <Image source={{ uri: shown.imageUrl ?? PLACEHOLDER_IMAGE }} style={[styles.hero, { height: screenWidth * 0.95 }]} resizeMode="cover" />
+          </Pressable>
           <View style={[styles.heroButtons, { top: insets.top + 8 }]}>
             <TouchableOpacity style={styles.circleButton} onPress={goBack} accessibilityLabel="Back">
               <Ionicons name="chevron-back" size={22} color={TEXT} />
