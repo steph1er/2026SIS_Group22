@@ -1,25 +1,40 @@
 import { useState } from 'react';
 import { View, StyleSheet, Pressable, Modal } from 'react-native';
 import { Link, router, usePathname } from 'expo-router';
-import { Feather } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../src/auth/auth-provider';
 import { ThemedText } from './themed-text';
 
-const TABS = [
-  { href: './home-dashboard', label: 'Home', icon: 'home' as const },
-  { href: './discover-search', label: 'Search', icon: 'search' as const },
-] as const;
+type IconName = keyof typeof Ionicons.glyphMap;
+type Tab = { href: string; paths: readonly string[]; label: string; icon: IconName; activeIcon: IconName };
 
-const RIGHT_TABS = [
-  { href: './saved', label: 'Saved', icon: 'bookmark' as const },
-  { href: './profile', label: 'Profile', icon: 'user' as const },
-] as const;
-
-const MENU_OPTIONS = [
-  { href: './upload-item', label: 'Upload item', icon: 'upload' as const },
-  { href: './create-outfit', label: 'Create outfit', icon: 'x-circle' as const },
-  { href: './colour-analysis', label: 'Colour analysis', icon: 'zap' as const },
+// `paths` are the screens that highlight the tab: its own page plus any screen opened from it.
+const TABS: Tab[] = [
+  { href: '/home-dashboard', paths: ['/home-dashboard'], label: 'Home', icon: 'home-outline', activeIcon: 'home' },
+  { href: '/outfits', paths: ['/outfits'], label: 'Outfits', icon: 'shirt-outline', activeIcon: 'shirt' },
 ];
+
+const RIGHT_TABS: Tab[] = [
+  { href: '/saved', paths: ['/saved', '/wishlist'], label: 'Saved', icon: 'bookmark-outline', activeIcon: 'bookmark' },
+  { href: '/profile', paths: ['/profile', '/settings'], label: 'Profile', icon: 'person-outline', activeIcon: 'person' },
+];
+
+const MENU_OPTIONS: { href: string; label: string; icon: IconName }[] = [
+  { href: './upload-item', label: 'Upload item', icon: 'cloud-upload-outline' },
+  { href: './colour-analysis', label: 'Colour analysis', icon: 'color-palette-outline' },
+];
+
+function NavTab({ tab, pathname }: { tab: Tab; pathname: string }) {
+  const isActive = tab.paths.includes(pathname);
+  return (
+    <Link href={tab.href as never} asChild>
+      <Pressable style={styles.tab} accessibilityRole="tab" accessibilityState={{ selected: isActive }}>
+        <Ionicons name={isActive ? tab.activeIcon : tab.icon} size={22} color={isActive ? '#000' : '#999'} />
+        <ThemedText style={isActive ? styles.activeLabel : styles.label}>{tab.label}</ThemedText>
+      </Pressable>
+    </Link>
+  );
+}
 
 export function BottomNavBar() {
   const pathname = usePathname();
@@ -40,40 +55,23 @@ export function BottomNavBar() {
   return (
     <>
       <View style={styles.container}>
-        {TABS.map((tab) => {
-          const isActive = pathname === tab.href;
-          return (
-            <Link key={tab.href} href={tab.href} asChild>
-              <Pressable style={styles.tab}>
-                <Feather name={tab.icon} size={22} color={isActive ? '#000' : '#999'} />
-                <ThemedText style={isActive ? styles.activeLabel : styles.label}>
-                  {tab.label}
-                </ThemedText>
-              </Pressable>
-            </Link>
-          );
-        })}
+        {TABS.map((tab) => (
+          <NavTab key={tab.href} tab={tab} pathname={pathname} />
+        ))}
 
-        <Pressable
-          style={styles.centerButton}
-          onPress={() => setMenuVisible((prev) => !prev)}
-        >
-          <Feather name={menuVisible ? 'x' : 'plus'} size={26} color="#000" />
-        </Pressable>
+        <View style={styles.tab}>
+          <Pressable
+            style={styles.centerButton}
+            onPress={() => setMenuVisible((prev) => !prev)}
+            accessibilityLabel={menuVisible ? 'Close menu' : 'Open menu'}
+          >
+            <Ionicons name={menuVisible ? 'close' : 'add'} size={28} color="#000" />
+          </Pressable>
+        </View>
 
-        {RIGHT_TABS.map((tab) => {
-          const isActive = pathname === tab.href;
-          return (
-            <Link key={tab.href} href={tab.href} asChild>
-              <Pressable style={styles.tab}>
-                <Feather name={tab.icon} size={22} color={isActive ? '#000' : '#999'} />
-                <ThemedText style={isActive ? styles.activeLabel : styles.label}>
-                  {tab.label}
-                </ThemedText>
-              </Pressable>
-            </Link>
-          );
-        })}
+        {RIGHT_TABS.map((tab) => (
+          <NavTab key={tab.href} tab={tab} pathname={pathname} />
+        ))}
       </View>
 
       <Modal
@@ -91,7 +89,7 @@ export function BottomNavBar() {
                 onPress={() => handleOptionPress(option.href)}
               >
                 <View style={styles.optionIconCircle}>
-                  <Feather name={option.icon} size={18} color="#D98E73" />
+                  <Ionicons name={option.icon} size={18} color="#D98E73" />
                 </View>
                 <ThemedText style={styles.optionLabel}>{option.label}</ThemedText>
               </Pressable>
@@ -115,6 +113,7 @@ const styles = StyleSheet.create({
     borderTopColor: '#ddd',
   },
   tab: {
+    flex: 1,
     alignItems: 'center',
     gap: 2,
   },
@@ -134,7 +133,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#EDBBA3',
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: -20,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.15,
