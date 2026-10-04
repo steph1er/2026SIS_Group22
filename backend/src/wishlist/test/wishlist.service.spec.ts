@@ -4,7 +4,7 @@ import { SupabaseService } from "../../supabase/supabase.service";
 import { ConflictException, HttpException, NotFoundException } from "@nestjs/common";
 import { AddWishlistItemDto } from "../dto/add-wishlist-item.dto";
 
-describe('WishlistContoller', () => {
+describe('WishlistService', () => {
     let wishlistService: WishlistService;
     let supabaseClient: SupabaseService;
 
