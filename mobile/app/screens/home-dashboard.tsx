@@ -17,6 +17,7 @@ import { router, useFocusEffect } from 'expo-router';
 
 import { ThemedView } from '../components/themed-view';
 import { ThemedText } from '../components/themed-text';
+import { type CatalogueFilters, CatalogueSearch, hasActiveSearch, matchesSearch } from '../components/catalogue-search';
 import { useAuth } from '../../src/auth/auth-provider';
 import { useProfile } from '../../src/profile/use-profile';
 import { useWishlist } from '../hooks/use-wishlist';
@@ -86,6 +87,8 @@ export default function HomeDashboardScreen() {
   const [feed, setFeed] = useState<Feed | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [query, setQuery] = useState('');
+  const [filters, setFilters] = useState<CatalogueFilters>({});
   const isLoadingMoreRef = useRef(false);
 
   const loadFeed = useCallback(async (forUser: string) => {
@@ -155,14 +158,20 @@ export default function HomeDashboardScreen() {
   const items = (current?.items ?? []).filter((item) => !wishlist.isSaved(item.id));
   const name = profile?.display_name?.trim() || null;
 
+  // Search and filters only cover the items loaded so far; the top-up below keeps loading pages
+  // while too few of them match.
+  const isSearching = hasActiveSearch(query, filters);
+  const visibleItems = isSearching ? items.filter((item) => matchesSearch(item, query, filters)) : items;
+
   // A feed too short to scroll never triggers onScroll, so top it up directly.
   const hasMore = current?.hasMore ?? false;
+  const hasLoadError = Boolean(current?.error);
   useEffect(() => {
-    if (hasMore && items.length < 6) void loadMore();
+    if (hasMore && !hasLoadError && visibleItems.length < 6) void loadMore();
     // loadMore reads the latest feed each render; re-run only when the visible count changes.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hasMore, items.length]);
-  const columns = toColumns(items);
+  }, [hasMore, hasLoadError, visibleItems.length, items.length]);
+  const columns = toColumns(visibleItems);
 
   return (
     <ThemedView style={{ flex: 1 }}>
@@ -171,6 +180,8 @@ export default function HomeDashboardScreen() {
           contentContainerStyle={styles.content}
           onScroll={onScroll}
           scrollEventThrottle={200}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
           refreshControl={<RefreshControl refreshing={isRefreshing} onRefresh={() => void refresh()} />}
         >
           <View style={styles.header}>
@@ -193,12 +204,15 @@ export default function HomeDashboardScreen() {
             </TouchableOpacity>
           </View>
 
-          <View style={styles.sectionHeaderRow}>
-            <ThemedText style={styles.sectionTitle}>Personalised Feed</ThemedText>
-            <TouchableOpacity onPress={() => router.push('/discover-search' as never)} hitSlop={8}>
-              <ThemedText style={styles.viewAll}>View All</ThemedText>
-            </TouchableOpacity>
-          </View>
+          <CatalogueSearch
+            query={query}
+            onQueryChange={setQuery}
+            filters={filters}
+            onFiltersChange={setFilters}
+            items={items}
+          />
+
+          <ThemedText style={styles.sectionTitle}>Personalised Feed</ThemedText>
 
           {current?.error && items.length === 0 ? (
             <StateMessage
@@ -216,6 +230,21 @@ export default function HomeDashboardScreen() {
               title="No new recommendations"
               message="You've saved everything we have for you. Pull down to check again soon."
             />
+          ) : isSearching && visibleItems.length === 0 ? (
+            current.hasMore && !current.error ? (
+              <ActivityIndicator style={{ paddingVertical: 40 }} />
+            ) : (
+              <StateMessage
+                icon="search-outline"
+                title="No matching items"
+                message="Try a different search or filter."
+                actionLabel="Clear search"
+                onAction={() => {
+                  setQuery('');
+                  setFilters({});
+                }}
+              />
+            )
           ) : (
             <View style={styles.masonry}>
               {columns.map((column, columnIndex) => (
@@ -239,7 +268,7 @@ export default function HomeDashboardScreen() {
               <ThemedText style={styles.stateAction}>Couldn't load more. Tap to retry.</ThemedText>
             </TouchableOpacity>
           ) : null}
-          {current && !current.hasMore && items.length > 0 ? (
+          {current && !current.hasMore && visibleItems.length > 0 ? (
             <ThemedText style={[styles.stateBody, styles.footer]}>You're all caught up</ThemedText>
           ) : null}
         </ScrollView>
@@ -332,18 +361,9 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: TEXT,
   },
-  sectionHeaderRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
   sectionTitle: {
     fontSize: 19,
     fontWeight: '500',
-  },
-  viewAll: {
-    fontSize: 15,
-    color: ACCENT,
   },
   masonry: {
     flexDirection: 'row',
