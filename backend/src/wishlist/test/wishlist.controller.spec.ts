@@ -5,6 +5,7 @@ import { SupabaseAuthGuard } from "../../auth/supabase-auth.guard";
 import { PostgrestSingleResponse, User } from "@supabase/supabase-js";
 import { AddWishlistItemDto } from "../dto/add-wishlist-item.dto";
 import { NotFoundException } from "@nestjs/common";
+import { SearchWishlistDto } from "../dto/search-wishlist.dto";
 
 describe('WishlistContoller', () => {
     let wishlistContoller: WishlistController;
@@ -20,7 +21,8 @@ describe('WishlistContoller', () => {
                         getWishlist: jest.fn(),
                         addItem: jest.fn(),
                         getWishlistItem: jest.fn(),
-                        removeItem: jest.fn()
+                        removeItem: jest.fn(),
+                        searchWishlist: jest.fn()
                     }
                 }
             ]
@@ -280,6 +282,54 @@ describe('WishlistContoller', () => {
             const mockUser = { id: "user id" }
 
             expect(await wishlistContoller.removeItemFromWishlist("wishlist item id", mockUser as User)).toBe(expectedResult);
+        });
+    });
+
+    describe('search wishlist', () => {
+        it('searchWishlist successfully returns search results', async () => {
+            const mockSearchWishlistDto : SearchWishlistDto = {
+                item_name: 'Sleek Riri Scoop Neck Tank',
+                clothingcategory: ['tops'],
+                style: ['fitted'],
+                brand: ['supre'],
+                size: ['S'],
+                colour: ['blue'],
+                material: ['nylon'],
+                min_price: 5.00,
+                max_price: 25.00
+            };
+
+            const expectedResult = [{
+                "id": "wishlist id",
+                "user_id": "user id",
+                "catalogue_item_id": "item id",
+                "created_at": "2026-09-19T01:18:00+00:00",
+                "catalogue_items": {
+                    "id": "item id",
+                    "price": 20,
+                    "style": ["fitted", "scoop neck", "sleeveless"],
+                    "brands": {
+                        "id": "brand id",
+                        "brand_name": "Supre",
+                        "created_at": "2026-09-18T03:07:53.871164+00:00"
+                    },
+                    "colour": ["blue"],
+                    "brand_id": "brand id",
+                    "category": "Tops",
+                    "image_url": "image url",
+                    "item_name": "Sleek Riri Scoop Neck Tank",
+                    "materials": ["nylon", "polyester", "elastane"],
+                    "created_at": "2026-09-18T03:41:23.638604+00:00",
+                    "product_url": "product url",
+                    "available_sizes": ["3XS", "2XS", "XS", "S", "M", "L", "XL"]
+                }
+            }];
+
+            jest.spyOn(wishlistService, 'searchWishlist').mockResolvedValueOnce(expectedResult);
+
+            const mockUser = { id: "user id" }
+
+            expect(await wishlistContoller.searchWishlist(mockSearchWishlistDto, mockUser as User)).toBe(expectedResult);
         });
     });
 });
