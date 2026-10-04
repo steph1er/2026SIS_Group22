@@ -11,7 +11,7 @@ const TABS = [
 ] as const;
 
 const RIGHT_TABS = [
-  { href: './wishlist-saved', label: 'Saved', icon: 'bookmark' as const },
+  { href: './saved', label: 'Saved', icon: 'bookmark' as const },
   { href: './profile', label: 'Profile', icon: 'user' as const },
 ] as const;
 

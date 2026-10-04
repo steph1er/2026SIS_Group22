@@ -22,10 +22,9 @@ const GRID_GAP = 14;
 
 // Cover photos for collections that are not backed by the API yet (they keep placeholder counts).
 const COVERS = {
-  uploads: require('../../../assets/onboarding/minimalist.jpg'),
+  wardrobe: require('../../../assets/onboarding/minimalist.jpg'),
   wishlist: require('../../../assets/onboarding/bohemian.jpg'),
   outfits: require('../../../assets/onboarding/classy.jpg'),
-  casual: require('../../../assets/onboarding/casual.jpg'),
 };
 
 type Collection = {
@@ -41,19 +40,22 @@ function pluralise(count: number, word: string) {
   return `${count} ${word}${count === 1 ? '' : 's'}`;
 }
 
-export default function WishlistSavedScreen() {
+export default function SavedScreen() {
   // Only the wishlist itself is loaded here (for its count and cover); the items are shown on /wishlist.
   const { wishlist, isWishlistLoading, wishlistError, refresh } = useWishlist();
 
   // Sized in points: percentage widths combined with aspectRatio lay out but never draw on React Native 0.86.
   const { width: screenWidth } = useWindowDimensions();
-  const cardWidth = (screenWidth - PAGE_PADDING * 2 - GRID_GAP) / 2;
+  const rowWidth = screenWidth - PAGE_PADDING * 2;
+  const cardWidth = (rowWidth - GRID_GAP) / 2;
   const cardSize = { width: cardWidth, height: cardWidth / 0.9 };
+  // A card left alone on the last row spans the full width (same height) so the grid has no gap.
+  const wideCardSize = { width: rowWidth, height: cardSize.height };
 
   const wishlistCover = wishlist.find((entry) => entry.item.imageUrl)?.item.imageUrl;
 
   const collections: Collection[] = [
-    { id: 'uploads', label: 'My Uploads', countLabel: '24 items', cover: COVERS.uploads },
+    { id: 'wardrobe', label: 'My Wardrobe', countLabel: '24 items', cover: COVERS.wardrobe },
     {
       id: 'wishlist',
       label: 'Wishlist',
@@ -63,7 +65,6 @@ export default function WishlistSavedScreen() {
       onPress: () => router.push('/wishlist' as never),
     },
     { id: 'outfits', label: 'Saved Outfits', countLabel: '8 outfits', cover: COVERS.outfits },
-    { id: 'casual', label: 'Casual', countLabel: '16 items', cover: COVERS.casual },
   ];
 
   return (
@@ -86,9 +87,16 @@ export default function WishlistSavedScreen() {
           </View>
 
           <View style={styles.grid}>
-            {collections.map((collection) => (
-              <CollectionCard key={collection.id} collection={collection} size={cardSize} />
-            ))}
+            {collections.map((collection, index) => {
+              const isLoneLastCard = collections.length % 2 === 1 && index === collections.length - 1;
+              return (
+                <CollectionCard
+                  key={collection.id}
+                  collection={collection}
+                  size={isLoneLastCard ? wideCardSize : cardSize}
+                />
+              );
+            })}
           </View>
 
           {wishlistError ? (
@@ -99,19 +107,6 @@ export default function WishlistSavedScreen() {
               </ThemedText>
             </TouchableOpacity>
           ) : null}
-
-          <TouchableOpacity style={styles.createCard}>
-            <View style={styles.createIcon}>
-              <Ionicons name="add" size={20} color="#22201F" />
-            </View>
-
-            <View style={{ flex: 1 }}>
-              <ThemedText style={styles.cardTitle}>+ Create Collection</ThemedText>
-              <ThemedText style={styles.muted}>
-                Build a new lookbook-style collection and add items and outfits.
-              </ThemedText>
-            </View>
-          </TouchableOpacity>
 
           <TouchableOpacity style={styles.rowCard}>
             <View style={styles.rowCardIcon}>
@@ -259,24 +254,6 @@ const styles = StyleSheet.create({
   cardTitle: {
     fontSize: 16,
     fontWeight: '600',
-  },
-  createCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 14,
-    backgroundColor: '#FDF4F1',
-    borderWidth: 1,
-    borderColor: '#F0CFC3',
-    borderRadius: 18,
-    padding: 16,
-  },
-  createIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#E2B7A9',
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   rowCard: {
     flexDirection: 'row',
