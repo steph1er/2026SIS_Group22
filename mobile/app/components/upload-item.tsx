@@ -27,12 +27,12 @@ export default function Camera() {
 
   if (!permission.granted) {
     // Camera permissions are not granted yet.
-    return (
-      <View style={styles.container}>
-        <Text style={{ textAlign: 'center' }}>We need your permission to show the camera</Text>
-        <Button onPress={requestPermission} title="grant permission" />
-      </View>
-    );
+    <View style={styles.permissionContainer}>
+      <Text style={styles.permissionText}>
+        We need your permission to show the camera
+      </Text> 
+      <Button onPress={requestPermission} title="Grant Permission" />
+    </View>
   }
 
   function toggleCameraFacing() {
@@ -69,41 +69,24 @@ export default function Camera() {
   return (
     <View style={styles.container}>
       <CameraView style={styles.camera} facing={facing} ref={cameraRef}>
-        {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity style={styles.iconButton}>
-            <Feather name="arrow-left" size={20} color="#000" />
-          </TouchableOpacity>
-
-          <ThemedText style={styles.headerTitle}>StyleU</ThemedText>
-
-          <View style={styles.headerRight}>
-            <TouchableOpacity style={styles.iconButton}>
-              <Feather name="settings" size={18} color="#000" />
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.iconButton, styles.iconButtonActive]}
-              onPress={toggleCameraFacing}
-            >
-              <Feather name="grid" size={18} color="#D98E73" />
-            </TouchableOpacity>
-          </View>
-        </View>
       </CameraView>
 
       {/* Bottom control sheet */}
       <View style={styles.sheet}>
-
         <View style={styles.controlsRow}>
           <TouchableOpacity style={styles.wardrobeThumb} onPress={handlePickFromLibrary}>
             <Feather name="image" size={20} color="#fff" />
           </TouchableOpacity>
-
           <Pressable style={styles.shutterOuter} onPress={handleTakePhoto}>
             <View style={styles.shutterInner} />
-          </Pressable>
-         <View style={{ width: 48 }} /> {/* invisible spacer keeps the shutter centred */}
+          </Pressable> 
 
+            <TouchableOpacity
+              style={[styles.iconButton, styles.iconButtonActive]}
+              onPress={toggleCameraFacing}
+            >
+              <Feather name="camera" size={18} color="#D98E73" />
+            </TouchableOpacity>
 
         </View>
       </View>
@@ -115,7 +98,20 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#000',
-  },
+  }, 
+  permissionContainer: {
+  flex: 1,
+  backgroundColor: '#000',
+  justifyContent: 'center', 
+  alignItems: 'center',     
+  paddingHorizontal: 24,    
+  gap: 12,                  
+},
+permissionText: {
+  color: '#fff',
+  fontSize: 16,
+  textAlign: 'center',
+},
   camera: {
     flex: 1,
   },

@@ -15,3 +15,7 @@ export default function DiscoverSearchScreen() {
     </ThemedView>
   );
 }
+// search by all the categories, colors, styles, and brands. case in-sensitive 
+// if not filters then show all items 
+// for recommendations --> backend sends the top 10 
+

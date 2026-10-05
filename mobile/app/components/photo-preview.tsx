@@ -5,23 +5,19 @@ import { TouchableOpacity, Image, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context'; 
 const PhotoPreviewSection = ({
     photo,
-    handleRetakePhoto, // retake button callback
-    handleSavePhoto, // save button callback
+    handleRetakePhoto, // retake button call
+    handleSavePhoto, // save button call
 }: {
-       photo: CameraCapturedPicture;
-    handleRetakePhoto: () => void;
-    handleSavePhoto: () => void;
-}) => (
-    // CHANGED: SafeAreaView is now the root, covering top and bottom,
-    // so the photo starts below the notch and the buttons stay above the home bar
+    photo: CameraCapturedPicture;
+        handleRetakePhoto: () => void;
+        handleSavePhoto: () => void;
+}) => ( 
     <SafeAreaView edges={['top', 'bottom']} style={styles.container}>
         <Image style={styles.previewContainer} source={{ uri: photo.uri }} />
-
-        {/* CHANGED: plain View; the root SafeAreaView handles the bottom edge now */}
         <View style={styles.buttonContainer}>
             <TouchableOpacity style={styles.button} onPress={handleRetakePhoto}>
-                <Fontisto name="trash" size={32} color="white" />
-            </TouchableOpacity>
+                <Fontisto name="trash" size={32} color="white" /> 
+            </TouchableOpacity> 
             <TouchableOpacity style={styles.button} onPress={handleSavePhoto}>
                 <Fontisto name="save" size={32} color="white" />
             </TouchableOpacity>
