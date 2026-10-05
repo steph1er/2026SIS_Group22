@@ -68,9 +68,7 @@ export default function Camera() {
 
   return (
     <View style={styles.container}>
-      <CameraView style={styles.camera} facing={facing} ref={cameraRef}>
-      </CameraView>
-
+      <CameraView style={styles.camera} facing={facing} ref={cameraRef}> </CameraView>
       {/* Bottom control sheet */}
       <View style={styles.sheet}>
         <View style={styles.controlsRow}>

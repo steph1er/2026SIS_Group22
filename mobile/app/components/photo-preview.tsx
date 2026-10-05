@@ -24,7 +24,7 @@ const PhotoPreviewSection = ({
         </View>
     </SafeAreaView>
 );
-
+//  i need to figure out how to pass the image into the "analyse item" function in the ML folder 
 const styles = StyleSheet.create({
     container:{
         flex: 1,
