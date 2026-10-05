@@ -15,8 +15,11 @@ const config: Config = {
   rootDir: '.',
   testRegex: '.*\\.spec\\.ts$',
   transform: {
-    '^.+\\.(t|j)s$': ['ts-jest', { tsconfig: { rootDir: '.' } }],
+    '^.+\\.(t|j)s$': ['ts-jest', { tsconfig: { rootDir: '.' }, isolatedModules: true, useESM: true }],
   },
+  transformIgnorePatterns: [
+    "node_modules/(?!@nestjs/)"
+  ],
   moduleNameMapper: pathsToModuleNameMapper(paths, { prefix: '<rootDir>/' }),
   collectCoverageFrom: [
     'src/**/*.(t|j)s',
@@ -24,7 +27,7 @@ const config: Config = {
     'apps/**/*.(t|j)s',
   ],
   coverageDirectory: './coverage',
-  testEnvironment: 'node',
+  testEnvironment: 'node'
 };
 
 export default config;

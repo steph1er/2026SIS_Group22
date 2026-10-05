@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Image,
+  Linking,
   Pressable,
   ScrollView,
   Share,
@@ -124,11 +125,24 @@ export default function ItemDetailScreen() {
     );
   };
 
+  // Opens the retailer's product page in the device's default browser.
+  const openProductPage = () => {
+    if (!shown.productUrl) return;
+    Linking.openURL(shown.productUrl).catch(() => setNotice("Couldn't open the product page."));
+  };
+
   return (
     <ThemedView style={{ flex: 1 }}>
       <ScrollView contentContainerStyle={{ paddingBottom: 110 + insets.bottom }}>
         <View>
-          <Image source={{ uri: shown.imageUrl ?? PLACEHOLDER_IMAGE }} style={[styles.hero, { height: screenWidth * 0.95 }]} resizeMode="cover" />
+          <Pressable
+            onPress={openProductPage}
+            disabled={!shown.productUrl}
+            accessibilityRole="link"
+            accessibilityLabel={`View ${shown.name} on the retailer's site`}
+          >
+            <Image source={{ uri: shown.imageUrl ?? PLACEHOLDER_IMAGE }} style={[styles.hero, { height: screenWidth * 0.95 }]} resizeMode="cover" />
+          </Pressable>
           <View style={[styles.heroButtons, { top: insets.top + 8 }]}>
             <TouchableOpacity style={styles.circleButton} onPress={goBack} accessibilityLabel="Back">
               <Ionicons name="chevron-back" size={22} color={TEXT} />
@@ -198,7 +212,7 @@ export default function ItemDetailScreen() {
 
       <View style={[styles.actionBar, { paddingBottom: Math.max(insets.bottom, 16) }]}>
         <TouchableOpacity
-          style={styles.heartButton}
+          style={styles.wishlistButton}
           onPress={() => void wishlist.toggle(shown)}
           disabled={isPending}
           accessibilityLabel={isSaved ? `Remove ${shown.name} from wishlist` : `Add ${shown.name} to wishlist`}
@@ -208,13 +222,7 @@ export default function ItemDetailScreen() {
           ) : (
             <Ionicons name={isSaved ? 'heart' : 'heart-outline'} size={22} color={isSaved ? ACCENT : TEXT} />
           )}
-        </TouchableOpacity>
-        {/* The backend's wardrobe add endpoint (GET /wardrobes/add) is still a stub. */}
-        <TouchableOpacity
-          style={styles.closetButton}
-          onPress={() => setNotice("Adding items to your closet isn't available yet.")}
-        >
-          <ThemedText style={styles.closetButtonText}>Add to Closet</ThemedText>
+          <ThemedText style={styles.wishlistButtonText}>{isSaved ? 'Added to Wishlist' : 'Add to Wishlist'}</ThemedText>
         </TouchableOpacity>
       </View>
     </ThemedView>
@@ -362,26 +370,20 @@ const styles = StyleSheet.create({
     paddingTop: 12,
     backgroundColor: '#fff',
   },
-  heartButton: {
-    width: 58,
+  wishlistButton: {
+    flex: 1,
     height: 58,
     borderRadius: 18,
     borderWidth: 1,
     borderColor: '#ECE8E4',
     backgroundColor: '#FAF9F7',
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    gap: 10,
   },
-  closetButton: {
-    flex: 1,
-    height: 58,
-    borderRadius: 18,
-    backgroundColor: TEXT,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  closetButtonText: {
-    color: '#fff',
+  wishlistButtonText: {
+    color: TEXT,
     fontSize: 16,
     fontWeight: '600',
   },
