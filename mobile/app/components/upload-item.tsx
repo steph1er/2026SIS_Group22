@@ -64,6 +64,7 @@ export default function Camera() {
   }
 };
 
+  if (photo) return <PhotoPreviewSection photo={photo} handleRetakePhoto={handleRetakePhoto} />; 
 
   return (
     <View style={styles.container}>
