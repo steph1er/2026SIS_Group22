@@ -27,12 +27,12 @@ export default function Camera() {
 
   if (!permission.granted) {
     // Camera permissions are not granted yet.
-    <View style={styles.permissionContainer}>
+    return(<View style={styles.permissionContainer}>
       <Text style={styles.permissionText}>
         We need your permission to show the camera
       </Text> 
       <Button onPress={requestPermission} title="Grant Permission" />
-    </View>
+    </View>); 
   }
 
   function toggleCameraFacing() {
@@ -53,6 +53,12 @@ export default function Camera() {
 
   const handleRetakePhoto = () => setPhoto(null);
 
+  const handleSavePhoto = () => {
+  // TODO: upload/save the photo (e.g. send photo.uri to the backend)
+  console.log('save photo', photo?.uri);
+  // setPhoto(null); // return to the camera after saving
+}; 
+
   const handlePickFromLibrary = async () => {
   const result = await ImagePicker.launchImageLibraryAsync({
     mediaTypes: ['images'], // photos only, no videos
@@ -64,12 +70,18 @@ export default function Camera() {
   }
 };
 
-  if (photo) return <PhotoPreviewSection photo={photo} handleRetakePhoto={handleRetakePhoto} />; 
+  if (photo) 
+    {return (
+      <PhotoPreviewSection photo={photo} 
+      handleRetakePhoto={handleRetakePhoto} 
+      handleSavePhoto={handleSavePhoto}
+      /> 
+    );
+} 
 
   return (
     <View style={styles.container}>
-      <CameraView style={styles.camera} facing={facing} ref={cameraRef}> </CameraView>
-      {/* Bottom control sheet */}
+      <CameraView style={styles.camera} facing={facing} ref={cameraRef} />
       <View style={styles.sheet}>
         <View style={styles.controlsRow}>
           <TouchableOpacity style={styles.wardrobeThumb} onPress={handlePickFromLibrary}>
