@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { ThemedText } from './themed-text';
 import PhotoPreviewSection from './photo-preview';
+import * as ImagePicker from 'expo-image-picker'; 
 
 
 export default function Camera() {
@@ -26,12 +27,12 @@ export default function Camera() {
 
   if (!permission.granted) {
     // Camera permissions are not granted yet.
-    return (
-      <View style={styles.container}>
-        <Text style={{ textAlign: 'center' }}>We need your permission to show the camera</Text>
-        <Button onPress={requestPermission} title="grant permission" />
-      </View>
-    );
+    return(<View style={styles.permissionContainer}>
+      <Text style={styles.permissionText}>
+        We need your permission to show the camera
+      </Text> 
+      <Button onPress={requestPermission} title="Grant Permission" />
+    </View>); 
   }
 
   function toggleCameraFacing() {
@@ -52,48 +53,51 @@ export default function Camera() {
 
   const handleRetakePhoto = () => setPhoto(null);
 
-  if (photo) return <PhotoPreviewSection photo={photo} handleRetakePhoto={handleRetakePhoto} />;
+  const handleSavePhoto = () => {
+  // TODO: upload/save the photo (e.g. send photo.uri to the backend)
+  console.log('save photo', photo?.uri);
+  // setPhoto(null); // return to the camera after saving
+}; 
+
+  const handlePickFromLibrary = async () => {
+  const result = await ImagePicker.launchImageLibraryAsync({
+    mediaTypes: ['images'], // photos only, no videos
+    quality: 1,
+  });
+
+  if (!result.canceled) {
+    setPhoto(result.assets[0]); // opens the same preview as a camera photo
+  }
+};
+
+  if (photo) 
+    {return (
+      <PhotoPreviewSection photo={photo} 
+      handleRetakePhoto={handleRetakePhoto} 
+      handleSavePhoto={handleSavePhoto}
+      /> 
+    );
+} 
 
   return (
     <View style={styles.container}>
-      <CameraView style={styles.camera} facing={facing} ref={cameraRef}>
-        {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity style={styles.iconButton}>
-            <Feather name="arrow-left" size={20} color="#000" />
+      <CameraView style={styles.camera} facing={facing} ref={cameraRef} />
+      <View style={styles.sheet}>
+        <View style={styles.controlsRow}>
+          <TouchableOpacity style={styles.wardrobeThumb} onPress={handlePickFromLibrary}>
+            <Feather name="image" size={20} color="#fff" />
           </TouchableOpacity>
+          <Pressable style={styles.shutterOuter} onPress={handleTakePhoto}>
+            <View style={styles.shutterInner} />
+          </Pressable> 
 
-          <ThemedText style={styles.headerTitle}>StyleU</ThemedText>
-
-          <View style={styles.headerRight}>
-            <TouchableOpacity style={styles.iconButton}>
-              <Feather name="settings" size={18} color="#000" />
-            </TouchableOpacity>
             <TouchableOpacity
               style={[styles.iconButton, styles.iconButtonActive]}
               onPress={toggleCameraFacing}
             >
-              <Feather name="grid" size={18} color="#D98E73" />
+              <Feather name="camera" size={18} color="#D98E73" />
             </TouchableOpacity>
-          </View>
-        </View>
-      </CameraView>
 
-      {/* Bottom control sheet */}
-      <View style={styles.sheet}>
-
-        <View style={styles.controlsRow}>
-          <TouchableOpacity style={styles.wardrobeThumb}>
-            <Feather name="image" size={20} color="#fff" />
-          </TouchableOpacity>
-
-          <Pressable style={styles.shutterOuter} onPress={handleTakePhoto}>
-            <View style={styles.shutterInner} />
-          </Pressable>
-
-          <TouchableOpacity style={styles.uploadButton}>
-            <Feather name="arrow-up" size={20} color="#000" />
-          </TouchableOpacity>
         </View>
       </View>
     </View>
@@ -104,7 +108,20 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#000',
-  },
+  }, 
+  permissionContainer: {
+  flex: 1,
+  backgroundColor: '#000',
+  justifyContent: 'center', 
+  alignItems: 'center',     
+  paddingHorizontal: 24,    
+  gap: 12,                  
+},
+permissionText: {
+  color: '#fff',
+  fontSize: 16,
+  textAlign: 'center',
+},
   camera: {
     flex: 1,
   },

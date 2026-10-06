@@ -51,7 +51,7 @@ function subtitleFor(item: CatalogueItem) {
 
 function goBack() {
   if (router.canGoBack()) router.back();
-  else router.replace('/wishlist-saved' as never);
+  else router.replace('/saved' as never);
 }
 
 export default function WishlistScreen() {

@@ -1,4 +1,4 @@
-import { HttpException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, HttpException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
 import { SupabaseService } from '../supabase/supabase.service';
 import { UpdateWardrobeItemDto } from './dto/update-wardrobe-item.dto';
 
@@ -134,6 +134,7 @@ export class WardrobeService {
         }
 
         if(style && style?.length !== 0){
+            style = style.map((item) => item.toLowerCase());
             query= query.overlaps('style', style);
         }
 
@@ -142,17 +143,19 @@ export class WardrobeService {
             query = query.or(brand_query);
         }
 
-        // TODO set up how different sizes are equal
         if(size && size?.length !== 0){
-            const size_query = size.map(item => `size.ilike.${item}`).join(',');
+            const sizes = this.mapSizeOptions(size.at(0) ?? "error");
+            const size_query = sizes.map(item => `size.ilike.${item}`).join(',');
             query = query.or(size_query);
         }
 
         if(colour && colour?.length !== 0){
+            colour = colour.map((item) => item.toLowerCase());
             query= query.overlaps('colour', colour);
         }
 
         if(material && material?.length !== 0){
+            material = material.map((item) => item.toLowerCase());
             query= query.overlaps('material', material);
         }
 
@@ -241,5 +244,32 @@ export class WardrobeService {
         }
 
         return data[0].id;
+    }
+
+    private mapSizeOptions(size: string){
+        // go through possible size searchs (3XS, 2XS, XS, S, M, L, XL, 2XL, 3XL)
+
+        switch (size) {
+            case '3XS':
+                return ['3XS', '4', 'One Size', 'XXXS', '22'];
+            case '2XS':
+                return ['2XS', '6', 'One Size', 'XXS', '24'];
+            case 'XS':
+                return ['XS', '8', 'One Size', 'Extra Small', '26', 'XS/S'];
+            case 'S':
+                return ['S', '10', 'One Size', 'Small', '28', 'XS/S'];
+            case 'M':
+                return ['M', '12', 'One Size', 'Medium', '30', 'M/L'];
+            case 'L':
+                return ['L', '14', 'One Size', 'Large', '32', 'M/L'];
+            case 'XL':
+                return ['XL', '16', 'One Size', 'Extra Large', '34'];
+            case '2XL':
+                return ['2XL', '18', 'One Size', 'XXL', '36'];
+            case '3XL':
+                return ['3XL', '20', 'One Size', 'XXXL', '38'];
+            default:
+                throw new BadRequestException("Invalid size request");
+        }
     }
 }
