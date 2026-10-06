@@ -1,6 +1,22 @@
 import { BadRequestException, HttpException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
 import { SupabaseService } from '../supabase/supabase.service';
 import { UpdateWardrobeItemDto } from './dto/update-wardrobe-item.dto';
+import { readFile } from 'fs/promises';
+import { basename, resolve } from 'path';
+
+const ML_SERVICE_URL = process.env.ML_SERVICE_URL ?? 'http://localhost:8000';
+
+// backend is run from backend/, so the test images sit one level up
+const DEFAULT_TEST_IMAGE = resolve(process.cwd(), '../ml-service/images-temp/uniqlo_jeans.png');
+
+interface AnalyseItemResponse {
+    category: string;
+    category_confidence: number;
+    style: string;
+    style_confidence: number;
+    colour: string;
+    embedding: number[];
+}
 
 @Injectable()
 export class WardrobeService {
@@ -55,14 +71,55 @@ export class WardrobeService {
         return data;
     }
 
-    addItem(): string{
-        // get logged in user 
+    // image_path defaults to a test image until image upload is wired up
+    async addItem(auth_id: string, image_path: string = DEFAULT_TEST_IMAGE){
+        const supabase = this.supabaseService.client;
 
-        // take uploaded image and put through machine learning to analyse categories
+        // get logged in user
+        const user_id = await this.get_profile_id(auth_id);
 
-        // format response and return for your to verify output (update item which will include brand etc.)
+        // take image and put through machine learning to analyse categories
+        const image_buffer = await readFile(image_path).catch(() => {
+            throw new BadRequestException('Could not read image');
+        });
+        const analysis = await this.analyseItem(image_buffer, basename(image_path));
 
-        return 'This will add an uploaded item to users wardrobe';
+        // send item to the user's wardrobe db (lowercased like updateItemDetails)
+        const { data, error } = await supabase.from('wardrobe_items')
+                                              .insert({
+                                                  user_id: user_id,
+                                                  clothing_category: analysis.category.toLowerCase(),
+                                                  style: [analysis.style.toLowerCase()],
+                                                  colour: [analysis.colour.toLowerCase()],
+                                                  embedding: analysis.embedding
+                                              })
+                                              .select()
+                                              .single();
+
+        if(error){
+            throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+
+        // return created item so the user can verify it and add brand, size etc. via update
+        return data;
+    }
+
+    private async analyseItem(image: Buffer, filename: string): Promise<AnalyseItemResponse>{
+        const form = new FormData();
+        form.append('file', new Blob([new Uint8Array(image)]), filename);
+
+        let res: Response;
+        try {
+            res = await fetch(`${ML_SERVICE_URL}/analyze-item`, { method: 'POST', body: form });
+        } catch {
+            throw new HttpException('ML service unavailable', HttpStatus.BAD_GATEWAY);
+        }
+
+        if(!res.ok){
+            throw new HttpException('ML service failed to analyse item', HttpStatus.BAD_GATEWAY);
+        }
+
+        return await res.json() as AnalyseItemResponse;
     }
 
     async updateItemDetails(updateWardrobeItemDto: UpdateWardrobeItemDto, auth_id: string){
