@@ -9,6 +9,7 @@
 export type WardrobeItem = {
   // wardrobe_items.id — used for GET /wardrobes/:id, POST /wardrobes/update and DELETE /wardrobes/delete/:id.
   id: string;
+  // A URL the app can display, built from wardrobe_items.image_url (a storage path or a full URL).
   imageUrl: string | null;
   category: string | null;
   styles: string[];
@@ -22,9 +23,8 @@ export type WardrobeItem = {
   modifiedAt: string | null;
 };
 
-// The editable fields of a wardrobe item, as entered on the edit form.
+// The editable fields of a wardrobe item, as entered on the edit form. The image is set on upload only.
 export type WardrobeItemChanges = {
-  imageUrl: string;
   category: string;
   styles: string[];
   brand: string;

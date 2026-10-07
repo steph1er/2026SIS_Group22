@@ -1,3 +1,4 @@
+import { supabase } from '../../../src/auth/supabase-client';
 import { requestJson, toArray, WishlistApiError } from '../wishlist/wishlist-service';
 import type { WardrobeItem, WardrobeItemChanges } from './wardrobe-types';
 
@@ -36,12 +37,25 @@ function asStringArray(value: unknown): string[] {
   return single ? [single] : [];
 }
 
+// The public Supabase Storage bucket that holds uploaded wardrobe photos.
+const WARDROBE_BUCKET = 'wardrobe-items';
+
+// image_url holds a storage path for uploaded items (e.g. {userId}/{itemId}.png),
+// or a full URL for rows added by hand. getPublicUrl only builds a string, with no request.
+function wardrobeImageUrl(value: unknown): string | null {
+  const path = asString(value);
+  if (!path) return null;
+  if (/^https?:\/\//.test(path)) return path;
+  return supabase?.storage.from(WARDROBE_BUCKET).getPublicUrl(path).data.publicUrl ?? null;
+}
+
 export function normaliseWardrobeItem(raw: unknown): WardrobeItem {
   const row = (raw && typeof raw === 'object' ? raw : {}) as RawRow;
 
   return {
     id: asString(row.id) ?? '',
-    imageUrl: asString(row.image_url),
+    // Prefer a ready-made URL if the backend ever sends one.
+    imageUrl: asString(row.image_display_url) ?? wardrobeImageUrl(row.image_url),
     category: asString(row.clothing_category),
     styles: asStringArray(row.style),
     brand: asString(row.brand),
@@ -91,15 +105,14 @@ export async function fetchWardrobeItem(id: string): Promise<WardrobeItem> {
 /**
  * Save edits to a wardrobe item and return the updated item.
  *
- * Every field is sent, even empty ones: the backend calls toLowerCase() on brand, size and
- * the arrays without checking they exist, so leaving one out fails with a 500.
+ * Every field is sent, even empty ones: the backend leaves fields it doesn't receive unchanged,
+ * so sending "" / [] / null is what clears a field the user emptied. The image can't be edited.
  */
 export async function updateWardrobeItem(id: string, changes: WardrobeItemChanges): Promise<WardrobeItem> {
   const result = await requestJson('wardrobes/update', {
     method: 'POST',
     body: JSON.stringify({
       id,
-      image_url: changes.imageUrl.trim(),
       clothing_category: changes.category.trim(),
       style: changes.styles,
       brand: changes.brand.trim(),

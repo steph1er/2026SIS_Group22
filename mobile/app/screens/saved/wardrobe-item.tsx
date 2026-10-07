@@ -50,7 +50,6 @@ function goBack() {
 
 // The edit form keeps every field as text; lists are comma-separated.
 type FormValues = {
-  imageUrl: string;
   category: string;
   brand: string;
   size: string;
@@ -63,7 +62,6 @@ type FormValues = {
 
 function toFormValues(item: WardrobeItem): FormValues {
   return {
-    imageUrl: item.imageUrl ?? '',
     category: item.category ?? '',
     brand: item.brand ?? '',
     size: item.size ?? '',
@@ -84,7 +82,6 @@ function splitList(value: string) {
 
 /** Check the form against the backend's UpdateWardrobeItemDto, returning the changes or an error message. */
 function parseForm(values: FormValues): { changes: WardrobeItemChanges } | { error: string } {
-  if (!values.imageUrl.trim()) return { error: 'An image URL is required.' };
   if (!values.category.trim()) return { error: 'A category is required.' };
 
   let price: number | null = null;
@@ -96,7 +93,6 @@ function parseForm(values: FormValues): { changes: WardrobeItemChanges } | { err
 
   return {
     changes: {
-      imageUrl: values.imageUrl,
       category: values.category,
       brand: values.brand,
       size: values.size,
@@ -185,7 +181,6 @@ export default function WardrobeItemScreen() {
   const title = shown.category ? titleCase(shown.category) : 'Untitled item';
   const addedOn = formatDate(shown.createdAt);
   const editedOn = formatDate(shown.modifiedAt);
-  const previewUrl = form?.imageUrl.trim() || shown.imageUrl;
 
   const details: { label: string; values: string[] }[] = [
     { label: 'Size', values: shown.size ? [shown.size.toUpperCase()] : [] },
@@ -236,7 +231,7 @@ export default function WardrobeItemScreen() {
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView contentContainerStyle={{ paddingBottom: 110 + insets.bottom }} keyboardShouldPersistTaps="handled">
           <View>
-            <Image source={{ uri: previewUrl ?? PLACEHOLDER_IMAGE }} style={[styles.hero, { height: screenWidth * 0.95 }]} resizeMode="cover" />
+            <Image source={{ uri: shown.imageUrl ?? PLACEHOLDER_IMAGE }} style={[styles.hero, { height: screenWidth * 0.95 }]} resizeMode="contain" />
             <View style={[styles.heroButtons, { top: insets.top + 8 }]}>
               <TouchableOpacity style={styles.circleButton} onPress={goBack} accessibilityLabel="Back">
                 <Ionicons name="chevron-back" size={22} color={TEXT} />
@@ -248,7 +243,6 @@ export default function WardrobeItemScreen() {
             {isEditing ? (
               <>
                 <ThemedText style={styles.name}>Edit item</ThemedText>
-                <FormField label="Image URL" required value={form.imageUrl} onChangeText={setField('imageUrl')} keyboardType="url" />
                 <FormField label="Category" required value={form.category} onChangeText={setField('category')} placeholder="e.g. pants" />
                 <FormField label="Brand" value={form.brand} onChangeText={setField('brand')} />
                 <View style={styles.fieldRow}>
@@ -378,7 +372,7 @@ type FormFieldProps = {
   required?: boolean;
   hint?: string;
   placeholder?: string;
-  keyboardType?: 'default' | 'url' | 'decimal-pad';
+  keyboardType?: 'default' | 'decimal-pad';
 };
 
 function FormField({ label, value, onChangeText, required, hint, placeholder, keyboardType = 'default' }: FormFieldProps) {

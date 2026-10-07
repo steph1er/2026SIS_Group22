@@ -186,7 +186,11 @@ function WardrobeTile({ item, imageHeight, onPress }: WardrobeTileProps) {
 
   return (
     <Pressable onPress={onPress} style={styles.tile}>
-      <Image source={{ uri: item.imageUrl ?? PLACEHOLDER_IMAGE }} style={[styles.tileImage, { height: imageHeight }]} />
+      <Image
+        source={{ uri: item.imageUrl ?? PLACEHOLDER_IMAGE }}
+        style={[styles.tileImage, { height: imageHeight }]}
+        resizeMode="contain"
+      />
       <ThemedText style={styles.tileName} numberOfLines={2}>
         {titleFor(item)}
       </ThemedText>
