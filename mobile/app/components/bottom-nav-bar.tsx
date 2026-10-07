@@ -15,7 +15,7 @@ const TABS: Tab[] = [
 ];
 
 const RIGHT_TABS: Tab[] = [
-  { href: '/saved', paths: ['/saved', '/wishlist'], label: 'Saved', icon: 'bookmark-outline', activeIcon: 'bookmark' },
+  { href: '/saved', paths: ['/saved', '/wishlist', '/wardrobe'], label: 'Saved', icon: 'bookmark-outline', activeIcon: 'bookmark' },
   { href: '/profile', paths: ['/profile', '/settings', '/my-colour-analysis'], label: 'Profile', icon: 'person-outline', activeIcon: 'person' },
 ];
 
@@ -49,8 +49,14 @@ export function BottomNavBar() {
 
   // Only for signed-in users, so the Welcome, Login and Sign Up screens cannot open
   // Home or Profile. Also hidden during onboarding so a new user cannot skip it, and
-  // on item details, which has its own action bar.
-  if (!user || pathname.startsWith('/onboarding') || pathname.startsWith('/item/')) return null;
+  // on item details (catalogue and wardrobe), which have their own action bar.
+  if (
+    !user ||
+    pathname.startsWith('/onboarding') ||
+    pathname.startsWith('/item/') ||
+    pathname.startsWith('/wardrobe-item/')
+  )
+    return null;
 
   return (
     <>
