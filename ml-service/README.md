@@ -9,21 +9,41 @@ Requires Python 3.9+.
 
 ```bash
 cd ml-service
-python -m venv venv
+python3 -m venv venv
 source venv/bin/activate      # Windows: venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
 The first run downloads rembg's segmentation model and
 Marqo-FashionCLIP, so do this well before a demo. The MediaPipe Face
-Landmarker model used by colour analysis is already stored at
-`models/face_landmarker.task` and came from Google's official
-`mediapipe-assets/face_landmarker_v2.task` release.
+Landmarker model used by colour analysis is committed at
+`models/face_landmarker.task`. Its source, checksum and license are recorded in
+[`models/README.md`](models/README.md).
+
+## Environment
+
+No ML-service environment variables are required for the normal local setup.
+The service has safe development defaults for its browser CORS origins and
+model path. Optional overrides are documented in `.env.example`:
+
+- `CORS_ORIGINS`: comma-separated browser origins. This applies to Expo web;
+  native Expo requests do not use browser CORS.
+- `FACE_LANDMARKER_MODEL_PATH`: alternate path to the MediaPipe task bundle.
+
+To use overrides, copy `.env.example` to the ignored `.env` file and include
+`--env-file .env` in the Uvicorn command below. These variables are
+configuration only and contain no credentials.
 
 ## Run
 
 ```bash
-uvicorn main:app --reload --port 8000
+uvicorn main:app --reload --host 0.0.0.0 --port 8000
+```
+
+With optional `.env` overrides:
+
+```bash
+uvicorn main:app --reload --host 0.0.0.0 --port 8000 --env-file .env
 ```
 
 `GET /health` returns `{"status": "ok"}` once the models have loaded.
@@ -78,7 +98,18 @@ EXPO_PUBLIC_ML_SERVICE_URL=http://localhost:8000
 ```
 
 Use your computer's LAN address instead of `localhost` when testing on a
-physical phone. Android emulators normally reach the host at `10.0.2.2`.
+physical phone. On macOS, `ipconfig getifaddr en0` usually prints that address.
+Android emulators normally reach the host at `10.0.2.2`.
+
+## Saved colour-analysis results
+
+Authenticated results are stored by the mobile app in Supabase. The required
+schema is tracked in
+`supabase/migrations/20261007040000_create_colour_analysis.sql`. It stores one
+current result per `auth.users` account and enables row-level security so users
+can only select, insert or update their own result. The migration is already
+applied to the team's hosted project; fresh or local Supabase environments
+must apply the repository migrations normally.
 
 ## Storing results in Supabase
 
@@ -127,5 +158,6 @@ Add `ML_SERVICE_URL=http://localhost:8000` to the backend's `.env`.
    the wardrobe item.
 4. Once embeddings are stored, outfit matching becomes a `pgvector`
    similarity query against `wardrobe_items`, with no new model needed.
-5. Shopping recommendations and personal colour analysis are separate,
-   later pieces. They can reuse this service but don't depend on it.
+5. Shopping recommendations are separate work. Personal colour analysis is
+   provided by `/analyze-colours` and is saved directly by the authenticated
+   mobile client.
