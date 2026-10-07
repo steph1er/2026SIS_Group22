@@ -124,3 +124,7 @@ export const SOURCE_ICONS: Record<ItemDetails['source'], ComponentProps<typeof I
   Wishlist: 'heart-outline',
   Catalogue: 'storefront-outline',
 };
+
+// options for the save popup dropdowns
+export const OUTFIT_STYLES = ['Y2K', 'Classy', 'Casual', 'Streetwear', 'Bohemian', 'Minimalist', 'Preppy', 'Active', 'Vintage'];
+export const OUTFIT_SEASONS = ['Spring', 'Summer', 'Autumn', 'Winter'];

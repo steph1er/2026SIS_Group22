@@ -11,14 +11,78 @@ export const saveStyles = StyleSheet.create ({
     color: colors.text,
   },
 
-  // image
+  outfitPreview: {
+    width: '100%',
+    height: 220,
+    borderRadius: 16,
+    backgroundColor: colors.backgroundElement,
+    overflow: 'hidden',
+    marginBottom: 16,
+  },
 
-  // TODO: fix popup scroll after image feature added
+  outfitPreviewImage: {
+    position: 'absolute',
+    width: 80,
+    height: 80,
+    borderRadius: 10,
+    backgroundColor: colors.background,
+  },
+
+  dropdownTrigger: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    maxWidth: '60%',
+  },
+
+  dropdownTriggerText: {
+    color: colors.text,
+    fontSize: 14,
+  },
+
+  dropdownPlaceholderText: {
+    color: colors.placeholder,
+    fontSize: 14,
+  },
+ 
+  dropdownOptions: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    paddingBottom: 8,
+  },
+
+  dropdownChip: {
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    borderRadius: 20,
+    backgroundColor: colors.background,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+
+  dropdownChipSelected: {
+    backgroundColor: colors.chipSelectedBg,
+    borderColor: colors.accent,
+  },
+
+  dropdownChipText: {
+    color: colors.mutedText,
+    fontSize: 13,
+  },
+
+  dropdownChipTextSelected: {
+    color: colors.text,
+  },
+
+  saveError: {
+    color: colors.errorRed,
+    fontSize: 13,
+    paddingVertical: 8,
+  },
 
   itemsInOutfitContainer: {
     backgroundColor: colors.mutedAccent,
-    width: '100%',
-    alignSelf: 'center',
     borderRadius: 16,
     paddingVertical: 8,
   },
@@ -29,7 +93,6 @@ export const saveStyles = StyleSheet.create ({
     fontWeight: 500,
   },
 
-  
   outfitDetailsContainer: {
     flexDirection: 'column',
     paddingVertical: 8,
@@ -50,11 +113,15 @@ export const saveStyles = StyleSheet.create ({
   outfitDetailsInput: {
     color: colors.text,
     fontSize: 14,
+    textAlign: 'right',
+    flex: 1,
+    marginLeft: 16,
+    padding: 0,
   },
 
   detailSeparator: {
-    color: colors.placeholder,
-    height: 3,
+    backgroundColor: colors.border,
+    height: 1,
     width: '100%',
     alignSelf: 'center',
     marginVertical: 10,

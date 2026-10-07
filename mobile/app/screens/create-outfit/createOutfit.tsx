@@ -55,7 +55,7 @@ export default function CreateOutfits() {
   const animatedStyle = useAnimatedStyle(() => ({ transform: [{ translateY: translateY.value }] }));
 
   const [selectedItem, setSelectedItem] = useState<WardrobeItem | RecommendedItem | null>(null);
-  const [itemsCategory, setItemsCategory] = useState('Wardrobe'); // wardrobe or wishlist
+  const [itemsCategory, setItemsCategory] = useState<'Wardrobe' | 'Wishlist'>('Wardrobe'); // wardrobe or wishlist
   const togglePosition = useSharedValue(0);
 
   const [outfitItems, setOutfitItems] = useState<OutfitItem[]>([]);
@@ -90,7 +90,7 @@ export default function CreateOutfits() {
     setLoading(true);
     setLoadError(null);
 
-    fetchBuilderItems(itemsCategory as 'Wardrobe' | 'Wishlist', selectedCategory)
+    fetchBuilderItems(itemsCategory, selectedCategory)
       .then(({ recommendations, items }) => {
         if (cancelled) return;
           setSuggested(recommendations);
@@ -152,14 +152,15 @@ export default function CreateOutfits() {
     setShowSave(false);
   };
 
-  const handleConfirmSave = (outfitName: string) => {
-    // TODO: save outfit
+  const handleConfirmSave = () => {
     setShowSave(false);
+    setOutfitItems([]);
   };
 
   const handleAddToWishlist = () => {
     if (!hasOutfitItems) return;
-    // TODO: add to wishlist and clear outfit builder
+    // TODO: add to wishlist
+    setOutfitItems([]);
   };
 
   return (
@@ -320,7 +321,6 @@ export default function CreateOutfits() {
         {showSave && (
           <CreateOutfitSave
             onClose={handleCloseSave}
-            onConfirmSave={handleConfirmSave}
             outfitItems={outfitItems}
           />
         )}
