@@ -16,7 +16,7 @@ const TABS: Tab[] = [
 
 const RIGHT_TABS: Tab[] = [
   { href: '/saved', paths: ['/saved', '/wishlist'], label: 'Saved', icon: 'bookmark-outline', activeIcon: 'bookmark' },
-  { href: '/profile', paths: ['/profile', '/settings'], label: 'Profile', icon: 'person-outline', activeIcon: 'person' },
+  { href: '/profile', paths: ['/profile', '/settings', '/my-colour-analysis'], label: 'Profile', icon: 'person-outline', activeIcon: 'person' },
 ];
 
 const MENU_OPTIONS: { href: string; label: string; icon: IconName }[] = [

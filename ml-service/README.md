@@ -1,9 +1,7 @@
 # ml-service
 
-Python service for the wardrobe app's image analysis. Given a clothing
-photo, it strips the background, identifies the category, style and
-dominant colour, and returns an embedding vector for later similarity
-search (outfit matching, recommendations).
+Python service for the wardrobe app's image analysis. It supports wardrobe
+item analysis and personal colour analysis from a portrait.
 
 ## Setup
 
@@ -17,7 +15,10 @@ pip install -r requirements.txt
 ```
 
 The first run downloads rembg's segmentation model and
-Marqo-FashionCLIP, so do this well before a demo.
+Marqo-FashionCLIP, so do this well before a demo. The MediaPipe Face
+Landmarker model used by colour analysis is already stored at
+`models/face_landmarker.task` and came from Google's official
+`mediapipe-assets/face_landmarker_v2.task` release.
 
 ## Run
 
@@ -51,6 +52,33 @@ Expected response shape:
 - Confidences are relative to the other labels in `CATEGORY_LABELS` /
   `STYLE_LABELS`, so they shift if those lists change.
 - `embedding` is 512 floats for this model.
+
+### Personal colour analysis
+
+Send one clear portrait to the dedicated endpoint:
+
+```bash
+curl -X POST -F "file=@/path/to/portrait.jpg" http://localhost:8000/analyze-colours
+```
+
+The endpoint uses MediaPipe Face Landmarker to require exactly one face and
+locate the cheeks and forehead. It robustly filters pixels from those skin
+regions, measures the representative colour in RGB and CIE Lab, estimates
+undertone, depth, chroma and facial contrast, then selects one of twelve
+seasonal styling palettes. It rejects photos that are too small, dark,
+overexposed, blurry or unevenly lit instead of returning a weak result.
+
+This output is an approximate styling recommendation. Lighting, camera white
+balance, makeup and the rule-based season thresholds all affect the answer.
+
+For the Expo app, set the ML service URL in `mobile/.env.local`:
+
+```dotenv
+EXPO_PUBLIC_ML_SERVICE_URL=http://localhost:8000
+```
+
+Use your computer's LAN address instead of `localhost` when testing on a
+physical phone. Android emulators normally reach the host at `10.0.2.2`.
 
 ## Storing results in Supabase
 

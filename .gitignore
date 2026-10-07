@@ -65,3 +65,7 @@ report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 # pycache
 **/__pycache__/
 *.py[cod]
+
+# Python virtual environments
+ml-service/venv/
+ml-service/.venv/
