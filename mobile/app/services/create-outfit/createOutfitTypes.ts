@@ -31,3 +31,10 @@ export type OutfitItem = {
   x: number;
   y: number;
 };
+
+export type OutfitSaveDetails = {
+  name: string;
+  style?: string;
+  season?: string;
+  occasion?: string;
+};

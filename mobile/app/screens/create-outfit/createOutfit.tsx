@@ -4,9 +4,9 @@ import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { fetchBuilderItems, fetchGeneralRecommendations, getItemLabel, type BuilderItem } from '../../services/create-outfit/create-outfit-service';
+import { fetchBuilderItems, fetchGeneralRecommendations, getItemLabel, saveOutfit, type BuilderItem } from '../../services/create-outfit/create-outfit-service';
 
-import { OutfitItem, RecommendedItem, WardrobeItem } from '../../services/create-outfit/createOutfitTypes';
+import { OutfitItem, OutfitSaveDetails, RecommendedItem, WardrobeItem } from '../../services/create-outfit/createOutfitTypes';
 import CreateOutfitItem from './createOutfitItem';
 import CreateOutfitSave from './createOutfitSave';
 import CreateOutfitVisualiserItem from './createOutfitVisualiserItem';
@@ -152,7 +152,8 @@ export default function CreateOutfits() {
     setShowSave(false);
   };
 
-  const handleConfirmSave = () => {
+  const handleConfirmSave = async (details: OutfitSaveDetails) => {
+    await saveOutfit({ ...details, items: outfitItems.map((o) => o.item) });
     setShowSave(false);
     setOutfitItems([]);
   };
@@ -321,6 +322,7 @@ export default function CreateOutfits() {
         {showSave && (
           <CreateOutfitSave
             onClose={handleCloseSave}
+            onConfirmSave={handleConfirmSave}
             outfitItems={outfitItems}
           />
         )}

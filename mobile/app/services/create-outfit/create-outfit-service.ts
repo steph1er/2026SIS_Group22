@@ -2,7 +2,7 @@ import type { Ionicons } from '@expo/vector-icons';
 import type { ComponentProps } from 'react';
 import { fetchRecommendations, normaliseCatalogueItem, requestJson, toArray } from '../wishlist/wishlist-service';
 import type { CatalogueItem } from '../wishlist/wishlist-types';
-import type { RecommendedItem, WardrobeItem } from './createOutfitTypes';
+import type { OutfitSaveDetails, RecommendedItem, WardrobeItem } from './createOutfitTypes';
 
 export type FilterCategory = 'tops' | 'bottoms' | 'outerwear' | 'dresses' | 'shoes' | 'other';
 export type BuilderItem = WardrobeItem | RecommendedItem;
@@ -128,3 +128,20 @@ export const SOURCE_ICONS: Record<ItemDetails['source'], ComponentProps<typeof I
 // options for the save popup dropdowns
 export const OUTFIT_STYLES = ['Y2K', 'Classy', 'Casual', 'Streetwear', 'Bohemian', 'Minimalist', 'Preppy', 'Active', 'Vintage'];
 export const OUTFIT_SEASONS = ['Spring', 'Summer', 'Autumn', 'Winter'];
+
+export type SaveOutfitInput = OutfitSaveDetails & { items: BuilderItem[]};
+
+export async function saveOutfit({ name, style, season, occasion, items }: SaveOutfitInput): Promise<void> {
+  const unique = [...new Map(items.map((i) => [i.id, i])).values()];
+
+  await requestJson('outfits', {
+    method: 'POST',
+    body: JSON.stringify({
+      name: name.trim() || undefined,
+      style,
+      season,
+      occasion,
+      items: unique.map((i) => ('name' in i ? { catalogue_items_id: i.id } : { wardrobe_items_id: i.id })),
+    }),
+  });
+}

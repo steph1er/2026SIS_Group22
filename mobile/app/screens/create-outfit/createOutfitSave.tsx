@@ -4,7 +4,7 @@ import { ActivityIndicator, Image, ScrollView, Text, TextInput, TouchableOpacity
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, { runOnJS, useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { OUTFIT_SEASONS, OUTFIT_STYLES } from '../../services/create-outfit/create-outfit-service';
-import { OutfitItem } from '../../services/create-outfit/createOutfitTypes';
+import { OutfitItem, OutfitSaveDetails } from '../../services/create-outfit/createOutfitTypes';
 import { StyleUTokens } from '../../services/styleu-theme';
 import { styles } from './createOutfit';
 
@@ -13,6 +13,7 @@ const getItemLabel = (outfitItem: OutfitItem) =>
 
 type Props = {
   onClose: () => void;
+  onConfirmSave: (details: OutfitSaveDetails) => Promise<void>;
   outfitItems: OutfitItem[];
 };
 
@@ -63,7 +64,7 @@ function DetailDropdown({ label, options, value, open, onToggle, onSelect }: Dro
   );
 }
 
-export default function CreateOutfitSave({ onClose, outfitItems }: Props) {
+export default function CreateOutfitSave({ onClose, onConfirmSave, outfitItems }: Props) {
   const [outfitName, setOutfitName] = useState('');
   const [style, setStyle] = useState<string | undefined>();
   const [season, setSeason] = useState<string | undefined>();
@@ -80,6 +81,13 @@ export default function CreateOutfitSave({ onClose, outfitItems }: Props) {
     if (saving) return;
     setSaving(true);
     setSaveError(null);
+    
+    try {
+      await onConfirmSave({ name: outfitName, style, season, occasion });
+    } catch (e) {
+      setSaveError(e instanceof Error ? e.message : 'Could not save outfit. Please try again.');
+      setSaving(false);
+    }
   };
 
   const startY = useSharedValue(0);
@@ -119,88 +127,85 @@ export default function CreateOutfitSave({ onClose, outfitItems }: Props) {
           </View>
         </GestureDetector>
 
-        <ScrollView showsVerticalScrollIndicator={false}>
-          <Text style={styles.saveHeader}>
-            Outfit Description
-          </Text>
+        <Text style={styles.saveHeader}>
+          Outfit Description
+        </Text>
 
-          {/* image */}
+        {/* image */}
 
-          <Text style={styles.outfitDetailsTitle}>
-            Outfit Details
-          </Text>
+        <Text style={styles.outfitDetailsTitle}>
+          Outfit Details
+        </Text>
 
-          <View style={styles.outfitDetailsContainer}>
-            <View style={styles.outfitDetailsField}>
-              <Text style={styles.outfitDetailsCategory}>
-                Outfit Name
-              </Text>
-              <TextInput
-                style={styles.outfitDetailsInput}
-                placeholder="Enter outfit name"
-                placeholderTextColor={StyleUTokens.colors.placeholder}
-                maxLength={60}
-                value={outfitName}
-                onChangeText={setOutfitName}
-              />
-            </View>
-
-            <DetailDropdown
-              label="Season"
-              options={OUTFIT_SEASONS}
-              value={season}
-              open={openDropdown === 'season'}
-              onToggle={() => toggleDropdown('season')}
-              onSelect={setSeason}
+        <View style={styles.outfitDetailsContainer}>
+          <View style={styles.outfitDetailsField}>
+            <Text style={styles.outfitDetailsCategory}>
+              Outfit Name
+            </Text>
+            <TextInput
+              style={styles.outfitDetailsInput}
+              placeholder="Enter outfit name"
+              placeholderTextColor={StyleUTokens.colors.placeholder}
+              maxLength={60}
+              value={outfitName}
+              onChangeText={setOutfitName}
             />
-
-            <DetailDropdown
-              label="Style"
-              options={OUTFIT_STYLES}
-              value={style}
-              open={openDropdown === 'style'}
-              onToggle={() => toggleDropdown('style')}
-              onSelect={setStyle}
-            />
-
-            <View style={styles.outfitDetailsField}>
-              <Text style={styles.outfitDetailsCategory}>
-                Occasion
-              </Text>
-              <TextInput
-                style={styles.outfitDetailsInput}
-                placeholder="Enter occasion"
-                placeholderTextColor={StyleUTokens.colors.placeholder}
-                maxLength={60}
-                value={occasion}
-                onChangeText={setOccasion}
-              />
-            </View>
-            <View style={styles.detailSeparator} />
           </View>
 
-          <View style={styles.itemsInOutfitContainer}>
-            {/* items in outfit */}
-            <Text style={styles.suggestionText}>Items in Outfit</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-              <View style={styles.suggestedItemsGrid}>
-                {outfitItems.map((outfitItem) => (
-                  <View key={outfitItem.instanceId} style={styles.itemCard}>
-                    <Image source={{ uri: outfitItem.item.image_url }} style={styles.itemImage} />
-                    <Text style={styles.itemName} numberOfLines={1}>
-                      {getItemLabel(outfitItem)}
-                    </Text>
-                  </View>
-                ))}
-              </View>
-            </ScrollView>
+          <DetailDropdown
+            label="Season"
+            options={OUTFIT_SEASONS}
+            value={season}
+            open={openDropdown === 'season'}
+            onToggle={() => toggleDropdown('season')}
+            onSelect={setSeason}
+          />
+
+          <DetailDropdown
+            label="Style"
+            options={OUTFIT_STYLES}
+            value={style}
+            open={openDropdown === 'style'}
+            onToggle={() => toggleDropdown('style')}
+            onSelect={setStyle}
+          />
+
+          <View style={styles.outfitDetailsField}>
+            <Text style={styles.outfitDetailsCategory}>
+              Occasion
+            </Text>
+            <TextInput
+              style={styles.outfitDetailsInput}
+              placeholder="Enter occasion"
+              placeholderTextColor={StyleUTokens.colors.placeholder}
+              maxLength={60}
+              value={occasion}
+              onChangeText={setOccasion}
+            />
           </View>
+          <View style={styles.detailSeparator} />
+        </View>
 
-          {saveError && <Text style={styles.saveError}>{saveError}</Text>}
-          
-          <View style={{ height: 100 }} />
+        <View style={styles.itemsInOutfitContainer}>
+          {/* items in outfit */}
+          <Text style={styles.suggestionText}>Items in Outfit</Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+            <View style={styles.suggestedItemsGrid}>
+              {outfitItems.map((outfitItem) => (
+                <View key={outfitItem.instanceId} style={styles.itemCard}>
+                  <Image source={{ uri: outfitItem.item.image_url }} style={styles.itemImage} />
+                  <Text style={styles.itemName} numberOfLines={1}>
+                    {getItemLabel(outfitItem)}
+                  </Text>
+                </View>
+              ))}
+            </View>
+          </ScrollView>
+        </View>
 
-        </ScrollView>
+        {saveError && <Text style={styles.saveError}>{saveError}</Text>}
+        
+        <View style={{ height: 100 }} />
 
         <View style={styles.buttonContainer}>
           <TouchableOpacity

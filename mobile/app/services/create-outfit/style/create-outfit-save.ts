@@ -11,23 +11,6 @@ export const saveStyles = StyleSheet.create ({
     color: colors.text,
   },
 
-  outfitPreview: {
-    width: '100%',
-    height: 220,
-    borderRadius: 16,
-    backgroundColor: colors.backgroundElement,
-    overflow: 'hidden',
-    marginBottom: 16,
-  },
-
-  outfitPreviewImage: {
-    position: 'absolute',
-    width: 80,
-    height: 80,
-    borderRadius: 10,
-    backgroundColor: colors.background,
-  },
-
   dropdownTrigger: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -101,7 +84,7 @@ export const saveStyles = StyleSheet.create ({
   outfitDetailsField: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingVertical: 8,
+    paddingVertical: 12,
   },
 
   outfitDetailsCategory: {
