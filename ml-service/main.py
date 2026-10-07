@@ -10,16 +10,39 @@ Given a clothing photo, this service:
 """
 
 import io
+import os
 
 import cv2
 import numpy as np
 import open_clip
 import torch
-from fastapi import FastAPI, File, UploadFile
+from fastapi import FastAPI, File, HTTPException, UploadFile
+from fastapi.middleware.cors import CORSMiddleware
 from PIL import Image
 from rembg import remove
 
+from colour_analysis import AnalysisError, analyze_colour_image
+
 app = FastAPI(title="Wardrobe ML Service")
+
+cors_origins = [
+    origin.strip()
+    for origin in os.getenv(
+        "CORS_ORIGINS",
+        "http://localhost:8081,http://127.0.0.1:8081,http://localhost:19006",
+    ).split(",")
+    if origin.strip()
+]
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=cors_origins,
+    allow_credentials=True,
+    allow_methods=["GET", "POST"],
+    allow_headers=["*"],
+)
+
+MAX_COLOUR_PHOTO_BYTES = 12 * 1024 * 1024
+ALLOWED_IMAGE_TYPES = {"image/jpeg", "image/png", "image/webp"}
 
 MODEL_NAME = "hf-hub:Marqo/marqo-fashionCLIP"
 model, _, preprocess = open_clip.create_model_and_transforms(MODEL_NAME)
@@ -165,6 +188,24 @@ async def analyze_item(file: UploadFile = File(...)):
         "colour": colour,
         "embedding": embedding,
     }
+
+
+@app.post("/analyze-colours")
+async def analyze_colours(file: UploadFile = File(...)):
+    """Return a face-landmark guided, estimated seasonal colour palette."""
+    if file.content_type and file.content_type.lower() not in ALLOWED_IMAGE_TYPES:
+        raise HTTPException(status_code=415, detail="Please choose a JPEG, PNG or WebP photo.")
+
+    image_bytes = await file.read(MAX_COLOUR_PHOTO_BYTES + 1)
+    if len(image_bytes) > MAX_COLOUR_PHOTO_BYTES:
+        raise HTTPException(status_code=413, detail="This photo is too large. Please choose an image under 12 MB.")
+    if not image_bytes:
+        raise HTTPException(status_code=400, detail="The selected photo is empty.")
+
+    try:
+        return analyze_colour_image(image_bytes)
+    except AnalysisError as error:
+        raise HTTPException(status_code=422, detail=str(error)) from error
 
 
 @app.get("/health")
