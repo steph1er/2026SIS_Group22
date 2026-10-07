@@ -97,12 +97,12 @@ export class WardrobeService {
     } = updateWardrobeItemDto;
 
     clothing_category = clothing_category.toLowerCase();
-    style = style.map((item) => item.toLowerCase());
-    brand = brand.toLowerCase();
-    size = size.toLowerCase();
-    colour = colour.map((item) => item.toLowerCase());
-    material = material.map((item) => item.toLowerCase());
-    tags = tags.map((item) => item.toLowerCase());
+    style = style?.map((item) => item.toLowerCase());
+    brand = brand?.toLowerCase();
+    size = size?.toLowerCase();
+    colour = colour?.map((item) => item.toLowerCase());
+    material = material?.map((item) => item.toLowerCase());
+    tags = tags?.map((item) => item.toLowerCase());
 
     // check requested item exists
     await this.check_item_belongs_to_user(user_id, id);
