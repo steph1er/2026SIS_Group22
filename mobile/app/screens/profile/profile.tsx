@@ -1,4 +1,4 @@
-import { ActivityIndicator, ScrollView, View, TouchableOpacity, Switch, StyleSheet } from 'react-native';
+import { ActivityIndicator, ScrollView, View, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ThemedView } from '../../components/themed-view';
@@ -8,11 +8,18 @@ import { Link } from 'expo-router';
 import { useProfile } from '../../../src/profile/use-profile';
 import { ProfileHeader } from '../../components/profile-header';
 import { describeStyleQuiz } from './style-summary';
+import { useSavedColourAnalysis } from '../../../src/colour-analysis/use-saved-colour-analysis';
 
 export default function ProfileScreen() {
   // Loads the profile (profiles.user_id) and the onboarding row (onboarding.user_id) for the
   // signed-in user together, and again each time this screen is focused, so a finished retake shows up.
   const { user, profile, onboarding, error, isLoading, refetch } = useProfile({ includeOnboarding: true });
+  const {
+    result: colourAnalysis,
+    error: colourAnalysisError,
+    isLoading: isColourAnalysisLoading,
+    refetch: refetchColourAnalysis,
+  } = useSavedColourAnalysis();
 
   // Completion comes from profiles.onboarding_completed. The onboarding row alone never decides it.
   const quiz = profile && !error ? describeStyleQuiz(profile, onboarding) : null;
@@ -77,16 +84,38 @@ export default function ProfileScreen() {
 
           <View style={styles.analysisCard}>
             <View style={styles.analysisHeaderRow}>
-              <ThemedText style={styles.analysisLabel}>AI COLOUR ANALYSIS</ThemedText>
+              <ThemedText style={styles.analysisLabel}>MY COLOUR ANALYSIS</ThemedText>
+              <Ionicons name="color-palette-outline" size={20} color="#A56A45" />
             </View>
-            <ThemedText type="subtitle">Your Personal Season Guide</ThemedText>
-            <ThemedText style={styles.muted}>
-              Get outfit curations that match your natural undertones. Review or
-              redo your analysis anytime.
-            </ThemedText>
-            <Link href="./colour-analysis" asChild>
-              <PrimaryButton label="Redo Digital Scan" />
-            </Link>
+            {isColourAnalysisLoading ? (
+              <ActivityIndicator style={styles.analysisLoader} />
+            ) : colourAnalysisError ? (
+              <>
+                <ThemedText type="subtitle">Unable to load your result</ThemedText>
+                <ThemedText style={styles.muted}>{colourAnalysisError}</ThemedText>
+                <TouchableOpacity style={styles.retryButton} onPress={refetchColourAnalysis}>
+                  <ThemedText style={styles.retryLabel}>Try Again</ThemedText>
+                </TouchableOpacity>
+              </>
+            ) : colourAnalysis ? (
+              <>
+                <ThemedText type="subtitle">{colourAnalysis.season}</ThemedText>
+                <ThemedText style={styles.muted}>{colourAnalysis.undertone} Undertone</ThemedText>
+                <Link href={'/my-colour-analysis' as never} asChild>
+                  <PrimaryButton label="View Colour Analysis →" />
+                </Link>
+              </>
+            ) : (
+              <>
+                <ThemedText type="subtitle">Discover the colours that suit you best</ThemedText>
+                <ThemedText style={styles.muted}>
+                  Analyse a clear face photo to find your estimated seasonal palette.
+                </ThemedText>
+                <Link href={'/colour-analysis' as never} asChild>
+                  <PrimaryButton label="Start Colour Analysis" />
+                </Link>
+              </>
+            )}
           </View>
 
           <TouchableOpacity style={styles.rowCard}>
@@ -168,6 +197,20 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600',
     opacity: 0.7,
+  },
+  analysisLoader: {
+    paddingVertical: 24,
+  },
+  retryButton: {
+    alignSelf: 'flex-start',
+    borderRadius: 16,
+    backgroundColor: '#E2B7A9',
+    paddingHorizontal: 18,
+    paddingVertical: 12,
+  },
+  retryLabel: {
+    fontSize: 14,
+    fontWeight: '700',
   },
   rowCard: {
     flexDirection: 'row',

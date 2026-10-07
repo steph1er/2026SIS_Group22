@@ -25,6 +25,12 @@
       "expo-sqlite",
       "expo-web-browser",
       "expo-asset",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow $(PRODUCT_NAME) to choose a face photo for colour analysis."
+        }
+      ],
        [
         "expo-camera",
         {
