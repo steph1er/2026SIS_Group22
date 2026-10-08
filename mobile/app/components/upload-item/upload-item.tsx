@@ -9,7 +9,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { ThemedText } from './themed-text';
+import { ThemedText } from '../themed-text';
 import PhotoPreviewSection from './photo-preview';
 import * as ImagePicker from 'expo-image-picker'; 
 
@@ -20,6 +20,11 @@ export default function Camera() {
   const [photo, setPhoto] = useState<any>(null);
   const cameraRef = useRef<CameraView | null>(null);
   const [showTip, setShowTip] = useState(true);
+  
+  //    const [result, imagePath] = await Promise.all([
+  //    analyseItemPhoto(photo),
+  //    uploadItemPhoto(photo),
+  //  ]);
 
   if (!permission) {
     // Camera permissions are still loading.
