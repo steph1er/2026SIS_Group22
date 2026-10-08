@@ -1,6 +1,6 @@
 import type { Ionicons } from '@expo/vector-icons';
 import type { ComponentProps } from 'react';
-import { fetchRecommendations, normaliseCatalogueItem, requestJson, toArray } from '../wishlist/wishlist-service';
+import { addToWishlist, fetchRecommendations, normaliseCatalogueItem, requestJson, toArray, WishlistApiError } from '../wishlist/wishlist-service';
 import type { CatalogueItem } from '../wishlist/wishlist-types';
 import type { OutfitSaveDetails, RecommendedItem, WardrobeItem } from './createOutfitTypes';
 
@@ -144,4 +144,17 @@ export async function saveOutfit({ name, style, season, occasion, items }: SaveO
       items: unique.map((i) => ('name' in i ? { catalogue_items_id: i.id } : { wardrobe_items_id: i.id })),
     }),
   });
+}
+
+export async function addOutfitToWishlist(items: BuilderItem[]): Promise<void> {
+  const unique = [...new Map(items.map((i) => [i.id, i])).values()];
+  const toAdd = unique.filter((i) => 'name' in i && i.source !== 'Wishlist');
+
+  await Promise.all(
+    toAdd.map((item) =>
+      addToWishlist(item.id).catch((e) => {
+        if (!(e instanceof WishlistApiError && e.status === 409)) throw e;
+      }),
+    ),
+  );
 }

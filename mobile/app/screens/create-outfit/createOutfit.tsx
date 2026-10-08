@@ -4,7 +4,7 @@ import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { fetchBuilderItems, fetchGeneralRecommendations, getItemLabel, saveOutfit, type BuilderItem } from '../../services/create-outfit/create-outfit-service';
+import { addOutfitToWishlist, fetchBuilderItems, fetchGeneralRecommendations, getItemLabel, saveOutfit, type BuilderItem } from '../../services/create-outfit/create-outfit-service';
 
 import { OutfitItem, OutfitSaveDetails, RecommendedItem, WardrobeItem } from '../../services/create-outfit/createOutfitTypes';
 import CreateOutfitItem from './createOutfitItem';
@@ -63,6 +63,8 @@ export default function CreateOutfits() {
 
   const [selectedCategory, setSelectedCategory] = useState('Tops');
   const [showSave, setShowSave] = useState(false);
+  const [addingToWishlist, setAddingToWishlist] = useState(false);
+  const [reloadCount, setReloadCount] = useState(0); // bump to refetch wardrobe/wishlist items
 
   const categories = ['Tops', 'Bottoms', 'Outerwear', 'Dresses', 'Shoes', 'Other'];
 
@@ -100,7 +102,7 @@ export default function CreateOutfits() {
       .finally(() => { if (!cancelled) setLoading(false); });
 
     return () => { cancelled = true; };
-  }, [itemsCategory, selectedCategory]);
+  }, [itemsCategory, selectedCategory, reloadCount]);
 
   // don't repeat anything already shown in "Suggested for you" or the grid
   const shownIds = new Set([...suggested, ...gridItems].map((i) => i.id));
@@ -158,10 +160,18 @@ export default function CreateOutfits() {
     setOutfitItems([]);
   };
 
-  const handleAddToWishlist = () => {
-    if (!hasOutfitItems) return;
-    // TODO: add to wishlist
-    setOutfitItems([]);
+  const handleAddToWishlist = async () => {
+    if (!hasOutfitItems || addingToWishlist) return;
+    setAddingToWishlist(true);
+    try {
+      await addOutfitToWishlist(outfitItems.map((o) => o.item));
+      setOutfitItems([]);
+      setReloadCount((n) => n + 1); // refresh the Wishlist tab
+    } catch (e) {
+      console.warn('Could not add outfit to wishlist', e); // outfit stays so they can retry
+    } finally {
+      setAddingToWishlist(false);
+    }
   };
 
   return (
@@ -294,10 +304,10 @@ export default function CreateOutfits() {
         <View style={styles.buttonContainer}>
           <TouchableOpacity
             onPress={handleAddToWishlist}
-            disabled={!hasOutfitItems}
-            style={[styles.wishlistButton, !hasOutfitItems && styles.wishlistButtonDisabled]}
+            disabled={!hasOutfitItems || addingToWishlist}
+            style={[styles.wishlistButton, (!hasOutfitItems || addingToWishlist) && styles.wishlistButtonDisabled]}
           >
-            <Text style={styles.buttonText}>Add to Wishlist</Text>
+            {addingToWishlist ? <ActivityIndicator /> : <Text style={styles.buttonText}>Add to Wishlist</Text>}
           </TouchableOpacity>
 
           <TouchableOpacity
