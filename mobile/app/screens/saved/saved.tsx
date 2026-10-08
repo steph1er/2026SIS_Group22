@@ -14,6 +14,7 @@ import { Link, router } from 'expo-router';
 
 import { ThemedView } from '../../components/themed-view';
 import { ThemedText } from '../../components/themed-text';
+import { useWardrobe } from '../../hooks/use-wardrobe';
 import { useWishlist } from '../../hooks/use-wishlist';
 
 const ACCENT = '#D98E73';
@@ -41,8 +42,10 @@ function pluralise(count: number, word: string) {
 }
 
 export default function SavedScreen() {
-  // Only the wishlist itself is loaded here (for its count and cover); the items are shown on /wishlist.
+  // Only the wishlist and wardrobe are loaded here (for their counts and covers); the items are shown
+  // on /wishlist and /wardrobe.
   const { wishlist, isWishlistLoading, wishlistError, refresh } = useWishlist();
+  const wardrobe = useWardrobe();
 
   // Sized in points: percentage widths combined with aspectRatio lay out but never draw on React Native 0.86.
   const { width: screenWidth } = useWindowDimensions();
@@ -53,9 +56,17 @@ export default function SavedScreen() {
   const wideCardSize = { width: rowWidth, height: cardSize.height };
 
   const wishlistCover = wishlist.find((entry) => entry.item.imageUrl)?.item.imageUrl;
+  const wardrobeCover = wardrobe.items.find((item) => item.imageUrl)?.imageUrl;
 
   const collections: Collection[] = [
-    { id: 'wardrobe', label: 'My Wardrobe', countLabel: '24 items', cover: COVERS.wardrobe },
+    {
+      id: 'wardrobe',
+      label: 'My Wardrobe',
+      countLabel: wardrobe.error ? 'Tap to retry' : pluralise(wardrobe.items.length, 'item'),
+      cover: wardrobeCover ? { uri: wardrobeCover } : COVERS.wardrobe,
+      isLoading: wardrobe.isLoading && wardrobe.items.length === 0 && !wardrobe.error,
+      onPress: () => router.push('/wardrobe' as never),
+    },
     {
       id: 'wishlist',
       label: 'Wishlist',
