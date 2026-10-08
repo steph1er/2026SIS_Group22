@@ -2,6 +2,7 @@ import { AntDesign, Feather } from '@expo/vector-icons';
 import { CameraType, CameraView, useCameraPermissions } from 'expo-camera';
 import { useRef, useState } from 'react';
 import {
+  ActivityIndicator,
   Button,
   Pressable,
   StyleSheet,
@@ -12,6 +13,9 @@ import {
 import { ThemedText } from '../themed-text';
 import PhotoPreviewSection from './photo-preview';
 import * as ImagePicker from 'expo-image-picker'; 
+import ItemTagsForm, { type ConfirmedItem } from './edit-item-tags';
+import { preparePhotoForUpload } from '../../services/upload-item/prep-image';
+import { analyseItemPhoto, type AnalyseItemResult } from '../../services/upload-item/analyse-item-service';
 
 
 export default function Camera() {
@@ -20,11 +24,10 @@ export default function Camera() {
   const [photo, setPhoto] = useState<any>(null);
   const cameraRef = useRef<CameraView | null>(null);
   const [showTip, setShowTip] = useState(true);
+  const [analysing, setAnalysing] = useState(false);
+  const [result, setResult] = useState<AnalyseItemResult | null>(null);
+  const [error, setError] = useState<string | null>(null);
   
-  //    const [result, imagePath] = await Promise.all([
-  //    analyseItemPhoto(photo),
-  //    uploadItemPhoto(photo),
-  //  ]);
 
   if (!permission) {
     // Camera permissions are still loading.
@@ -57,13 +60,30 @@ export default function Camera() {
     }
   };
 
-  const handleRetakePhoto = () => setPhoto(null);
+  const handleRetakePhoto = () => {
+    setPhoto(null);
+    setAnalysing(false);
+    setResult(null);
+    setError(null);
+  };
 
-  const handleSavePhoto = () => {
-  // TODO: upload/save the photo (e.g. send photo.uri to the backend)
-  console.log('save photo', photo?.uri);
-  // setPhoto(null); // return to the camera after saving
+  const handleSavePhoto = async () => {
+    setAnalysing(true);
+    setError(null);
+    try {
+      const resized = await preparePhotoForUpload(photo);
+      setResult(await analyseItemPhoto(resized));
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Something went wrong. Please try again.');
+    } finally {
+      setAnalysing(false);
+    }
 }; 
+
+  const handleConfirm = (item: ConfirmedItem) => {
+    // TODO: save the item to the wardrobe (next step), then open the wardrobe page.
+    console.log('confirmed item', { ...item, embedding: `${item.embedding.length} numbers` });
+  };
 
   const handlePickFromLibrary = async () => {
   const result = await ImagePicker.launchImageLibraryAsync({
@@ -76,6 +96,50 @@ export default function Camera() {
   }
 };
 
+ //  the next three "if" blocks pick which screen to show. They are checked
+  // before the existing preview check, so once save is pressed they take over.
+
+  // Results came back: show them, editable.
+  if (photo && result) {
+    return (
+      <ItemTagsForm
+        photoUri={photo.uri}
+        result={result}
+        onConfirm={handleConfirm}
+        onRetake={handleRetakePhoto}
+      />
+    );
+  }
+
+  // Loading screen while the ML service works.
+  if (photo && analysing) {
+    return (
+      <View style={styles.statusContainer}>
+        <ActivityIndicator size="large" color="#D98E73" />
+        <Text style={styles.statusTitle}>Analysing…</Text>
+        <Text style={styles.statusText}>This can take up to 20 seconds.</Text>
+      </View>
+    );
+  }
+
+  // Something went wrong: let the user try again or retake.
+  if (photo && error) {
+    return (
+      <View style={styles.statusContainer}>
+        <Feather name="alert-circle" size={32} color="#B3261E" />
+        <Text style={styles.statusTitle}>Couldn't analyse the photo</Text>
+        <Text style={styles.statusText}>{error}</Text>
+        <Pressable style={styles.statusButton} onPress={handleSavePhoto}>
+          <Text style={styles.statusButtonText}>Try again</Text>
+        </Pressable>
+        <Pressable onPress={handleRetakePhoto}>
+          <Text style={styles.statusLink}>Retake photo</Text>
+        </Pressable>
+      </View>
+    );
+  }
+
+  // UNCHANGED from here: the preview and the camera.
   if (photo) 
     {return (
       <PhotoPreviewSection photo={photo} 
@@ -131,6 +195,43 @@ export default function Camera() {
 }
 
 const styles = StyleSheet.create({
+    statusContainer: {
+    flex: 1,
+    backgroundColor: '#FAF6F2',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 32,
+    gap: 12,
+  },
+  statusTitle: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: '#4A3A30',
+    textAlign: 'center',
+  },
+  statusText: {
+    fontSize: 14,
+    color: '#7A6A60',
+    textAlign: 'center',
+  },
+  statusButton: {
+    backgroundColor: '#D98E73',
+    borderRadius: 14,
+    paddingVertical: 12,
+    paddingHorizontal: 28,
+    marginTop: 8,
+  },
+  statusButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  statusLink: {
+    color: '#8B5E3C',
+    fontSize: 15,
+    fontWeight: '600',
+    paddingVertical: 8,
+  },
   container: {
     flex: 1,
     backgroundColor: '#000',
