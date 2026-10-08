@@ -1,7 +1,7 @@
-import { useState } from 'react';
-import { View, StyleSheet, Pressable, Modal } from 'react-native';
-import { Link, router, usePathname } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { Link, router, usePathname } from 'expo-router';
+import { useState } from 'react';
+import { Modal, Pressable, StyleSheet, View } from 'react-native';
 import { useAuth } from '../../src/auth/auth-provider';
 import { ThemedText } from './themed-text';
 
@@ -15,8 +15,8 @@ const TABS: Tab[] = [
 ];
 
 const RIGHT_TABS: Tab[] = [
-  { href: '/saved', paths: ['/saved', '/wishlist'], label: 'Saved', icon: 'bookmark-outline', activeIcon: 'bookmark' },
-  { href: '/profile', paths: ['/profile', '/settings'], label: 'Profile', icon: 'person-outline', activeIcon: 'person' },
+  { href: '/saved', paths: ['/saved', '/wishlist', '/wardrobe'], label: 'Saved', icon: 'bookmark-outline', activeIcon: 'bookmark' },
+  { href: '/profile', paths: ['/profile', '/settings', '/my-colour-analysis'], label: 'Profile', icon: 'person-outline', activeIcon: 'person' },
 ];
 
 const MENU_OPTIONS: { href: string; label: string; icon: IconName }[] = [
@@ -44,13 +44,18 @@ export function BottomNavBar() {
   const handleOptionPress = (href: string) => {
     setMenuVisible(false);
         router.push(href as never);
-
   };
 
   // Only for signed-in users, so the Welcome, Login and Sign Up screens cannot open
   // Home or Profile. Also hidden during onboarding so a new user cannot skip it, and
-  // on item details, which has its own action bar.
-  if (!user || pathname.startsWith('/onboarding') || pathname.startsWith('/item/')) return null;
+  // on item details (catalogue and wardrobe), which have their own action bar.
+  if (
+    !user ||
+    pathname.startsWith('/onboarding') ||
+    pathname.startsWith('/item/') ||
+    pathname.startsWith('/wardrobe-item/')
+  )
+    return null;
 
   return (
     <>

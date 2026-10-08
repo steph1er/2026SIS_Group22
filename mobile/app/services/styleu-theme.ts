@@ -7,6 +7,8 @@ export const StyleUTokens = {
     mutedText: '#75726F',
     placeholder: '#ABABAB',
     accent: '#E2B7A9',
+    mutedAccent: '#e2b7a952',
+    button: '#e2ddddaa',
 
     // onboarding
     backgroundElement: '#F0F0F3',
@@ -17,6 +19,10 @@ export const StyleUTokens = {
     badgeText: '#6B6B6B',
     errorRed: '#982422',
     buttonText: '#2B2320',
+
+    // create outfits
+    mutedBackground: '#faf5f2f1',
+    mutedAccentContent: '#eadfdb52',
   },
   radius: { field: 16, button: 22 },
 } as const;
