@@ -19,6 +19,7 @@ export default function Camera() {
   const [permission, requestPermission] = useCameraPermissions();
   const [photo, setPhoto] = useState<any>(null);
   const cameraRef = useRef<CameraView | null>(null);
+  const [showTip, setShowTip] = useState(true);
 
   if (!permission) {
     // Camera permissions are still loading.
@@ -81,7 +82,27 @@ export default function Camera() {
 
   return (
     <View style={styles.container}>
-      <CameraView style={styles.camera} facing={facing} ref={cameraRef} />
+      
+      <View style={styles.camera}>
+        <CameraView style={StyleSheet.absoluteFill} facing={facing} ref={cameraRef} />
+
+        {showTip && (
+          <View style={styles.tipBanner}>
+            <Feather name="alert-circle" size={18} color="#8B5E3C" />
+            <Text style={styles.tipText}>
+              Please ensure the item being uploaded is clearly visable with no obstructions. 
+            </Text>
+            <TouchableOpacity
+              onPress={() => setShowTip(false)}
+              hitSlop={10}
+              accessibilityLabel="Dismiss tip"
+            >
+              <Feather name="x" size={18} color="#8B5E3C" />
+            </TouchableOpacity>
+          </View>
+        )}
+      </View>
+
       <View style={styles.sheet}>
         <View style={styles.controlsRow}>
           <TouchableOpacity style={styles.wardrobeThumb} onPress={handlePickFromLibrary}>
@@ -179,6 +200,30 @@ permissionText: {
     fontWeight: '700',
     letterSpacing: 0.5,
     color: '#D98E73',
+  },
+  tipBanner: {
+  position: 'absolute',
+  top: 50,
+  left: 16,
+  right: 16,
+  flexDirection: 'row',
+  alignItems: 'center',
+  gap: 10,
+  backgroundColor: '#FAF6F2',
+  borderRadius: 14,
+  paddingVertical: 12,
+  paddingHorizontal: 14,
+  shadowColor: '#000',
+  shadowOffset: { width: 0, height: 2 },
+  shadowOpacity: 0.15,
+  shadowRadius: 6,
+  elevation: 3,
+  },
+  tipText: {
+    flex: 1,
+    fontSize: 13,
+    lineHeight: 18,
+    color: '#4A3A30',
   },
   tabDot: {
     width: 4,

@@ -3,6 +3,7 @@ import { CameraCapturedPicture } from 'expo-camera';
 import React from 'react'
 import { TouchableOpacity, Image, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context'; 
+
 const PhotoPreviewSection = ({
     photo,
     handleRetakePhoto, // retake button call
@@ -31,7 +32,7 @@ const styles = StyleSheet.create({
         backgroundColor: 'black',
         alignItems: 'center',
         justifyContent: 'center',
-    },
+    }, 
     box: {
         borderRadius: 15,
         padding: 1,
