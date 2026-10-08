@@ -1,7 +1,7 @@
-import { useState } from 'react';
-import { View, StyleSheet, Pressable, Modal } from 'react-native';
-import { Link, router, usePathname } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { Link, router, usePathname } from 'expo-router';
+import { useState } from 'react';
+import { Modal, Pressable, StyleSheet, View } from 'react-native';
 import { useAuth } from '../../src/auth/auth-provider';
 import { ThemedText } from './themed-text';
 
@@ -44,7 +44,6 @@ export function BottomNavBar() {
   const handleOptionPress = (href: string) => {
     setMenuVisible(false);
         router.push(href as never);
-
   };
 
   // Only for signed-in users, so the Welcome, Login and Sign Up screens cannot open
