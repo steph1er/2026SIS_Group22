@@ -1,11 +1,12 @@
+import { Ionicons } from '@expo/vector-icons';
 import { useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
 
-import { ThemedView } from '../../components/themed-view';
-import { ThemedText } from '../../components/themed-text';
+import { router } from 'expo-router';
 import { PrimaryButton } from '../../components/primary-button';
+import { ThemedText } from '../../components/themed-text';
+import { ThemedView } from '../../components/themed-view';
 
 const ACCENT = '#D98E73';
 
@@ -33,7 +34,7 @@ export default function OutfitsScreen() {
           </View>
 
           {/* TODO: open the outfit builder once it exists. */}
-          <PrimaryButton label="Create Outfit" onPress={() => setNotice("Creating outfits isn't available yet.")} />
+          <PrimaryButton label="Create Outfit" onPress={() => router.push('./create-outfit')} />
 
           {notice ? <ThemedText style={[styles.muted, styles.notice]}>{notice}</ThemedText> : null}
         </ScrollView>
