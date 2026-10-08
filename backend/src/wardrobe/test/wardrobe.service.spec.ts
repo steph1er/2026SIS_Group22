@@ -508,7 +508,6 @@ describe('WardrobeService', () => {
 
             const updateWardrobeItemDto: UpdateWardrobeItemDto = {
                 id: "wardrobe item id",
-                image_url: "new image",
                 clothing_category: "jeans",
                 style: ["baggy"],
                 brand: "levis",
@@ -539,7 +538,7 @@ describe('WardrobeService', () => {
             const expectedResult = [{
                 "id": "wardrobe item id",
                 "user_id": "user id",
-                "image_url": "new image",
+                "image_url": "image",
                 "clothing_category": "jeans",
                 "style": ["baggy"],
                 "colour": ["denim blue"],
@@ -595,7 +594,6 @@ describe('WardrobeService', () => {
 
             const updateWardrobeItemDto: UpdateWardrobeItemDto = {
                 id: "wardrobe item id",
-                image_url: "new image",
                 clothing_category: "jeans",
                 style: ["baggy"],
                 brand: "levis",
