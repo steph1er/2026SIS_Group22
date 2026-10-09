@@ -135,6 +135,13 @@ export const optionStyles = StyleSheet.create({
     borderColor: colors.accent,
   },
 
+  aestheticOverlay: {
+    ...StyleSheet.absoluteFill,
+    backgroundColor: colors.accent,
+    opacity: 0.5,
+  },
+
+
   aestheticImage: {
     width: '100%',
     height: '100%',

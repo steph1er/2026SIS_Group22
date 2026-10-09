@@ -269,7 +269,13 @@ export function useOnboardingHandler(initial: OnboardingProgress) {
     if (currentStep < onboardingSteps.length - 1) {
       void goToNextStep();
     } else {
+<<<<<<< HEAD:mobile/app/screens/onboarding/onboardingHandler.ts
+        // TODO: save onboarding answers
+        console.log(answers); // temp
+        router.replace('./home-dashboard');
+=======
       void finishOnboarding();
+>>>>>>> origin/main:mobile/app/services/onboarding/onboardingHandler.ts
     }
   };
 
