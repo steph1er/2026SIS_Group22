@@ -281,7 +281,9 @@ export default function CreateOutfits() {
                 }}
                 style={styles.catalogueToggleButton}
               >
-                <Text>Wardrobe</Text>
+                <Text style={[styles.catalogueToggleText, itemsCategory === 'Wardrobe' && styles.catalogueToggleTextActive]}>
+                  Wardrobe
+                </Text>
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={() => {
@@ -290,7 +292,9 @@ export default function CreateOutfits() {
                 }}
                 style={styles.catalogueToggleButton}
               >
-                <Text>Wishlist</Text>
+                <Text style={[styles.catalogueToggleText, itemsCategory === 'Wishlist' && styles.catalogueToggleTextActive]}>
+                  Wishlist
+                </Text>
               </TouchableOpacity>
             </View>
 
@@ -328,7 +332,11 @@ export default function CreateOutfits() {
             disabled={!hasOutfitItems || addingToWishlist}
             style={[styles.wishlistButton, (!hasOutfitItems || addingToWishlist) && styles.wishlistButtonDisabled]}
           >
-            {addingToWishlist ? <ActivityIndicator /> : <Text style={styles.buttonText}>Add to Wishlist</Text>}
+            {addingToWishlist ? (
+              <ActivityIndicator color={colors.text} />
+            ) : (
+              <Text style={styles.secondaryButtonText}>Add to Wishlist</Text>
+            )}
           </TouchableOpacity>
 
           <TouchableOpacity

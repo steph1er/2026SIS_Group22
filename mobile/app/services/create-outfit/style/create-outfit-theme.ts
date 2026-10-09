@@ -75,6 +75,13 @@ export const createThemeStyles = (colors: StyleUColors) =>
     fontWeight: '700',
   },
 
+  // Text on the outlined Add to Wishlist button, which sits on the page surface rather than the accent.
+  secondaryButtonText: {
+    color: colors.text,
+    fontSize: 16,
+    fontWeight: '700',
+  },
+
   wishlistButton: {
     backgroundColor: colors.surface,
     paddingVertical: 16,

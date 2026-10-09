@@ -76,8 +76,18 @@ export const createCatalogueStyles = (colors: StyleUColors) =>
     top: 4,
     bottom: 4,
     width: '50%',
-    backgroundColor: colors.background,
+    backgroundColor: colors.card,
     borderRadius: 20,
+  },
+
+  catalogueToggleText: {
+    color: colors.subtleText,
+    fontSize: 15,
+  },
+
+  catalogueToggleTextActive: {
+    color: colors.text,
+    fontWeight: '600',
   },
 
   catalogueToggleButton: {
