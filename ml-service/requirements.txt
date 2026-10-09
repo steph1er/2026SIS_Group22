@@ -4,6 +4,7 @@ python-multipart==0.0.20
 rembg[CPU]==2.0.61
 opencv-python-headless==5.0.0.93
 numpy==2.0.2
+matplotlib==3.9.4
 Pillow==11.3.0
 mediapipe==0.10.35
 open_clip_torch==3.3.0
