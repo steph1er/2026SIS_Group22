@@ -23,12 +23,12 @@ export function ColourRecommendations({ result }: { result: ColourAnalysisResult
   return (
     <View style={styles.section}>
       <Text style={styles.title}>Recommended Clothing for You</Text>
-      <Text style={styles.intro}>Ranked using your Best Colours and the onboarding preferences you have chosen.</Text>
+      <Text style={styles.intro}>Best matches from your palette and preferences.</Text>
 
       {recommendations.isLoading ? (
         <View style={styles.stateRow}>
           <ActivityIndicator color={StyleUTokens.colors.accent} />
-          <Text style={styles.stateText}>Ranking personalised matches…</Text>
+          <Text style={styles.stateText}>Finding your best matches…</Text>
         </View>
       ) : recommendations.error ? (
         <View style={styles.stateCard} accessibilityRole="alert">
@@ -54,14 +54,18 @@ export function ColourRecommendations({ result }: { result: ColourAnalysisResult
             <CatalogueItemCard
               key={recommendation.item.id}
               item={recommendation.item}
+              action={(
+                <View style={styles.matchBadge}>
+                  <Text style={styles.matchBadgeText}>{Math.round(recommendation.score * 100)}%</Text>
+                </View>
+              )}
               details={[
                 formatPrice(recommendation.item.price),
-                `${Math.round(recommendation.score * 100)}% match`,
                 recommendation.matchedColour && recommendation.matchedPaletteColour
                   ? `${titleCase(recommendation.matchedColour)} · ${recommendation.matchedPaletteColour}`
                   : null,
                 recommendation.matchedSize
-                  ? `Your size: ${recommendation.matchedSize}`
+                  ? `Size ${recommendation.matchedSize}`
                   : recommendation.item.sizes.length > 0
                     ? `Sizes: ${recommendation.item.sizes.slice(0, 3).join(', ')}`
                     : null,
@@ -76,12 +80,14 @@ export function ColourRecommendations({ result }: { result: ColourAnalysisResult
 }
 
 const styles = StyleSheet.create({
-  section: { gap: 10, marginTop: 4 },
-  title: { color: StyleUTokens.colors.text, fontSize: 22, fontWeight: '700' },
-  intro: { color: StyleUTokens.colors.mutedText, fontSize: 14, lineHeight: 20 },
+  section: { gap: 10, marginTop: 2 },
+  title: { color: StyleUTokens.colors.text, fontSize: 20, lineHeight: 26, fontWeight: '600' },
+  intro: { color: StyleUTokens.colors.mutedText, fontSize: 13, lineHeight: 18 },
   carousel: { gap: 12, paddingRight: 4, paddingVertical: 2 },
   stateRow: { minHeight: 82, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10 },
   stateCard: { minHeight: 100, borderRadius: 18, backgroundColor: StyleUTokens.colors.surface, padding: 16, alignItems: 'center', justifyContent: 'center', gap: 8 },
   stateText: { flexShrink: 1, color: StyleUTokens.colors.mutedText, fontSize: 14, lineHeight: 20, textAlign: 'center' },
   retry: { color: StyleUTokens.colors.errorRed, fontSize: 14, fontWeight: '700' },
+  matchBadge: { minWidth: 42, height: 26, borderRadius: 13, backgroundColor: 'rgba(255,255,255,0.94)', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 8 },
+  matchBadgeText: { color: StyleUTokens.colors.text, fontSize: 12, fontWeight: '700' },
 });
