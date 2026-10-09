@@ -49,37 +49,42 @@ export default function ProfileScreen() {
             onRetry={refetch}
           />
 
-          <ThemedText type="sectionTitle" style={styles.sectionTitle}>
-            Wardrobe Details
-          </ThemedText>
-
-          {/* The card opens the existing onboarding quiz: it retakes a finished quiz, resumes one in
-              progress, or starts one. Nothing is shown until the user's real status has loaded, and a
-              failed load shows the error (with retry) in the header instead of any quiz results. */}
-          {quiz ? (
-            <>
+          <View style={styles.sectionHeaderRow}>
+            <ThemedText type="sectionTitle">Style Preferences</ThemedText>
+            {quiz?.status === 'completed' ? (
               <Link href="../onboarding" asChild>
-                <TouchableOpacity style={styles.quizCard}>
-                  <View style={styles.rowCardIcon}>
-                    <Ionicons name="clipboard-outline" size={20} color={colors.text} />
-                  </View>
-                  <View style={{ flex: 1 }}>
-                    <ThemedText type="cardTitle">{quiz.title}</ThemedText>
-                    <ThemedText style={styles.muted}>{quiz.message}</ThemedText>
-                    <ThemedText style={styles.muted}>{quiz.hint}</ThemedText>
-                  </View>
-                  <Ionicons name="chevron-forward" size={20} color={colors.text} />
+                <TouchableOpacity hitSlop={8} accessibilityLabel="Retake the style quiz">
+                  <ThemedText style={styles.sectionAction}>Retake</ThemedText>
                 </TouchableOpacity>
               </Link>
+            ) : null}
+          </View>
 
-              {quiz.details.length > 0 && (
-                <View>
-                  {quiz.details.map((detail) => (
-                    <DetailRow key={detail.label} label={detail.label} value={detail.value} />
-                  ))}
+          {/* A finished quiz shows its saved results, with Retake in the header above. Otherwise the
+              card opens the existing onboarding quiz to resume one in progress or start one. Nothing is
+              shown until the user's real status has loaded, and a failed load shows the error (with
+              retry) in the header instead of any quiz results. */}
+          {quiz?.status === 'completed' ? (
+            <View>
+              {quiz.details.map((detail) => (
+                <DetailRow key={detail.label} label={detail.label} value={detail.value} />
+              ))}
+              <ThemedText style={[styles.muted, styles.quizMeta]}>{quiz.message}</ThemedText>
+            </View>
+          ) : quiz ? (
+            <Link href="../onboarding" asChild>
+              <TouchableOpacity style={styles.quizCard}>
+                <View style={styles.rowCardIcon}>
+                  <Ionicons name="clipboard-outline" size={20} color={colors.text} />
                 </View>
-              )}
-            </>
+                <View style={{ flex: 1 }}>
+                  <ThemedText type="cardTitle">{quiz.title}</ThemedText>
+                  <ThemedText style={styles.muted}>{quiz.message}</ThemedText>
+                  <ThemedText style={styles.muted}>{quiz.hint}</ThemedText>
+                </View>
+                <Ionicons name="chevron-forward" size={20} color={colors.text} />
+              </TouchableOpacity>
+            </Link>
           ) : isLoading ? (
             <ActivityIndicator />
           ) : (
@@ -236,8 +241,19 @@ const createStyles = (colors: StyleUColors) =>
     alignItems: 'center',
     justifyContent: 'center',
   },
-  sectionTitle: {
+  sectionHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     marginTop: 8,
+  },
+  sectionAction: {
+    color: colors.accentStrong,
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  quizMeta: {
+    marginTop: 10,
   },
   quizCard: {
     flexDirection: 'row',
