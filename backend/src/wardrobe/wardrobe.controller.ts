@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Post, Query, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Query, UseGuards } from '@nestjs/common';
 import { SupabaseAuthGuard } from '../auth/supabase-auth.guard';
 import { WardrobeService } from './wardrobe.service';
 import { UpdateWardrobeItemDto } from './dto/update-wardrobe-item.dto';
@@ -17,10 +17,10 @@ export class WardrobeController {
         return this.wardrobeService.getWardrobe(user.id);
     }
 
-    // change to post
-    @Get('add')
-    addItem(): string {
-        return this.wardrobeService.addItem();
+    // uses a test image for now, will take an uploaded image later
+    @Post('add')
+    addItem(@AuthenticatedUser() user: User) {
+        return this.wardrobeService.addItem(user.id);
     }
 
     @Post('update')

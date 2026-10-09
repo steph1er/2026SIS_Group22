@@ -26,7 +26,10 @@ export const onboardingSteps: OnboardingStep[] = [
           { id: 'minimalist', label: 'Minimalist', image: require('../../../assets/onboarding/minimalist.jpg')  },
           { id: 'preppy', label: 'Preppy', image: require('../../../assets/onboarding/preppy.jpg') },
           { id: 'active', label: 'Active', image: require('../../../assets/onboarding/active.jpg')  },
-          { id: 'vintage', label: 'Vintage', image: require('../../../assets/onboarding/vintage.jpg')  }
+          { id: 'coquette', label: 'Coquette', image: require('../../../assets/onboarding/coquette.jpg') },
+          { id: 'vintage', label: 'Vintage', image: require('../../../assets/onboarding/vintage.jpg')  },
+          { id: 'artsy', label: 'Artsy', image: require('../../../assets/onboarding/artsy.jpg') },
+          { id: 'corporate', label: 'Corporate', image: require('../../../assets/onboarding/corporate.jpg') },
         ],
       },
 

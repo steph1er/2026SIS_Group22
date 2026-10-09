@@ -160,7 +160,7 @@ function OnboardingQuizContent({ initial }: { initial: OnboardingProgress }) {
 
           {step.type !== 'wardrobe' && (
             <View style={styles.content}>
-              {step.sections?.map((section, index) => {
+              {step.sections?.map((section) => {
                 const currentAnswer = answers[section.id];
                 const showError = showErrors && !section.optional && !isSectionAnswered(section, answers);
 
@@ -466,11 +466,10 @@ function OnboardingQuizContent({ initial }: { initial: OnboardingProgress }) {
                               key={option.id}
                               style={[
                                 styles.aestheticCard,
-                                isSelected &&
-                                  styles.aestheticCardSelected,
+                                isSelected && styles.aestheticCardSelected,
                               ]}
                               onPress={() =>
-                                handleSingleSelect(section.id, option.id)
+                                handleMultiSelect(section.id, option.id)
                               }
                             >
                               {option.image && (
@@ -479,6 +478,10 @@ function OnboardingQuizContent({ initial }: { initial: OnboardingProgress }) {
                                   style={styles.aestheticImage}
                                   resizeMode="cover"
                                 />
+                              )}
+
+                              {isSelected && (
+                                <View style={styles.aestheticOverlay} />
                               )}
 
                               <View style={styles.aestheticBadge}>
