@@ -3,6 +3,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { PrimaryButton } from '../primary-button';
 import { StyleUTokens } from '../../services/styleu-theme';
 import type { ColourAnalysisResult, ColourSwatch } from '../../../src/colour-analysis/types';
+import { ColourRecommendations } from './colour-recommendations';
 
 type Props = {
   result: ColourAnalysisResult;
@@ -56,6 +57,7 @@ export function ColourAnalysisResultView({
         <Text style={styles.suggestionTitle}>Styling Suggestions</Text>
         <Text style={styles.suggestionText}>{result.explanation}</Text>
       </View>
+      <ColourRecommendations result={result} />
       <Text style={styles.disclaimer}>{result.disclaimer}</Text>
       <PrimaryButton label={actionLabel} onPress={onStartAgain} />
     </View>
