@@ -24,7 +24,13 @@
       "expo-image",
       "expo-sqlite",
       "expo-web-browser",
-      "expo-asset", 
+      "expo-asset",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow $(PRODUCT_NAME) to choose a face photo for colour analysis."
+        }
+      ],
        [
         "expo-camera",
         {
@@ -34,7 +40,7 @@
           "barcodeScannerEnabled": true
         }
       ]
-    ], 
+    ],
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true

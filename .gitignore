@@ -24,6 +24,7 @@ lerna-debug.log*
 # Tests
 /coverage
 /.nyc_output
+coverage/
 
 # IDEs and editors
 /.idea
@@ -64,3 +65,11 @@ report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 # pycache
 **/__pycache__/
 *.py[cod]
+**/.pytest_cache/
+**/.mypy_cache/
+**/.ruff_cache/
+
+# Python virtual environments
+ml-service/venv/
+ml-service/.venv/
+ml-service/models/*.tmp

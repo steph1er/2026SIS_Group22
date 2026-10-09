@@ -1,4 +1,4 @@
-import { Stack } from 'expo-router';
+import { Stack, usePathname } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -8,10 +8,13 @@ import { BottomNavBar } from './components/bottom-nav-bar';
 import './global.css';
 
 export default function RootLayout() {
+  const pathname = usePathname();
+  const hideBottomNav = pathname.startsWith('/create-outfit');
+
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <AuthProvider>
-        <StatusBar style="dark" />
+        <StatusBar style="light" />
         <View style={{ flex: 1 }}>
           <Stack
             screenOptions={{
@@ -19,7 +22,7 @@ export default function RootLayout() {
               animation: 'none',
             }}
           />
-          <BottomNavBar />
+          {!hideBottomNav && <BottomNavBar />}
         </View>
       </AuthProvider>
     </GestureHandlerRootView>
