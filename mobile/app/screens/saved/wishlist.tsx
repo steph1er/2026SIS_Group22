@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 import {
   ActivityIndicator,
   Image,
@@ -16,7 +16,6 @@ import { router } from 'expo-router';
 
 import { ThemedView } from '../../components/themed-view';
 import { ThemedText } from '../../components/themed-text';
-import { BackButton } from '../../components/back-button';
 import { useWishlist } from '../../hooks/use-wishlist';
 import { itemDetailHref } from '../../services/catalogue/catalogue-service';
 import type { CatalogueItem, WishlistEntry } from '../../services/wishlist/wishlist-types';
@@ -49,7 +48,11 @@ function subtitleFor(item: CatalogueItem) {
   return [item.category ? titleCase(item.category) : null, item.brand].filter(Boolean).join(' • ');
 }
 
-export default function WishlistScreen() {
+/**
+ * The wishlist shown under the Wishlist tab on Saved. `header` is rendered at the top of the
+ * scrolling content, so the page title and tab toggle scroll with the items.
+ */
+export function WishlistCollection({ header }: { header: ReactNode }) {
   const colors = useStyleUColors();
   const styles = useThemedStyles(createStyles);
   const wishlist = useWishlist({ includeRecommendations: true });
@@ -93,10 +96,25 @@ export default function WishlistScreen() {
     <ThemedView style={{ flex: 1 }}>
       <SafeAreaView style={{ flex: 1 }} edges={['top']}>
         <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-          <View style={styles.header}>
-            <View style={{ flex: 1 }}>
-              <BackButton label="My Collections" fallback="/saved" />
-              <ThemedText style={styles.title}>Wishlist</ThemedText>
+          {header}
+
+          <View style={styles.searchRow}>
+            <View style={[styles.searchBar, { flex: 1 }]}>
+              <Ionicons name="search" size={18} color={colors.subtleText} />
+              <TextInput
+                value={query}
+                onChangeText={setQuery}
+                placeholder={`Search my ${count} item${count === 1 ? '' : 's'}...`}
+                placeholderTextColor={colors.subtleText}
+                style={styles.searchInput}
+                returnKeyType="search"
+                autoCorrect={false}
+              />
+              {query ? (
+                <TouchableOpacity onPress={() => setQuery('')} accessibilityLabel="Clear search">
+                  <Ionicons name="close-circle" size={18} color={colors.subtleText} />
+                </TouchableOpacity>
+              ) : null}
             </View>
             <TouchableOpacity
               style={styles.iconCircle}
@@ -105,24 +123,6 @@ export default function WishlistScreen() {
             >
               <Ionicons name="ellipsis-vertical" size={18} color={colors.text} />
             </TouchableOpacity>
-          </View>
-
-          <View style={styles.searchBar}>
-            <Ionicons name="search" size={18} color={colors.subtleText} />
-            <TextInput
-              value={query}
-              onChangeText={setQuery}
-              placeholder={`Search my ${count} item${count === 1 ? '' : 's'}...`}
-              placeholderTextColor={colors.subtleText}
-              style={styles.searchInput}
-              returnKeyType="search"
-              autoCorrect={false}
-            />
-            {query ? (
-              <TouchableOpacity onPress={() => setQuery('')} accessibilityLabel="Clear search">
-                <Ionicons name="close-circle" size={18} color={colors.subtleText} />
-              </TouchableOpacity>
-            ) : null}
           </View>
 
           {categories.length > 0 ? (
@@ -390,15 +390,10 @@ const createStyles = (colors: StyleUColors) =>
     gap: 16,
     paddingBottom: 110,
   },
-  header: {
+  searchRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-  },
-  title: {
-    fontSize: 26,
-    lineHeight: 32,
-    fontWeight: '600',
+    gap: 10,
   },
   iconCircle: {
     width: 40,
@@ -573,7 +568,8 @@ const createStyles = (colors: StyleUColors) =>
     flex: 1,
     backgroundColor: colors.overlay,
     alignItems: 'flex-end',
-    paddingTop: 110,
+    // Opens just below the ⋮ button beside the search bar, under the Saved header and tab toggle.
+    paddingTop: 240,
     paddingHorizontal: 20,
   },
   menu: {

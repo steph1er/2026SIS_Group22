@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 import {
   ActivityIndicator,
   Image,
@@ -15,7 +15,6 @@ import { router } from 'expo-router';
 
 import { ThemedView } from '../../components/themed-view';
 import { ThemedText } from '../../components/themed-text';
-import { BackButton } from '../../components/back-button';
 import { useWardrobe } from '../../hooks/use-wardrobe';
 import { wardrobeItemHref } from '../../services/wardrobe/wardrobe-service';
 import type { WardrobeItem } from '../../services/wardrobe/wardrobe-types';
@@ -40,7 +39,11 @@ function subtitleFor(item: WardrobeItem) {
   return [item.brand ? titleCase(item.brand) : null, item.size?.toUpperCase()].filter(Boolean).join(' • ');
 }
 
-export default function WardrobeScreen() {
+/**
+ * The wardrobe shown under the Wardrobe tab on Saved. `header` is rendered at the top of the
+ * scrolling content, so the page title and tab toggle scroll with the items.
+ */
+export function WardrobeCollection({ header }: { header: ReactNode }) {
   const colors = useStyleUColors();
   const styles = useThemedStyles(createStyles);
   const wardrobe = useWardrobe();
@@ -78,32 +81,29 @@ export default function WardrobeScreen() {
     <ThemedView style={{ flex: 1 }}>
       <SafeAreaView style={{ flex: 1 }} edges={['top']}>
         <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-          <View style={styles.header}>
-            <View style={{ flex: 1 }}>
-              <BackButton label="My Collections" fallback="/saved" />
-              <ThemedText style={styles.title}>My Wardrobe</ThemedText>
+          {header}
+
+          <View style={styles.searchRow}>
+            <View style={[styles.searchBar, { flex: 1 }]}>
+              <Ionicons name="search" size={18} color={colors.subtleText} />
+              <TextInput
+                value={query}
+                onChangeText={setQuery}
+                placeholder={`Search my ${count} item${count === 1 ? '' : 's'}...`}
+                placeholderTextColor={colors.subtleText}
+                style={styles.searchInput}
+                returnKeyType="search"
+                autoCorrect={false}
+              />
+              {query ? (
+                <TouchableOpacity onPress={() => setQuery('')} accessibilityLabel="Clear search">
+                  <Ionicons name="close-circle" size={18} color={colors.subtleText} />
+                </TouchableOpacity>
+              ) : null}
             </View>
             <TouchableOpacity style={styles.iconCircle} onPress={wardrobe.refresh} accessibilityLabel="Refresh wardrobe">
               <Ionicons name="refresh" size={18} color={colors.text} />
             </TouchableOpacity>
-          </View>
-
-          <View style={styles.searchBar}>
-            <Ionicons name="search" size={18} color={colors.subtleText} />
-            <TextInput
-              value={query}
-              onChangeText={setQuery}
-              placeholder={`Search my ${count} item${count === 1 ? '' : 's'}...`}
-              placeholderTextColor={colors.subtleText}
-              style={styles.searchInput}
-              returnKeyType="search"
-              autoCorrect={false}
-            />
-            {query ? (
-              <TouchableOpacity onPress={() => setQuery('')} accessibilityLabel="Clear search">
-                <Ionicons name="close-circle" size={18} color={colors.subtleText} />
-              </TouchableOpacity>
-            ) : null}
           </View>
 
           {categories.length > 0 ? (
@@ -230,15 +230,10 @@ const createStyles = (colors: StyleUColors) =>
     gap: 16,
     paddingBottom: 110,
   },
-  header: {
+  searchRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-  },
-  title: {
-    fontSize: 26,
-    lineHeight: 32,
-    fontWeight: '600',
+    gap: 10,
   },
   iconCircle: {
     width: 40,

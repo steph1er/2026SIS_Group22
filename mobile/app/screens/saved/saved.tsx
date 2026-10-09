@@ -1,292 +1,157 @@
-import {
-  ActivityIndicator,
-  Image,
-  type ImageSourcePropType,
-  ScrollView,
-  StyleSheet,
-  TouchableOpacity,
-  useWindowDimensions,
-  View,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useEffect, useState } from 'react';
+import { Pressable, StyleSheet, TouchableOpacity, View } from 'react-native';
+import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
-import { Link, router } from 'expo-router';
+import { Link, router, useLocalSearchParams } from 'expo-router';
 
-import { ThemedView } from '../../components/themed-view';
 import { ThemedText } from '../../components/themed-text';
-import { useWardrobe } from '../../hooks/use-wardrobe';
-import { useWishlist } from '../../hooks/use-wishlist';
 import { useStyleUColors, useThemedStyles } from '../../hooks/use-theme';
 import type { StyleUColors } from '../../services/styleu-theme';
+import { WardrobeCollection } from './wardrobe';
+import { WishlistCollection } from './wishlist';
 
-const PAGE_PADDING = 20;
-const GRID_GAP = 14;
+export type SavedTab = 'wardrobe' | 'wishlist';
 
-// Cover photos for collections that are not backed by the API yet (they keep placeholder counts).
-const COVERS = {
-  wardrobe: require('../../../assets/onboarding/minimalist.jpg'),
-  wishlist: require('../../../assets/onboarding/bohemian.jpg'),
-  outfits: require('../../../assets/onboarding/classy.jpg'),
-};
+const TABS: { key: SavedTab; label: string }[] = [
+  { key: 'wardrobe', label: 'Wardrobe' },
+  { key: 'wishlist', label: 'Wishlist' },
+];
 
-type Collection = {
-  id: string;
-  label: string;
-  countLabel: string;
-  cover: ImageSourcePropType;
-  isLoading?: boolean;
-  onPress?: () => void;
-};
+const TOGGLE_PADDING = 4;
+const TOGGLE_BORDER = 1;
 
-function pluralise(count: number, word: string) {
-  return `${count} ${word}${count === 1 ? '' : 's'}`;
+// Switching tabs swaps the collection below, which rebuilds this header. Remembering the last tab
+// lets the new toggle start where the old one was and slide across, instead of jumping.
+let lastShownTab: SavedTab | null = null;
+
+/** Link to Saved opened on a given tab, e.g. after leaving a wardrobe item. */
+export function savedHref(tab: SavedTab) {
+  return `/saved?tab=${tab}` as const;
 }
 
+/**
+ * My Collections: one page that toggles between the user's wardrobe and wishlist.
+ * The open tab lives in the URL (?tab=wishlist), so links and Back return to the same tab.
+ */
 export default function SavedScreen() {
-  const colors = useStyleUColors();
-  const styles = useThemedStyles(createStyles);
-  // Only the wishlist and wardrobe are loaded here (for their counts and covers); the items are shown
-  // on /wishlist and /wardrobe.
-  const { wishlist, isWishlistLoading, wishlistError, refresh } = useWishlist();
-  const wardrobe = useWardrobe();
+  const params = useLocalSearchParams<{ tab?: string }>();
+  const tab: SavedTab = params.tab === 'wishlist' ? 'wishlist' : 'wardrobe';
+  const header = <SavedHeader tab={tab} onChange={(next) => router.setParams({ tab: next })} />;
 
-  // Sized in points: percentage widths combined with aspectRatio lay out but never draw on React Native 0.86.
-  const { width: screenWidth } = useWindowDimensions();
-  const rowWidth = screenWidth - PAGE_PADDING * 2;
-  const cardWidth = (rowWidth - GRID_GAP) / 2;
-  const cardSize = { width: cardWidth, height: cardWidth / 0.9 };
-  // A card left alone on the last row spans the full width (same height) so the grid has no gap.
-  const wideCardSize = { width: rowWidth, height: cardSize.height };
-
-  const wishlistCover = wishlist.find((entry) => entry.item.imageUrl)?.item.imageUrl;
-  const wardrobeCover = wardrobe.items.find((item) => item.imageUrl)?.imageUrl;
-
-  const collections: Collection[] = [
-    {
-      id: 'wardrobe',
-      label: 'My Wardrobe',
-      countLabel: wardrobe.error ? 'Tap to retry' : pluralise(wardrobe.items.length, 'item'),
-      cover: wardrobeCover ? { uri: wardrobeCover } : COVERS.wardrobe,
-      isLoading: wardrobe.isLoading && wardrobe.items.length === 0 && !wardrobe.error,
-      onPress: () => router.push('/wardrobe' as never),
-    },
-    {
-      id: 'wishlist',
-      label: 'Wishlist',
-      countLabel: wishlistError ? 'Tap to retry' : pluralise(wishlist.length, 'item'),
-      cover: wishlistCover ? { uri: wishlistCover } : COVERS.wishlist,
-      isLoading: isWishlistLoading && wishlist.length === 0 && !wishlistError,
-      onPress: () => router.push('/wishlist' as never),
-    },
-    { id: 'outfits', label: 'Saved Outfits', countLabel: '8 outfits', cover: COVERS.outfits },
-  ];
-
-  return (
-    <ThemedView style={{ flex: 1 }}>
-      <SafeAreaView style={{ flex: 1 }} edges={['top']}>
-        <ScrollView contentContainerStyle={styles.content}>
-          <View style={styles.header}>
-            <ThemedText style={styles.title}>My Collections</ThemedText>
-
-            <Link href="./settings" asChild>
-              <TouchableOpacity style={styles.iconCircle} accessibilityLabel="Settings">
-                <Ionicons name="settings-outline" size={20} color={colors.text} />
-              </TouchableOpacity>
-            </Link>
-          </View>
-
-          <View style={styles.sectionHeaderRow}>
-            <ThemedText style={styles.sectionTitle}>Saved Collections</ThemedText>
-            <ThemedText style={styles.accentText}>{collections.length} collections</ThemedText>
-          </View>
-
-          <View style={styles.grid}>
-            {collections.map((collection, index) => {
-              const isLoneLastCard = collections.length % 2 === 1 && index === collections.length - 1;
-              return (
-                <CollectionCard
-                  key={collection.id}
-                  collection={collection}
-                  size={isLoneLastCard ? wideCardSize : cardSize}
-                />
-              );
-            })}
-          </View>
-
-          {wishlistError ? (
-            <TouchableOpacity style={styles.errorRow} onPress={refresh}>
-              <Ionicons name="alert-circle-outline" size={16} color={colors.errorText} />
-              <ThemedText style={styles.errorText} numberOfLines={3}>
-                Couldn't load your wishlist: {wishlistError} Tap to retry.
-              </ThemedText>
-            </TouchableOpacity>
-          ) : null}
-
-          <TouchableOpacity style={styles.rowCard}>
-            <View style={styles.rowCardIcon}>
-              <Ionicons name="sparkles-outline" size={20} color={colors.accentStrong} />
-            </View>
-
-            <View style={{ flex: 1 }}>
-              <ThemedText style={styles.cardTitle}>Outfit Builder Canvas</ThemedText>
-              <ThemedText style={styles.muted}>Experiment with visual layouts & styling</ThemedText>
-            </View>
-
-            <Ionicons name="chevron-forward" size={20} color={colors.mutedText} />
-          </TouchableOpacity>
-        </ScrollView>
-      </SafeAreaView>
-    </ThemedView>
-  );
+  return tab === 'wardrobe' ? <WardrobeCollection header={header} /> : <WishlistCollection header={header} />;
 }
 
-type CardSize = { width: number; height: number };
-
-function CollectionCard({ collection, size }: { collection: Collection; size: CardSize }) {
+function SavedHeader({ tab, onChange }: { tab: SavedTab; onChange: (tab: SavedTab) => void }) {
   const colors = useStyleUColors();
   const styles = useThemedStyles(createStyles);
+  const tabIndex = TABS.findIndex((t) => t.key === tab);
+
+  const [toggleWidth, setToggleWidth] = useState(0);
+  const segmentWidth = toggleWidth > 0 ? (toggleWidth - (TOGGLE_PADDING + TOGGLE_BORDER) * 2) / TABS.length : 0;
+
+  const position = useSharedValue(TABS.findIndex((t) => t.key === (lastShownTab ?? tab)));
+  useEffect(() => {
+    position.value = withTiming(tabIndex, { duration: 220 });
+    lastShownTab = tab;
+  }, [position, tab, tabIndex]);
+
+  const indicatorStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: position.value * segmentWidth }],
+  }));
+
   return (
-    <TouchableOpacity
-      style={[styles.collectionCard, size]}
-      onPress={collection.onPress}
-      disabled={!collection.onPress}
-      activeOpacity={0.85}
-      accessibilityLabel={`${collection.label}, ${collection.countLabel}`}
-    >
-      <Image source={collection.cover} style={styles.collectionImage} resizeMode="cover" />
-      <View style={styles.countBadge}>
-        {collection.isLoading ? (
-          <ActivityIndicator size="small" color={colors.text} style={{ transform: [{ scale: 0.7 }] }} />
-        ) : (
-          <ThemedText style={styles.countBadgeText}>{collection.countLabel}</ThemedText>
-        )}
+    <View style={styles.headerBlock}>
+      <View style={styles.titleRow}>
+        <ThemedText type="pageTitle">My Collections</ThemedText>
+        <Link href="./settings" asChild>
+          <TouchableOpacity style={styles.iconCircle} accessibilityLabel="Settings">
+            <Ionicons name="settings-outline" size={20} color={colors.text} />
+          </TouchableOpacity>
+        </Link>
       </View>
-      <ThemedText style={styles.collectionLabel}>{collection.label}</ThemedText>
-    </TouchableOpacity>
+
+      <View
+        style={styles.toggle}
+        accessibilityRole="tablist"
+        onLayout={(event) => setToggleWidth(event.nativeEvent.layout.width)}
+      >
+        {/* The highlight slides between the two tabs, like the Create Outfit toggle. */}
+        <Animated.View
+          style={[styles.indicator, { width: segmentWidth, opacity: segmentWidth > 0 ? 1 : 0 }, indicatorStyle]}
+        />
+        {TABS.map(({ key, label }) => {
+          const selected = key === tab;
+          return (
+            <Pressable
+              key={key}
+              onPress={() => {
+                if (!selected) onChange(key);
+              }}
+              style={styles.segment}
+              accessibilityRole="tab"
+              accessibilityState={{ selected }}
+            >
+              <ThemedText style={[styles.segmentText, selected && styles.segmentTextSelected]}>{label}</ThemedText>
+            </Pressable>
+          );
+        })}
+      </View>
+    </View>
   );
 }
 
 const createStyles = (colors: StyleUColors) =>
   StyleSheet.create({
-  content: {
-    padding: PAGE_PADDING,
-    gap: 18,
-    paddingBottom: 110,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  title: {
-    fontSize: 26,
-    lineHeight: 32,
-    fontWeight: '600',
-  },
-  iconCircle: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: colors.input,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  sectionHeaderRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  sectionTitle: {
-    fontSize: 20,
-    lineHeight: 26,
-    fontWeight: '600',
-  },
-  accentText: {
-    color: colors.accentStrong,
-    fontSize: 13,
-  },
-  muted: {
-    opacity: 0.6,
-    fontSize: 13,
-  },
-  grid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: GRID_GAP,
-  },
-  collectionCard: {
-    borderRadius: 18,
-    overflow: 'hidden',
-    backgroundColor: colors.surface,
-  },
-  collectionImage: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    width: '100%',
-    height: '100%',
-  },
-  countBadge: {
-    position: 'absolute',
-    top: 10,
-    left: 10,
-    minHeight: 22,
-    justifyContent: 'center',
-    backgroundColor: colors.frosted,
-    paddingHorizontal: 9,
-    paddingVertical: 3,
-    borderRadius: 11,
-  },
-  countBadgeText: {
-    color: colors.text,
-    fontSize: 11,
-    fontWeight: '600',
-  },
-  collectionLabel: {
-    position: 'absolute',
-    left: 12,
-    bottom: 10,
-    right: 12,
-    color: colors.onAccent,
-    fontSize: 16,
-    fontWeight: '600',
-    textShadowColor: colors.overlay,
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 4,
-  },
-  errorRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 8,
-    backgroundColor: colors.errorSurface,
-    borderRadius: 12,
-    padding: 12,
-  },
-  errorText: {
-    flex: 1,
-    fontSize: 12,
-    lineHeight: 17,
-    color: colors.errorText,
-  },
-  cardTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  rowCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 14,
-    borderWidth: 1,
-    borderColor: colors.borderSoft,
-    borderRadius: 18,
-    padding: 16,
-  },
-  rowCardIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: colors.accentSoft,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
+    headerBlock: {
+      gap: 16,
+    },
+    titleRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+    },
+    iconCircle: {
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      backgroundColor: colors.input,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    toggle: {
+      flexDirection: 'row',
+      backgroundColor: colors.input,
+      borderWidth: TOGGLE_BORDER,
+      borderColor: colors.borderSoft,
+      borderRadius: 24,
+      padding: TOGGLE_PADDING,
+    },
+    indicator: {
+      position: 'absolute',
+      top: TOGGLE_PADDING,
+      bottom: TOGGLE_PADDING,
+      left: TOGGLE_PADDING,
+      borderRadius: 20,
+      backgroundColor: colors.card,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 1 },
+      shadowOpacity: 0.08,
+      shadowRadius: 3,
+      elevation: 1,
+    },
+    segment: {
+      flex: 1,
+      paddingVertical: 10,
+      alignItems: 'center',
+    },
+    segmentText: {
+      fontSize: 15,
+      lineHeight: 20,
+      color: colors.subtleText,
+      fontWeight: '500',
+    },
+    segmentTextSelected: {
+      color: colors.text,
+      fontWeight: '600',
+    },
+  });

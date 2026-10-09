@@ -152,7 +152,7 @@ export default function WardrobeItemScreen() {
   if (!shown) {
     return (
       <ThemedView style={[styles.centered, { paddingTop: insets.top }]}>
-        <BackButton variant="floating" fallback="/wardrobe" style={[styles.floatingBack, { top: insets.top + 8 }]} />
+        <BackButton variant="floating" fallback="/saved?tab=wardrobe" style={[styles.floatingBack, { top: insets.top + 8 }]} />
         {current?.error ? (
           <View style={styles.stateMessage}>
             <Ionicons name="cloud-offline-outline" size={28} color={colors.accentStrong} />
@@ -210,7 +210,7 @@ export default function WardrobeItemScreen() {
     setIsDeleting(true);
     try {
       await deleteWardrobeItem(shown.id);
-      goBackOr('/wardrobe');
+      goBackOr('/saved?tab=wardrobe');
     } catch (error) {
       setNotice(error instanceof Error ? error.message : 'Could not delete the item.');
       setIsDeleting(false);
@@ -227,7 +227,7 @@ export default function WardrobeItemScreen() {
           <View>
             <Image source={{ uri: shown.imageUrl ?? PLACEHOLDER_IMAGE }} style={[styles.hero, { height: screenWidth * 0.95 }]} resizeMode="contain" />
             <View style={[styles.heroButtons, { top: insets.top + 8 }]}>
-              <BackButton variant="floating" fallback="/wardrobe" />
+              <BackButton variant="floating" fallback="/saved?tab=wardrobe" />
             </View>
           </View>
 
