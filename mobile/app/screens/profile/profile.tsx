@@ -7,7 +7,7 @@ import { PrimaryButton } from '../../components/primary-button';
 import { Link } from 'expo-router';
 import { useProfile } from '../../../src/profile/use-profile';
 import { ProfileHeader } from '../../components/profile-header';
-import { describeStyleQuiz } from './style-summary';
+import { describeStyleQuiz, type StylePreferences } from './style-summary';
 import { useSavedColourAnalysis } from '../../../src/colour-analysis/use-saved-colour-analysis';
 import { useStyleUColors, useThemedStyles } from '../../hooks/use-theme';
 import type { StyleUColors } from '../../services/styleu-theme';
@@ -66,9 +66,7 @@ export default function ProfileScreen() {
               retry) in the header instead of any quiz results. */}
           {quiz?.status === 'completed' ? (
             <View>
-              {quiz.details.map((detail) => (
-                <DetailRow key={detail.label} label={detail.label} value={detail.value} />
-              ))}
+              {quiz.preferences ? <PreferencesCard preferences={quiz.preferences} /> : null}
               <ThemedText style={[styles.muted, styles.quizMeta]}>{quiz.message}</ThemedText>
             </View>
           ) : quiz ? (
@@ -146,12 +144,56 @@ export default function ProfileScreen() {
   );
 }
 
-function DetailRow({ label, value }: { label: string; value: string }) {
+/** The saved style quiz answers: the main aesthetic, multi-answer groups as chips, then sizes as tiles. */
+function PreferencesCard({ preferences }: { preferences: StylePreferences }) {
   const styles = useThemedStyles(createStyles);
+  const { aesthetic, groups, sizes } = preferences;
+
+  if (!aesthetic && groups.length === 0 && sizes.length === 0) {
+    return (
+      <View style={styles.preferencesCard}>
+        <ThemedText style={styles.muted}>No preferences saved yet.</ThemedText>
+      </View>
+    );
+  }
+
   return (
-    <View style={styles.detailRow}>
-      <ThemedText style={styles.muted}>{label}</ThemedText>
-      <ThemedText style={styles.detailValue}>{value}</ThemedText>
+    <View style={styles.preferencesCard}>
+      {aesthetic ? (
+        <View style={styles.preferenceGroup}>
+          <ThemedText style={styles.preferenceLabel}>Aesthetic</ThemedText>
+          <View style={styles.aestheticChip}>
+            <ThemedText style={styles.aestheticText}>{aesthetic}</ThemedText>
+          </View>
+        </View>
+      ) : null}
+
+      {groups.map((group) => (
+        <View key={group.label} style={styles.preferenceGroup}>
+          <ThemedText style={styles.preferenceLabel}>{group.label}</ThemedText>
+          <View style={styles.chips}>
+            {group.values.map((value) => (
+              <View key={value} style={styles.chip}>
+                <ThemedText style={styles.chipText}>{value}</ThemedText>
+              </View>
+            ))}
+          </View>
+        </View>
+      ))}
+
+      {sizes.length > 0 ? (
+        <View style={styles.preferenceGroup}>
+          <ThemedText style={styles.preferenceLabel}>Sizes & body type</ThemedText>
+          <View style={styles.sizeGrid}>
+            {sizes.map((size) => (
+              <View key={size.label} style={styles.sizeTile}>
+                <ThemedText style={styles.sizeLabel}>{size.label}</ThemedText>
+                <ThemedText style={styles.sizeValue}>{size.value}</ThemedText>
+              </View>
+            ))}
+          </View>
+        </View>
+      ) : null}
     </View>
   );
 }
@@ -263,16 +305,79 @@ const createStyles = (colors: StyleUColors) =>
     borderRadius: 16,
     padding: 16,
   },
-  detailRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.divider,
+  preferencesCard: {
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.borderSoft,
+    borderRadius: 16,
+    padding: 16,
+    gap: 18,
   },
-  detailValue: {
-    flex: 1,
-    textAlign: 'right',
-    marginLeft: 16,
+  preferenceGroup: {
+    gap: 8,
+  },
+  preferenceLabel: {
+    color: colors.subtleText,
+    fontSize: 12,
+    lineHeight: 16,
+    fontWeight: '600',
+    letterSpacing: 0.3,
+  },
+  aestheticChip: {
+    alignSelf: 'flex-start',
+    backgroundColor: colors.accentSoft,
+    borderWidth: 1,
+    borderColor: colors.accent,
+    borderRadius: 18,
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+  },
+  aestheticText: {
+    fontSize: 15,
+    lineHeight: 20,
+    fontWeight: '600',
+  },
+  chips: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  chip: {
+    backgroundColor: colors.card,
+    borderWidth: 1,
+    borderColor: colors.borderSoft,
+    borderRadius: 16,
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+  },
+  chipText: {
+    fontSize: 13,
+    lineHeight: 18,
+  },
+  sizeGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  sizeTile: {
+    flexGrow: 1,
+    flexBasis: '30%',
+    backgroundColor: colors.card,
+    borderWidth: 1,
+    borderColor: colors.borderSoft,
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    gap: 2,
+  },
+  sizeLabel: {
+    color: colors.subtleText,
+    fontSize: 12,
+    lineHeight: 16,
+  },
+  sizeValue: {
+    fontSize: 15,
+    lineHeight: 20,
+    fontWeight: '600',
   },
 });
