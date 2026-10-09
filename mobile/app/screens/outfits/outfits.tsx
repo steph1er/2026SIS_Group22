@@ -1,19 +1,16 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useState } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { router } from 'expo-router';
-import { PrimaryButton } from '../../components/primary-button';
 import { ThemedText } from '../../components/themed-text';
 import { ThemedView } from '../../components/themed-view';
 
+import { StyleUTokens } from '../../services/styleu-theme';
+
 const ACCENT = '#D98E73';
 
-/**
- * The Outfits tab: where the user creates outfits. Outfits are not stored by the
- * backend yet, so this shows the empty state and the create button only.
- */
 export default function OutfitsScreen() {
   const [notice, setNotice] = useState<string | null>(null);
 
@@ -21,7 +18,12 @@ export default function OutfitsScreen() {
     <ThemedView style={{ flex: 1 }}>
       <SafeAreaView style={{ flex: 1 }} edges={['top']}>
         <ScrollView contentContainerStyle={styles.content}>
-          <ThemedText style={styles.title}>My Outfits</ThemedText>
+          <View style={styles.titleContainer}>
+            <ThemedText style={styles.title}>My Outfits</ThemedText>
+              <TouchableOpacity onPress={() => router.push('./create-outfit')} style={styles.button}>
+                <Text style={styles.buttonText}>Create Outfit</Text>
+              </TouchableOpacity>
+          </View>
 
           <View style={styles.emptyState}>
             <View style={styles.emptyIcon}>
@@ -33,9 +35,6 @@ export default function OutfitsScreen() {
             </ThemedText>
           </View>
 
-          {/* TODO: open the outfit builder once it exists. */}
-          <PrimaryButton label="Create Outfit" onPress={() => router.push('./create-outfit')} />
-
           {notice ? <ThemedText style={[styles.muted, styles.notice]}>{notice}</ThemedText> : null}
         </ScrollView>
       </SafeAreaView>
@@ -44,6 +43,21 @@ export default function OutfitsScreen() {
 }
 
 const styles = StyleSheet.create({
+  button: {
+    backgroundColor: StyleUTokens.colors.accent,
+    alignItems: 'center',
+    padding: 8,
+    borderRadius: 8,
+  },
+  buttonText: {
+    color: StyleUTokens.colors.buttonText,
+    fontWeight: '600',
+    fontSize: 16,
+  },
+  titleContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
   content: {
     padding: 20,
     gap: 18,
