@@ -5,6 +5,7 @@ import { UpdateWardrobeItemDto } from './dto/update-wardrobe-item.dto';
 import { SearchWardrobeItemDto } from './dto/search-wardrobe-item.dto';
 import { AuthenticatedUser } from '../auth/authenticated-user.decorator';
 import type { User } from '@supabase/supabase-js';
+import { basename, resolve } from 'path';
 
 @Controller('wardrobes')
 @UseGuards(SupabaseAuthGuard)
@@ -17,10 +18,14 @@ export class WardrobeController {
         return this.wardrobeService.getWardrobe(user.id);
     }
 
-    // uses a test image for now, will take an uploaded image later
+    // dev only: ?image=<file in ml-service/images-temp>; falls back to the default test image.
+    // will take an uploaded image later
     @Post('add')
-    addItem(@AuthenticatedUser() user: User) {
-        return this.wardrobeService.addItem(user.id);
+    addItem(@AuthenticatedUser() user: User, @Query('image') image?: string) {
+        const image_path = image
+            ? resolve(process.cwd(), '../ml-service/images-temp', basename(image))
+            : undefined;
+        return this.wardrobeService.addItem(user.id, image_path);
     }
 
     @Post('update')
