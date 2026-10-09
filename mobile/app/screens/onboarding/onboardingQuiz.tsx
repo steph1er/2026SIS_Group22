@@ -11,6 +11,7 @@ import { useAuth } from '../../../src/auth/auth-provider';
 import type { OnboardingLayout, OnboardingProgress } from '../../../src/onboarding/onboarding-service';
 import { useOnboardingProgress } from '../../../src/onboarding/use-onboarding-progress';
 import { useOnboardingHandler } from '../../services/onboarding/onboardingHandler';
+import { BackButton } from '../../components/back-button';
 import { createInputStyles } from '../../services/onboarding/style/onboarding-inputs';
 import { createOptionStyles } from '../../services/onboarding/style/onboarding-options';
 import { createLayoutStyles } from '../../services/onboarding/style/onboarding-theme';
@@ -142,9 +143,7 @@ function OnboardingQuizContent({ initial }: { initial: OnboardingProgress }) {
           <View style={styles.header}>
             <View style={styles.stepLabelRow}>
               {currentStep > 0 && (
-                <TouchableOpacity onPress={handleBack} style={styles.backChevron}>
-                  <Text style={styles.backChevronText}>‹</Text>
-                </TouchableOpacity>
+                <BackButton onPress={handleBack} style={styles.backChevron} />
               )}
 
               <Text style={styles.stepLabel}>

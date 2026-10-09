@@ -69,7 +69,7 @@ export default function LoginScreen() {
   return (
     <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.content}>
-        <BackButton />
+        <BackButton fallback="/" />
         <Text accessibilityRole="header" style={styles.title}>Welcome back</Text>
 
         <View style={styles.form}>

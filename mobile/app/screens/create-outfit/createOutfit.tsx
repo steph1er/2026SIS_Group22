@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Image, ScrollView, Text, TouchableOpacity, useWindowDimensions, View } from 'react-native';
+import { ActivityIndicator, Alert, Image, ScrollView, Text, TouchableOpacity, useWindowDimensions, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -17,7 +17,7 @@ import { createItemStyles } from '../../services/create-outfit/style/create-outf
 import { createThemeStyles } from '../../services/create-outfit/style/create-outfit-theme';
 import { createVisualiserStyles } from '../../services/create-outfit/style/create-outfit-visualiser';
 
-import { BackButton } from '../../components/back-button';
+import { BackButton, goBackOr } from '../../components/back-button';
 import { useStyleUColors, useThemedStyles } from '../../hooks/use-theme';
 import type { StyleUColors } from '../../services/styleu-theme';
 
@@ -69,6 +69,18 @@ export default function CreateOutfits() {
 
   const [outfitItems, setOutfitItems] = useState<OutfitItem[]>([]);
   const hasOutfitItems = outfitItems.length > 0;
+
+  // Leaving drops the outfit in progress, so check first once something has been added.
+  const handleClose = () => {
+    if (!hasOutfitItems) {
+      goBackOr('/outfits');
+      return;
+    }
+    Alert.alert('Discard this outfit?', "The items you've added won't be saved.", [
+      { text: 'Keep editing', style: 'cancel' },
+      { text: 'Discard', style: 'destructive', onPress: () => goBackOr('/outfits') },
+    ]);
+  };
 
   const [selectedCategory, setSelectedCategory] = useState('Tops');
   const [showSave, setShowSave] = useState(false);
@@ -188,7 +200,7 @@ export default function CreateOutfits() {
       {/* header */}
       <View style={styles.headerContainer}>
         <View style={styles.title}>
-          <BackButton />
+          <BackButton icon="close" onPress={handleClose} />
           <Text style={styles.headerText}>
             Outfit Builder
           </Text>

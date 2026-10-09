@@ -65,7 +65,7 @@ export default function SignUpScreen() {
     <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.flex}>
         <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
-            <BackButton />
+          <BackButton fallback="/" />
           <Text accessibilityRole="header" style={styles.title}>Create your account</Text>
 
           <Pressable

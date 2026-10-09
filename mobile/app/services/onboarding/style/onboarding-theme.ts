@@ -45,14 +45,10 @@ export const createLayoutStyles = (colors: StyleUColors) =>
       alignItems: 'center',
     },
 
+    // Pulls the back button's 44pt tap area in so it sits snugly beside the step label.
     backChevron: {
-      paddingRight: 4,
-    },
-
-    backChevronText: {
-      fontSize: 20,
-      color: colors.mutedText,
-      lineHeight: 20,
+      marginVertical: -12,
+      marginRight: -6,
     },
 
     stepLabel: {

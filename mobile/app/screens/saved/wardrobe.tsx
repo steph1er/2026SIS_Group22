@@ -15,6 +15,7 @@ import { router } from 'expo-router';
 
 import { ThemedView } from '../../components/themed-view';
 import { ThemedText } from '../../components/themed-text';
+import { BackButton } from '../../components/back-button';
 import { useWardrobe } from '../../hooks/use-wardrobe';
 import { wardrobeItemHref } from '../../services/wardrobe/wardrobe-service';
 import type { WardrobeItem } from '../../services/wardrobe/wardrobe-types';
@@ -37,11 +38,6 @@ function titleFor(item: WardrobeItem) {
 
 function subtitleFor(item: WardrobeItem) {
   return [item.brand ? titleCase(item.brand) : null, item.size?.toUpperCase()].filter(Boolean).join(' • ');
-}
-
-function goBack() {
-  if (router.canGoBack()) router.back();
-  else router.replace('/saved' as never);
 }
 
 export default function WardrobeScreen() {
@@ -84,10 +80,7 @@ export default function WardrobeScreen() {
         <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
           <View style={styles.header}>
             <View style={{ flex: 1 }}>
-              <TouchableOpacity onPress={goBack} style={styles.breadcrumb} hitSlop={8} accessibilityLabel="Back to My Collections">
-                <Ionicons name="chevron-back" size={14} color={colors.subtleText} />
-                <ThemedText style={styles.breadcrumbText}>My Collections</ThemedText>
-              </TouchableOpacity>
+              <BackButton label="My Collections" fallback="/saved" />
               <ThemedText style={styles.title}>My Wardrobe</ThemedText>
             </View>
             <TouchableOpacity style={styles.iconCircle} onPress={wardrobe.refresh} accessibilityLabel="Refresh wardrobe">
@@ -241,16 +234,6 @@ const createStyles = (colors: StyleUColors) =>
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-  },
-  breadcrumb: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 2,
-    alignSelf: 'flex-start',
-  },
-  breadcrumbText: {
-    fontSize: 14,
-    color: colors.subtleText,
   },
   title: {
     fontSize: 26,

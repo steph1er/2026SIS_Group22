@@ -22,6 +22,7 @@ import { fetchCatalogueItem, fetchSimilarItems, itemDetailHref } from '../servic
 import type { CatalogueItem } from '../services/wishlist/wishlist-types';
 import { useStyleUColors, useThemedStyles } from '../hooks/use-theme';
 import type { StyleUColors } from '../services/styleu-theme';
+import { BackButton } from './back-button';
 
 const PLACEHOLDER_IMAGE = 'https://placehold.co/600x800/F2EFEC/ABABAB/png?text=No+image';
 
@@ -32,11 +33,6 @@ function formatPrice(price: number | null) {
 
 function titleCase(value: string) {
   return value.replace(/\b\w/g, (letter) => letter.toUpperCase());
-}
-
-function goBack() {
-  if (router.canGoBack()) router.back();
-  else router.replace('/home-dashboard' as never);
 }
 
 type Loaded<T> = { id: string; data: T | null; error: string | null };
@@ -90,9 +86,7 @@ export default function ItemDetailScreen() {
   if (!shown) {
     return (
       <ThemedView style={[styles.centered, { paddingTop: insets.top }]}>
-        <TouchableOpacity style={[styles.circleButton, styles.floatingBack, { top: insets.top + 8 }]} onPress={goBack} accessibilityLabel="Back">
-          <Ionicons name="chevron-back" size={22} color={colors.text} />
-        </TouchableOpacity>
+        <BackButton variant="floating" fallback="/home-dashboard" style={[styles.floatingBack, { top: insets.top + 8 }]} />
         {current?.error ? (
           <View style={styles.stateMessage}>
             <Ionicons name="cloud-offline-outline" size={28} color={colors.accentStrong} />
@@ -145,9 +139,7 @@ export default function ItemDetailScreen() {
             <Image source={{ uri: shown.imageUrl ?? PLACEHOLDER_IMAGE }} style={[styles.hero, { height: screenWidth * 0.95 }]} resizeMode="cover" />
           </Pressable>
           <View style={[styles.heroButtons, { top: insets.top + 8 }]}>
-            <TouchableOpacity style={styles.circleButton} onPress={goBack} accessibilityLabel="Back">
-              <Ionicons name="chevron-back" size={22} color={colors.text} />
-            </TouchableOpacity>
+            <BackButton variant="floating" fallback="/home-dashboard" />
             <TouchableOpacity style={styles.circleButton} onPress={share} accessibilityLabel={`Share ${shown.name}`}>
               <Ionicons name="share-outline" size={20} color={colors.text} />
             </TouchableOpacity>

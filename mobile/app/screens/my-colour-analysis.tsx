@@ -19,7 +19,7 @@ export default function MyColourAnalysisScreen() {
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
       <View style={styles.header}>
-        <BackButton />
+        <BackButton fallback="/profile" />
         <Text style={styles.title}>My Colour Analysis</Text>
       </View>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>

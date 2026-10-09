@@ -87,7 +87,7 @@ export default function ColourAnalysisScreen() {
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
       <View style={styles.header}>
-        <BackButton />
+        <BackButton icon="close" fallback="/profile" style={styles.close} />
         <Text style={styles.title}>Colour Analysis</Text>
         <Text style={styles.subtitle}>Take or upload a clear photo of your face in natural lighting to discover the colours that suit you best.</Text>
       </View>
@@ -156,11 +156,14 @@ function ErrorMessage({ message }: { message: string }) {
 const createStyles = (colors: StyleUColors) =>
   StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: colors.background },
-  header: { paddingHorizontal: 22, paddingTop: 8, paddingBottom: 12 },
-  title: { color: colors.text, fontSize: 32, lineHeight: 39, fontWeight: '700' },
+  // Wider page margins than the ✕, so the title and text sit inset from it rather than right under it.
+  header: { paddingHorizontal: 28, paddingTop: 8, paddingBottom: 12 },
+  close: { marginLeft: -22 },
+  // Same page title size as Saved and Profile.
+  title: { color: colors.text, fontSize: 26, lineHeight: 32, fontWeight: '600', marginTop: 12 },
   subtitle: { color: colors.mutedText, fontSize: 15, lineHeight: 22, marginTop: 8 },
   scroll: { flex: 1 },
-  scrollContent: { paddingHorizontal: 22, paddingTop: 8, paddingBottom: 28 },
+  scrollContent: { paddingHorizontal: 28, paddingTop: 8, paddingBottom: 28 },
   introContent: { gap: 14 },
   guideCard: { backgroundColor: colors.surface, borderRadius: 24, padding: 24, alignItems: 'center', marginBottom: 8 },
   faceIcon: { width: 92, height: 112, borderRadius: 46, borderWidth: 2, borderColor: colors.accent, alignItems: 'center', justifyContent: 'center', marginBottom: 16 },

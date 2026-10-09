@@ -14,6 +14,8 @@ import PhotoPreviewSection from './photo-preview';
 import { useStyleUColors, useThemedStyles } from '../hooks/use-theme';
 import type { StyleUColors } from '../services/styleu-theme';
 import * as ImagePicker from 'expo-image-picker'; 
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { BackButton } from './back-button';
 
 
 export default function Camera() {
@@ -23,6 +25,12 @@ export default function Camera() {
   const [permission, requestPermission] = useCameraPermissions();
   const [photo, setPhoto] = useState<any>(null);
   const cameraRef = useRef<CameraView | null>(null);
+  const insets = useSafeAreaInsets();
+
+  // Uploading is a task started from the + menu, so it closes (✕) rather than going back.
+  const closeButton = (
+    <BackButton icon="close" variant="floating" fallback="/home-dashboard" style={[styles.closeButton, { top: insets.top + 8 }]} />
+  );
 
   if (!permission) {
     // Camera permissions are still loading.
@@ -36,6 +44,7 @@ export default function Camera() {
         We need your permission to show the camera
       </Text> 
       <Button onPress={requestPermission} title="Grant Permission" />
+      {closeButton}
     </View>); 
   }
 
@@ -86,6 +95,7 @@ export default function Camera() {
   return (
     <View style={styles.container}>
       <CameraView style={styles.camera} facing={facing} ref={cameraRef} />
+      {closeButton}
       <View style={styles.sheet}>
         <View style={styles.controlsRow}>
           <TouchableOpacity style={styles.wardrobeThumb} onPress={handlePickFromLibrary}>
@@ -129,6 +139,10 @@ permissionText: {
 },
   camera: {
     flex: 1,
+  },
+  closeButton: {
+    position: 'absolute',
+    left: 20,
   },
   header: {
     flexDirection: 'row',

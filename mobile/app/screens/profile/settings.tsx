@@ -7,6 +7,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { ThemedView } from '../../components/themed-view';
 import { ThemedText } from '../../components/themed-text';
 import { PrimaryButton } from '../../components/primary-button';
+import { BackButton } from '../../components/back-button';
 
 import { signOut } from '../../../src/auth/auth-service';
 import { useProfile } from '../../../src/profile/use-profile';
@@ -159,9 +160,7 @@ export default function SettingsScreen() {
         keyboardShouldPersistTaps="handled"
         >
           <View style={styles.header}>
-            <TouchableOpacity>
-              <Ionicons name="search-outline" size={22} color={colors.text} />
-            </TouchableOpacity>
+            <BackButton fallback="/profile" />
 
             <ThemedText type="pageTitle">Settings</ThemedText>
 
@@ -523,8 +522,9 @@ const createStyles = (colors: StyleUColors) =>
     alignItems: 'center',
   },
 
+  // Matches the back button's visible width, so the title stays centred.
   headerSpacer: {
-    width: 22,
+    width: 34,
   },
 
   muted: {

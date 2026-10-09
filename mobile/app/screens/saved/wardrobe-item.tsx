@@ -15,7 +15,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { router, useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
 
 import { ThemedView } from '../../components/themed-view';
 import { ThemedText } from '../../components/themed-text';
@@ -23,6 +23,7 @@ import { deleteWardrobeItem, fetchWardrobeItem, updateWardrobeItem } from '../..
 import type { WardrobeItem, WardrobeItemChanges } from '../../services/wardrobe/wardrobe-types';
 import { useStyleUColors, useThemedStyles } from '../../hooks/use-theme';
 import type { StyleUColors } from '../../services/styleu-theme';
+import { BackButton, goBackOr } from '../../components/back-button';
 
 const PLACEHOLDER_IMAGE = 'https://placehold.co/600x800/F2EFEC/ABABAB/png?text=No+image';
 
@@ -39,11 +40,6 @@ function formatDate(value: string | null) {
   if (!value) return null;
   const date = new Date(value);
   return Number.isNaN(date.getTime()) ? null : date.toLocaleDateString();
-}
-
-function goBack() {
-  if (router.canGoBack()) router.back();
-  else router.replace('/wardrobe' as never);
 }
 
 // The edit form keeps every field as text; lists are comma-separated.
@@ -156,9 +152,7 @@ export default function WardrobeItemScreen() {
   if (!shown) {
     return (
       <ThemedView style={[styles.centered, { paddingTop: insets.top }]}>
-        <TouchableOpacity style={[styles.circleButton, styles.floatingBack, { top: insets.top + 8 }]} onPress={goBack} accessibilityLabel="Back">
-          <Ionicons name="chevron-back" size={22} color={colors.text} />
-        </TouchableOpacity>
+        <BackButton variant="floating" fallback="/wardrobe" style={[styles.floatingBack, { top: insets.top + 8 }]} />
         {current?.error ? (
           <View style={styles.stateMessage}>
             <Ionicons name="cloud-offline-outline" size={28} color={colors.accentStrong} />
@@ -216,7 +210,7 @@ export default function WardrobeItemScreen() {
     setIsDeleting(true);
     try {
       await deleteWardrobeItem(shown.id);
-      goBack();
+      goBackOr('/wardrobe');
     } catch (error) {
       setNotice(error instanceof Error ? error.message : 'Could not delete the item.');
       setIsDeleting(false);
@@ -233,9 +227,7 @@ export default function WardrobeItemScreen() {
           <View>
             <Image source={{ uri: shown.imageUrl ?? PLACEHOLDER_IMAGE }} style={[styles.hero, { height: screenWidth * 0.95 }]} resizeMode="contain" />
             <View style={[styles.heroButtons, { top: insets.top + 8 }]}>
-              <TouchableOpacity style={styles.circleButton} onPress={goBack} accessibilityLabel="Back">
-                <Ionicons name="chevron-back" size={22} color={colors.text} />
-              </TouchableOpacity>
+              <BackButton variant="floating" fallback="/wardrobe" />
             </View>
           </View>
 
