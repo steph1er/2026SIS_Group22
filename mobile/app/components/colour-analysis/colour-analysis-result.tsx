@@ -1,8 +1,9 @@
 import { StyleSheet, Text, View } from 'react-native';
 
 import { PrimaryButton } from '../primary-button';
-import { StyleUTokens } from '../../services/styleu-theme';
 import type { ColourAnalysisResult, ColourSwatch } from '../../../src/colour-analysis/types';
+import { useThemedStyles } from '../../hooks/use-theme';
+import type { StyleUColors } from '../../services/styleu-theme';
 
 type Props = {
   result: ColourAnalysisResult;
@@ -11,6 +12,7 @@ type Props = {
 };
 
 function Swatches({ colours }: { colours: ColourSwatch[] }) {
+  const styles = useThemedStyles(createStyles);
   return <View style={styles.swatchGrid}>{colours.map((colour) => (
     <View key={`${colour.name}-${colour.hex}`} style={styles.swatchItem}>
       <View style={[styles.swatch, { backgroundColor: colour.hex }]} />
@@ -24,6 +26,7 @@ export function ColourAnalysisResultView({
   onStartAgain,
   actionLabel = 'Analyse Another Photo',
 }: Props) {
+  const styles = useThemedStyles(createStyles);
   return (
     <View style={styles.container}>
       <View style={styles.heroCard}>
@@ -62,26 +65,27 @@ export function ColourAnalysisResultView({
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: StyleUColors) =>
+  StyleSheet.create({
   container: { gap: 14, paddingBottom: 28 },
-  heroCard: { backgroundColor: '#FBF0EC', borderRadius: 24, padding: 22, alignItems: 'center', marginBottom: 8 },
-  eyebrow: { color: StyleUTokens.colors.mutedText, fontSize: 12, fontWeight: '800', letterSpacing: 1.1 },
-  season: { color: StyleUTokens.colors.text, fontSize: 34, lineHeight: 42, fontWeight: '700', marginTop: 4, textAlign: 'center' },
-  estimate: { color: StyleUTokens.colors.mutedText, fontSize: 12, marginTop: 3, textAlign: 'center' },
+  heroCard: { backgroundColor: colors.accentSoft, borderRadius: 24, padding: 22, alignItems: 'center', marginBottom: 8 },
+  eyebrow: { color: colors.mutedText, fontSize: 12, fontWeight: '800', letterSpacing: 1.1 },
+  season: { color: colors.text, fontSize: 34, lineHeight: 42, fontWeight: '700', marginTop: 4, textAlign: 'center' },
+  estimate: { color: colors.mutedText, fontSize: 12, marginTop: 3, textAlign: 'center' },
   characteristicsRow: { flexDirection: 'row', width: '100%', marginTop: 22, alignItems: 'center' },
   characteristicGroup: { flex: 1, flexDirection: 'row', alignItems: 'center' },
   characteristic: { flex: 1, alignItems: 'center' },
-  characteristicLabel: { color: StyleUTokens.colors.mutedText, fontSize: 11, fontWeight: '600' },
-  characteristicValue: { color: StyleUTokens.colors.text, fontSize: 14, fontWeight: '700', marginTop: 3, textAlign: 'center' },
-  divider: { width: 1, height: 34, backgroundColor: StyleUTokens.colors.border },
-  sectionTitle: { color: StyleUTokens.colors.text, fontSize: 22, fontWeight: '700', marginTop: 8 },
-  sectionIntro: { color: StyleUTokens.colors.mutedText, fontSize: 14, lineHeight: 20, marginTop: -8 },
+  characteristicLabel: { color: colors.mutedText, fontSize: 11, fontWeight: '600' },
+  characteristicValue: { color: colors.text, fontSize: 14, fontWeight: '700', marginTop: 3, textAlign: 'center' },
+  divider: { width: 1, height: 34, backgroundColor: colors.border },
+  sectionTitle: { color: colors.text, fontSize: 22, fontWeight: '700', marginTop: 8 },
+  sectionIntro: { color: colors.mutedText, fontSize: 14, lineHeight: 20, marginTop: -8 },
   swatchGrid: { flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: -5, rowGap: 14 },
   swatchItem: { width: '25%', alignItems: 'center', paddingHorizontal: 5 },
   swatch: { width: 58, height: 58, borderRadius: 29, borderWidth: StyleSheet.hairlineWidth, borderColor: 'rgba(0,0,0,0.16)' },
-  swatchName: { color: StyleUTokens.colors.text, fontSize: 11, lineHeight: 15, textAlign: 'center', marginTop: 6 },
-  suggestionCard: { backgroundColor: StyleUTokens.colors.surface, borderRadius: 20, padding: 18, marginTop: 8 },
-  suggestionTitle: { color: StyleUTokens.colors.text, fontSize: 17, fontWeight: '700', marginBottom: 7 },
-  suggestionText: { color: StyleUTokens.colors.mutedText, fontSize: 14, lineHeight: 21 },
-  disclaimer: { color: StyleUTokens.colors.mutedText, fontSize: 12, lineHeight: 18, textAlign: 'center', marginBottom: 4 },
+  swatchName: { color: colors.text, fontSize: 11, lineHeight: 15, textAlign: 'center', marginTop: 6 },
+  suggestionCard: { backgroundColor: colors.surface, borderRadius: 20, padding: 18, marginTop: 8 },
+  suggestionTitle: { color: colors.text, fontSize: 17, fontWeight: '700', marginBottom: 7 },
+  suggestionText: { color: colors.mutedText, fontSize: 14, lineHeight: 21 },
+  disclaimer: { color: colors.mutedText, fontSize: 12, lineHeight: 18, textAlign: 'center', marginBottom: 4 },
 });

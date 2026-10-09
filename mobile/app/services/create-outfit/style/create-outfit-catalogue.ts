@@ -1,9 +1,8 @@
 import { StyleSheet } from 'react-native';
-import { StyleUTokens } from '../../styleu-theme';
+import type { StyleUColors } from '../../styleu-theme';
 
-const { colors } = StyleUTokens;
-
-export const catalogueStyles = StyleSheet.create ({
+export const createCatalogueStyles = (colors: StyleUColors) =>
+  StyleSheet.create({
   catalogueContainer: {
     position: 'absolute',
     left: 0,

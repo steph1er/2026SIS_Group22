@@ -1,11 +1,10 @@
 // main styles for onboarding
 
 import { StyleSheet } from 'react-native';
-import { StyleUTokens } from '../../styleu-theme';
+import type { StyleUColors } from '../../styleu-theme';
 
-const { colors } = StyleUTokens;
-
-export const layoutStyles =  StyleSheet.create({
+export const createLayoutStyles = (colors: StyleUColors) =>
+  StyleSheet.create({
     container: {
       flex: 1,
       backgroundColor: colors.background,

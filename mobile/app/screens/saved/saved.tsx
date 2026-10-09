@@ -16,8 +16,9 @@ import { ThemedView } from '../../components/themed-view';
 import { ThemedText } from '../../components/themed-text';
 import { useWardrobe } from '../../hooks/use-wardrobe';
 import { useWishlist } from '../../hooks/use-wishlist';
+import { useStyleUColors, useThemedStyles } from '../../hooks/use-theme';
+import type { StyleUColors } from '../../services/styleu-theme';
 
-const ACCENT = '#D98E73';
 const PAGE_PADDING = 20;
 const GRID_GAP = 14;
 
@@ -42,6 +43,8 @@ function pluralise(count: number, word: string) {
 }
 
 export default function SavedScreen() {
+  const colors = useStyleUColors();
+  const styles = useThemedStyles(createStyles);
   // Only the wishlist and wardrobe are loaded here (for their counts and covers); the items are shown
   // on /wishlist and /wardrobe.
   const { wishlist, isWishlistLoading, wishlistError, refresh } = useWishlist();
@@ -87,7 +90,7 @@ export default function SavedScreen() {
 
             <Link href="./settings" asChild>
               <TouchableOpacity style={styles.iconCircle} accessibilityLabel="Settings">
-                <Ionicons name="settings-outline" size={20} color="#22201F" />
+                <Ionicons name="settings-outline" size={20} color={colors.text} />
               </TouchableOpacity>
             </Link>
           </View>
@@ -112,7 +115,7 @@ export default function SavedScreen() {
 
           {wishlistError ? (
             <TouchableOpacity style={styles.errorRow} onPress={refresh}>
-              <Ionicons name="alert-circle-outline" size={16} color="#8A2D1B" />
+              <Ionicons name="alert-circle-outline" size={16} color={colors.errorText} />
               <ThemedText style={styles.errorText} numberOfLines={3}>
                 Couldn't load your wishlist: {wishlistError} Tap to retry.
               </ThemedText>
@@ -121,7 +124,7 @@ export default function SavedScreen() {
 
           <TouchableOpacity style={styles.rowCard}>
             <View style={styles.rowCardIcon}>
-              <Ionicons name="sparkles-outline" size={20} color={ACCENT} />
+              <Ionicons name="sparkles-outline" size={20} color={colors.accentStrong} />
             </View>
 
             <View style={{ flex: 1 }}>
@@ -129,7 +132,7 @@ export default function SavedScreen() {
               <ThemedText style={styles.muted}>Experiment with visual layouts & styling</ThemedText>
             </View>
 
-            <Ionicons name="chevron-forward" size={20} color="#75726F" />
+            <Ionicons name="chevron-forward" size={20} color={colors.mutedText} />
           </TouchableOpacity>
         </ScrollView>
       </SafeAreaView>
@@ -140,6 +143,8 @@ export default function SavedScreen() {
 type CardSize = { width: number; height: number };
 
 function CollectionCard({ collection, size }: { collection: Collection; size: CardSize }) {
+  const colors = useStyleUColors();
+  const styles = useThemedStyles(createStyles);
   return (
     <TouchableOpacity
       style={[styles.collectionCard, size]}
@@ -151,7 +156,7 @@ function CollectionCard({ collection, size }: { collection: Collection; size: Ca
       <Image source={collection.cover} style={styles.collectionImage} resizeMode="cover" />
       <View style={styles.countBadge}>
         {collection.isLoading ? (
-          <ActivityIndicator size="small" color="#22201F" style={{ transform: [{ scale: 0.7 }] }} />
+          <ActivityIndicator size="small" color={colors.text} style={{ transform: [{ scale: 0.7 }] }} />
         ) : (
           <ThemedText style={styles.countBadgeText}>{collection.countLabel}</ThemedText>
         )}
@@ -161,7 +166,8 @@ function CollectionCard({ collection, size }: { collection: Collection; size: Ca
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: StyleUColors) =>
+  StyleSheet.create({
   content: {
     padding: PAGE_PADDING,
     gap: 18,
@@ -181,7 +187,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#F4F2F0',
+    backgroundColor: colors.input,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -196,7 +202,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   accentText: {
-    color: ACCENT,
+    color: colors.accentStrong,
     fontSize: 13,
   },
   muted: {
@@ -211,7 +217,7 @@ const styles = StyleSheet.create({
   collectionCard: {
     borderRadius: 18,
     overflow: 'hidden',
-    backgroundColor: '#EFEAE6',
+    backgroundColor: colors.surface,
   },
   collectionImage: {
     position: 'absolute',
@@ -226,13 +232,13 @@ const styles = StyleSheet.create({
     left: 10,
     minHeight: 22,
     justifyContent: 'center',
-    backgroundColor: 'rgba(255,255,255,0.92)',
+    backgroundColor: colors.frosted,
     paddingHorizontal: 9,
     paddingVertical: 3,
     borderRadius: 11,
   },
   countBadgeText: {
-    color: '#22201F',
+    color: colors.text,
     fontSize: 11,
     fontWeight: '600',
   },
@@ -241,10 +247,10 @@ const styles = StyleSheet.create({
     left: 12,
     bottom: 10,
     right: 12,
-    color: '#fff',
+    color: colors.onAccent,
     fontSize: 16,
     fontWeight: '600',
-    textShadowColor: 'rgba(0,0,0,0.45)',
+    textShadowColor: colors.overlay,
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 4,
   },
@@ -252,7 +258,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'flex-start',
     gap: 8,
-    backgroundColor: '#FBE3DD',
+    backgroundColor: colors.errorSurface,
     borderRadius: 12,
     padding: 12,
   },
@@ -260,7 +266,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 12,
     lineHeight: 17,
-    color: '#8A2D1B',
+    color: colors.errorText,
   },
   cardTitle: {
     fontSize: 16,
@@ -271,7 +277,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 14,
     borderWidth: 1,
-    borderColor: '#ECEAE7',
+    borderColor: colors.borderSoft,
     borderRadius: 18,
     padding: 16,
   },
@@ -279,7 +285,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#FBF0EC',
+    backgroundColor: colors.accentSoft,
     alignItems: 'center',
     justifyContent: 'center',
   },

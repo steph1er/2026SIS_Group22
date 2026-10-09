@@ -11,18 +11,27 @@ import CreateOutfitItem from './createOutfitItem';
 import CreateOutfitSave from './createOutfitSave';
 import CreateOutfitVisualiserItem from './createOutfitVisualiserItem';
 
-import { saveStyles } from '@/services/create-outfit/style/create-outfit-save';
-import { catalogueStyles } from '../../services/create-outfit/style/create-outfit-catalogue';
-import { itemStyles } from '../../services/create-outfit/style/create-outfit-item';
-import { themeStyles } from '../../services/create-outfit/style/create-outfit-theme';
-import { visualiserStyles } from '../../services/create-outfit/style/create-outfit-visualiser';
-import { StyleUTokens } from '../../services/styleu-theme';
+import { createSaveStyles } from '@/services/create-outfit/style/create-outfit-save';
+import { createCatalogueStyles } from '../../services/create-outfit/style/create-outfit-catalogue';
+import { createItemStyles } from '../../services/create-outfit/style/create-outfit-item';
+import { createThemeStyles } from '../../services/create-outfit/style/create-outfit-theme';
+import { createVisualiserStyles } from '../../services/create-outfit/style/create-outfit-visualiser';
 
 import { BackButton } from '../../components/back-button';
+import { useStyleUColors, useThemedStyles } from '../../hooks/use-theme';
+import type { StyleUColors } from '../../services/styleu-theme';
 
-export const styles = {...themeStyles, ...visualiserStyles, ...itemStyles, ...catalogueStyles, ...saveStyles};
+export const createStyles = (colors: StyleUColors) => ({
+  ...createThemeStyles(colors),
+  ...createVisualiserStyles(colors),
+  ...createItemStyles(colors),
+  ...createCatalogueStyles(colors),
+  ...createSaveStyles(colors),
+});
 
 export default function CreateOutfits() {
+  const styles = useThemedStyles(createStyles);
+  const colors = useStyleUColors();
 
   const { height: screenHeight, width: screenWidth } = useWindowDimensions();
 
@@ -274,7 +283,7 @@ export default function CreateOutfits() {
             </View>
 
             {/* suggested for you container */}
-            <View style={[styles.suggestedContainer, {backgroundColor: StyleUTokens.colors.backgroundElement}]}>
+            <View style={[styles.suggestedContainer, {backgroundColor: colors.backgroundElement}]}>
               <Text style={styles.suggestionText}>Suggested for you</Text>
               {loading ? (
                 <ActivityIndicator style={{ paddingVertical: 24 }} />

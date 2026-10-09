@@ -9,8 +9,12 @@ import { useProfile } from '../../../src/profile/use-profile';
 import { ProfileHeader } from '../../components/profile-header';
 import { describeStyleQuiz } from './style-summary';
 import { useSavedColourAnalysis } from '../../../src/colour-analysis/use-saved-colour-analysis';
+import { useStyleUColors, useThemedStyles } from '../../hooks/use-theme';
+import type { StyleUColors } from '../../services/styleu-theme';
 
 export default function ProfileScreen() {
+  const colors = useStyleUColors();
+  const styles = useThemedStyles(createStyles);
   // Loads the profile (profiles.user_id) and the onboarding row (onboarding.user_id) for the
   // signed-in user together, and again each time this screen is focused, so a finished retake shows up.
   const { user, profile, onboarding, error, isLoading, refetch } = useProfile({ includeOnboarding: true });
@@ -32,7 +36,7 @@ export default function ProfileScreen() {
             <ThemedText type="title">My Profile</ThemedText>
             <Link href="./settings" asChild>
               <TouchableOpacity hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-                <Ionicons name="settings-outline" size={22} />
+                <Ionicons name="settings-outline" size={22} color={colors.text} />
               </TouchableOpacity>
             </Link>
           </View>
@@ -57,14 +61,14 @@ export default function ProfileScreen() {
               <Link href="../onboarding" asChild>
                 <TouchableOpacity style={styles.quizCard}>
                   <View style={styles.rowCardIcon}>
-                    <Ionicons name="clipboard-outline" size={20} />
+                    <Ionicons name="clipboard-outline" size={20} color={colors.text} />
                   </View>
                   <View style={{ flex: 1 }}>
                     <ThemedText type="subtitle">{quiz.title}</ThemedText>
                     <ThemedText style={styles.muted}>{quiz.message}</ThemedText>
                     <ThemedText style={styles.muted}>{quiz.hint}</ThemedText>
                   </View>
-                  <Ionicons name="chevron-forward" size={20} />
+                  <Ionicons name="chevron-forward" size={20} color={colors.text} />
                 </TouchableOpacity>
               </Link>
 
@@ -120,7 +124,7 @@ export default function ProfileScreen() {
 
           <TouchableOpacity style={styles.rowCard}>
             <View style={styles.rowCardIcon}>
-              <Ionicons name="sparkles-outline" size={20} />
+              <Ionicons name="sparkles-outline" size={20} color={colors.text} />
             </View>
             <View style={{ flex: 1 }}>
               <ThemedText type="subtitle">Outfit Builder Canvas</ThemedText>
@@ -128,7 +132,7 @@ export default function ProfileScreen() {
                 Experiment with visual layouts & styling
               </ThemedText>
             </View>
-            <Ionicons name="chevron-forward" size={20} />
+            <Ionicons name="chevron-forward" size={20} color={colors.text} />
           </TouchableOpacity>
 
         </ScrollView>
@@ -138,6 +142,7 @@ export default function ProfileScreen() {
 }
 
 function DetailRow({ label, value }: { label: string; value: string }) {
+  const styles = useThemedStyles(createStyles);
   return (
     <View style={styles.detailRow}>
       <ThemedText style={styles.muted}>{label}</ThemedText>
@@ -146,7 +151,8 @@ function DetailRow({ label, value }: { label: string; value: string }) {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: StyleUColors) =>
+  StyleSheet.create({
   content: {
     padding: 20,
     gap: 20,
@@ -163,7 +169,7 @@ const styles = StyleSheet.create({
   },
   tabSwitcher: {
     flexDirection: 'row',
-    backgroundColor: 'rgba(0,0,0,0.05)',
+    backgroundColor: colors.subtle,
     borderRadius: 24,
     padding: 4,
   },
@@ -174,7 +180,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   tabActive: {
-    backgroundColor: '#fff',
+    backgroundColor: colors.card,
   },
   tabText: {
     opacity: 0.6,
@@ -183,7 +189,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   analysisCard: {
-    backgroundColor: '#F7E9E4',
+    backgroundColor: colors.accentSoft,
     borderRadius: 16,
     padding: 16,
     gap: 8,
@@ -204,11 +210,12 @@ const styles = StyleSheet.create({
   retryButton: {
     alignSelf: 'flex-start',
     borderRadius: 16,
-    backgroundColor: '#E2B7A9',
+    backgroundColor: colors.accent,
     paddingHorizontal: 18,
     paddingVertical: 12,
   },
   retryLabel: {
+    color: colors.buttonText,
     fontSize: 14,
     fontWeight: '700',
   },
@@ -217,7 +224,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 12,
     borderWidth: 1,
-    borderColor: 'rgba(0,0,0,0.08)',
+    borderColor: colors.subtleStrong,
     borderRadius: 16,
     padding: 16,
   },
@@ -225,7 +232,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: 'rgba(0,0,0,0.05)',
+    backgroundColor: colors.subtle,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -236,7 +243,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    backgroundColor: '#F7E9E4',
+    backgroundColor: colors.accentSoft,
     borderRadius: 16,
     padding: 16,
   },
@@ -245,7 +252,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingVertical: 10,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(0,0,0,0.06)',
+    borderBottomColor: colors.divider,
   },
   detailValue: {
     flex: 1,

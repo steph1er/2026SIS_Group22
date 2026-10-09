@@ -3,6 +3,8 @@ import { ActivityIndicator, StyleSheet, TouchableOpacity, View } from 'react-nat
 
 import type { Profile } from '../../src/profile/profile-service';
 import { ThemedText } from './themed-text';
+import { useStyleUColors, useThemedStyles } from '../hooks/use-theme';
+import type { StyleUColors } from '../services/styleu-theme';
 
 type ProfileHeaderProps = {
   /** The signed-in user's email, from their auth account. */
@@ -16,10 +18,12 @@ type ProfileHeaderProps = {
 
 /** The signed-in user's avatar, name and email, shared by the Profile and Saved tabs. */
 export function ProfileHeader({ email, profile, isLoading, error, onRetry }: ProfileHeaderProps) {
+  const colors = useStyleUColors();
+  const styles = useThemedStyles(createStyles);
   return (
     <View style={styles.userRow}>
       <View style={styles.avatar}>
-        <Ionicons name="person-outline" size={26} />
+        <Ionicons name="person-outline" size={26} color={colors.text} />
       </View>
       {isLoading ? (
         <ActivityIndicator />
@@ -41,7 +45,8 @@ export function ProfileHeader({ email, profile, isLoading, error, onRetry }: Pro
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: StyleUColors) =>
+  StyleSheet.create({
   userRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -51,7 +56,7 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: 'rgba(0,0,0,0.08)',
+    backgroundColor: colors.subtleStrong,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -63,7 +68,7 @@ const styles = StyleSheet.create({
     fontSize: 13,
   },
   retry: {
-    color: '#C97B63',
+    color: colors.accentStrong,
     fontWeight: '600',
     fontSize: 13,
     marginTop: 4,

@@ -19,10 +19,9 @@ import { ThemedText } from '../../components/themed-text';
 import { useWishlist } from '../../hooks/use-wishlist';
 import { itemDetailHref } from '../../services/catalogue/catalogue-service';
 import type { CatalogueItem, WishlistEntry } from '../../services/wishlist/wishlist-types';
+import { useStyleUColors, useThemedStyles } from '../../hooks/use-theme';
+import type { StyleUColors } from '../../services/styleu-theme';
 
-const ACCENT = '#D98E73';
-const TEXT = '#22201F';
-const MUTED = '#8A8683';
 const PLACEHOLDER_IMAGE = 'https://placehold.co/300x360/F2EFEC/ABABAB/png?text=No+image';
 
 /** Image heights that repeat down each column, giving the staggered look from the design. */
@@ -55,6 +54,8 @@ function goBack() {
 }
 
 export default function WishlistScreen() {
+  const colors = useStyleUColors();
+  const styles = useThemedStyles(createStyles);
   const wishlist = useWishlist({ includeRecommendations: true });
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState<string | null>(null);
@@ -99,7 +100,7 @@ export default function WishlistScreen() {
           <View style={styles.header}>
             <View style={{ flex: 1 }}>
               <TouchableOpacity onPress={goBack} style={styles.breadcrumb} hitSlop={8} accessibilityLabel="Back to My Collections">
-                <Ionicons name="chevron-back" size={14} color={MUTED} />
+                <Ionicons name="chevron-back" size={14} color={colors.subtleText} />
                 <ThemedText style={styles.breadcrumbText}>My Collections</ThemedText>
               </TouchableOpacity>
               <ThemedText style={styles.title}>Wishlist</ThemedText>
@@ -109,24 +110,24 @@ export default function WishlistScreen() {
               onPress={() => setMenuVisible(true)}
               accessibilityLabel="Wishlist options"
             >
-              <Ionicons name="ellipsis-vertical" size={18} color={TEXT} />
+              <Ionicons name="ellipsis-vertical" size={18} color={colors.text} />
             </TouchableOpacity>
           </View>
 
           <View style={styles.searchBar}>
-            <Ionicons name="search" size={18} color={MUTED} />
+            <Ionicons name="search" size={18} color={colors.subtleText} />
             <TextInput
               value={query}
               onChangeText={setQuery}
               placeholder={`Search my ${count} item${count === 1 ? '' : 's'}...`}
-              placeholderTextColor={MUTED}
+              placeholderTextColor={colors.subtleText}
               style={styles.searchInput}
               returnKeyType="search"
               autoCorrect={false}
             />
             {query ? (
               <TouchableOpacity onPress={() => setQuery('')} accessibilityLabel="Clear search">
-                <Ionicons name="close-circle" size={18} color={MUTED} />
+                <Ionicons name="close-circle" size={18} color={colors.subtleText} />
               </TouchableOpacity>
             ) : null}
           </View>
@@ -144,7 +145,7 @@ export default function WishlistScreen() {
                     <ThemedText style={[styles.chipText, selected && styles.chipTextSelected]}>
                       {selected ? `Category: ${label}` : label}
                     </ThemedText>
-                    {selected ? <Ionicons name="close-circle-outline" size={16} color={TEXT} /> : null}
+                    {selected ? <Ionicons name="close-circle-outline" size={16} color={colors.text} /> : null}
                   </TouchableOpacity>
                 );
               })}
@@ -153,10 +154,10 @@ export default function WishlistScreen() {
 
           {wishlist.actionError ? (
             <View style={styles.errorBanner}>
-              <Ionicons name="alert-circle-outline" size={18} color="#8A2D1B" />
+              <Ionicons name="alert-circle-outline" size={18} color={colors.errorText} />
               <ThemedText style={styles.errorBannerText}>{wishlist.actionError}</ThemedText>
               <TouchableOpacity onPress={wishlist.dismissActionError} accessibilityLabel="Dismiss">
-                <Ionicons name="close" size={18} color="#8A2D1B" />
+                <Ionicons name="close" size={18} color={colors.errorText} />
               </TouchableOpacity>
             </View>
           ) : null}
@@ -263,6 +264,8 @@ type WishlistTileProps = {
 };
 
 function WishlistTile({ entry, imageHeight, isPending, onPress, onRemove }: WishlistTileProps) {
+  const colors = useStyleUColors();
+  const styles = useThemedStyles(createStyles);
   const { item } = entry;
   const subtitle = subtitleFor(item);
 
@@ -277,7 +280,7 @@ function WishlistTile({ entry, imageHeight, isPending, onPress, onRemove }: Wish
           hitSlop={6}
           accessibilityLabel={`Remove ${item.name} from wishlist`}
         >
-          {isPending ? <ActivityIndicator size="small" color={TEXT} /> : <Ionicons name="close" size={16} color={TEXT} />}
+          {isPending ? <ActivityIndicator size="small" color={colors.text} /> : <Ionicons name="close" size={16} color={colors.text} />}
         </TouchableOpacity>
       </View>
       <ThemedText style={styles.tileName} numberOfLines={2}>
@@ -301,6 +304,8 @@ type RecommendationCardProps = {
 };
 
 function RecommendationCard({ item, isSaved, isPending, onToggleSaved, onPress }: RecommendationCardProps) {
+  const colors = useStyleUColors();
+  const styles = useThemedStyles(createStyles);
   const price = formatPrice(item.price);
 
   return (
@@ -313,9 +318,9 @@ function RecommendationCard({ item, isSaved, isPending, onToggleSaved, onPress }
         accessibilityLabel={isSaved ? `Remove ${item.name} from wishlist` : `Add ${item.name} to wishlist`}
       >
         {isPending ? (
-          <ActivityIndicator size="small" color={ACCENT} />
+          <ActivityIndicator size="small" color={colors.accentStrong} />
         ) : (
-          <Ionicons name={isSaved ? 'heart' : 'heart-outline'} size={18} color={ACCENT} />
+          <Ionicons name={isSaved ? 'heart' : 'heart-outline'} size={18} color={colors.accentStrong} />
         )}
       </TouchableOpacity>
       <ThemedText style={styles.tileName} numberOfLines={1}>
@@ -337,18 +342,20 @@ type OptionsMenuProps = {
 };
 
 function OptionsMenu({ visible, sortOrder, onClose, onRefresh, onSort }: OptionsMenuProps) {
+  const colors = useStyleUColors();
+  const styles = useThemedStyles(createStyles);
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <Pressable style={styles.menuOverlay} onPress={onClose}>
         <Pressable style={styles.menu} onPress={(event) => event.stopPropagation()}>
           <TouchableOpacity style={styles.menuRow} onPress={onRefresh}>
-            <Ionicons name="refresh" size={18} color={TEXT} />
+            <Ionicons name="refresh" size={18} color={colors.text} />
             <ThemedText style={styles.menuText}>Refresh</ThemedText>
           </TouchableOpacity>
           <View style={styles.menuDivider} />
           {(Object.keys(SORT_LABELS) as SortOrder[]).map((order) => (
             <TouchableOpacity key={order} style={styles.menuRow} onPress={() => onSort(order)}>
-              <Ionicons name={order === sortOrder ? 'checkmark' : 'swap-vertical'} size={18} color={order === sortOrder ? ACCENT : TEXT} />
+              <Ionicons name={order === sortOrder ? 'checkmark' : 'swap-vertical'} size={18} color={order === sortOrder ? colors.accentStrong : colors.text} />
               <ThemedText style={styles.menuText}>{SORT_LABELS[order]}</ThemedText>
             </TouchableOpacity>
           ))}
@@ -367,9 +374,11 @@ type StateMessageProps = {
 };
 
 function StateMessage({ icon, title, message, actionLabel, onAction }: StateMessageProps) {
+  const colors = useStyleUColors();
+  const styles = useThemedStyles(createStyles);
   return (
     <View style={styles.stateMessage}>
-      <Ionicons name={icon} size={28} color={ACCENT} />
+      <Ionicons name={icon} size={28} color={colors.accentStrong} />
       <ThemedText style={styles.stateTitle}>{title}</ThemedText>
       <ThemedText style={styles.stateBody}>{message}</ThemedText>
       {actionLabel && onAction ? (
@@ -381,7 +390,8 @@ function StateMessage({ icon, title, message, actionLabel, onAction }: StateMess
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: StyleUColors) =>
+  StyleSheet.create({
   content: {
     padding: 20,
     gap: 16,
@@ -400,7 +410,7 @@ const styles = StyleSheet.create({
   },
   breadcrumbText: {
     fontSize: 14,
-    color: MUTED,
+    color: colors.subtleText,
   },
   title: {
     fontSize: 26,
@@ -411,7 +421,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#F4F2F0',
+    backgroundColor: colors.input,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -419,9 +429,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
-    backgroundColor: '#F6F4F2',
+    backgroundColor: colors.input,
     borderWidth: 1,
-    borderColor: '#ECE8E4',
+    borderColor: colors.borderSoft,
     borderRadius: 26,
     paddingHorizontal: 16,
     height: 50,
@@ -429,7 +439,7 @@ const styles = StyleSheet.create({
   searchInput: {
     flex: 1,
     fontSize: 15,
-    color: TEXT,
+    color: colors.text,
   },
   chips: {
     gap: 8,
@@ -440,22 +450,22 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 6,
     borderWidth: 1,
-    borderColor: '#E6E2DE',
+    borderColor: colors.borderSoft,
     borderRadius: 18,
     paddingHorizontal: 14,
     paddingVertical: 8,
-    backgroundColor: '#fff',
+    backgroundColor: colors.card,
   },
   chipSelected: {
-    borderColor: ACCENT,
-    backgroundColor: '#FBEEE9',
+    borderColor: colors.accentStrong,
+    backgroundColor: colors.accentSoft,
   },
   chipText: {
     fontSize: 13,
-    color: MUTED,
+    color: colors.subtleText,
   },
   chipTextSelected: {
-    color: TEXT,
+    color: colors.text,
     fontWeight: '600',
   },
   masonry: {
@@ -473,7 +483,7 @@ const styles = StyleSheet.create({
   tileImage: {
     width: '100%',
     borderRadius: 16,
-    backgroundColor: '#F2EFEC',
+    backgroundColor: colors.imageBackdrop,
   },
   removeCircle: {
     position: 'absolute',
@@ -482,7 +492,7 @@ const styles = StyleSheet.create({
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: 'rgba(255,255,255,0.95)',
+    backgroundColor: colors.frosted,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -493,7 +503,7 @@ const styles = StyleSheet.create({
   },
   tileSubtitle: {
     fontSize: 13,
-    color: MUTED,
+    color: colors.subtleText,
   },
   section: {
     gap: 12,
@@ -522,7 +532,7 @@ const styles = StyleSheet.create({
     width: '100%',
     height: 180,
     borderRadius: 16,
-    backgroundColor: '#F2EFEC',
+    backgroundColor: colors.imageBackdrop,
   },
   heartButton: {
     position: 'absolute',
@@ -531,7 +541,7 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: '#fff',
+    backgroundColor: colors.card,
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#000',
@@ -546,7 +556,7 @@ const styles = StyleSheet.create({
     paddingVertical: 24,
     paddingHorizontal: 16,
     borderRadius: 16,
-    backgroundColor: '#F8F6F4',
+    backgroundColor: colors.surface,
   },
   stateTitle: {
     fontWeight: '600',
@@ -555,11 +565,11 @@ const styles = StyleSheet.create({
   stateBody: {
     fontSize: 13,
     lineHeight: 18,
-    color: MUTED,
+    color: colors.subtleText,
     textAlign: 'center',
   },
   stateAction: {
-    color: ACCENT,
+    color: colors.accentStrong,
     fontWeight: '600',
     marginTop: 4,
   },
@@ -567,24 +577,24 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    backgroundColor: '#FBE3DD',
+    backgroundColor: colors.errorSurface,
     borderRadius: 12,
     padding: 12,
   },
   errorBannerText: {
     flex: 1,
     fontSize: 13,
-    color: '#8A2D1B',
+    color: colors.errorText,
   },
   menuOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.25)',
+    backgroundColor: colors.overlay,
     alignItems: 'flex-end',
     paddingTop: 110,
     paddingHorizontal: 20,
   },
   menu: {
-    backgroundColor: '#fff',
+    backgroundColor: colors.card,
     borderRadius: 14,
     paddingVertical: 6,
     minWidth: 220,
@@ -603,11 +613,11 @@ const styles = StyleSheet.create({
   },
   menuText: {
     fontSize: 15,
-    color: TEXT,
+    color: colors.text,
   },
   menuDivider: {
     height: 1,
-    backgroundColor: '#EFEDEB',
+    backgroundColor: colors.divider,
     marginVertical: 4,
   },
 });

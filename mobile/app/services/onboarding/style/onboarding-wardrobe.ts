@@ -1,11 +1,10 @@
 // styles for final step of onboarding
 
 import { StyleSheet } from 'react-native';
-import { StyleUTokens } from '../../styleu-theme';
+import type { StyleUColors } from '../../styleu-theme';
 
-const { colors } = StyleUTokens;
-
-export const wardrobeStyles = StyleSheet.create({
+export const createWardrobeStyles = (colors: StyleUColors) =>
+  StyleSheet.create({
   wardrobeContent: {
     paddingHorizontal: 24,
     gap: 16,

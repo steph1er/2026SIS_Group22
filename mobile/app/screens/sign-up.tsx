@@ -8,9 +8,11 @@ import { useAuth } from '../../src/auth/auth-provider';
 import { BackButton } from '../components/back-button';
 import { OnboardingFormField } from '../components/onboarding-form-field';
 import { PrimaryButton } from '../components/primary-button';
-import { StyleUTokens } from '../services/styleu-theme';
+import { useThemedStyles } from '../hooks/use-theme';
+import type { StyleUColors } from '../services/styleu-theme';
 
 export default function SignUpScreen() {
+  const styles = useThemedStyles(createStyles);
   const { configurationError } = useAuth();
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
@@ -110,23 +112,24 @@ export default function SignUpScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: StyleUColors) =>
+  StyleSheet.create({
   flex: { flex: 1 },
-  safeArea: { backgroundColor: StyleUTokens.colors.background, flex: 1 },
+  safeArea: { backgroundColor: colors.background, flex: 1 },
   content: { flexGrow: 1, paddingHorizontal: 28, paddingTop: 60, paddingBottom: 28 },
-  title: { color: StyleUTokens.colors.text, fontSize: 32, fontWeight: '800', marginBottom: 32 },
+  title: { color: colors.text, fontSize: 32, fontWeight: '800', marginBottom: 32 },
   googleButton: {
     borderWidth: 1,
-    borderColor: StyleUTokens.colors.placeholder,
+    borderColor: colors.placeholder,
     borderRadius: 12,
     paddingVertical: 16,
     alignItems: 'center',
   },
-  googleButtonLabel: { color: StyleUTokens.colors.text, fontSize: 16, fontWeight: '600' },
+  googleButtonLabel: { color: colors.text, fontSize: 16, fontWeight: '600' },
   disabled: { opacity: 0.5 },
   dividerRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginVertical: 24 },
-  dividerLine: { flex: 1, height: StyleSheet.hairlineWidth, backgroundColor: StyleUTokens.colors.placeholder },
-  dividerText: { color: StyleUTokens.colors.placeholder, fontSize: 13 },
+  dividerLine: { flex: 1, height: StyleSheet.hairlineWidth, backgroundColor: colors.placeholder },
+  dividerText: { color: colors.placeholder, fontSize: 13 },
   form: { gap: 26 },
   tfaRow: {
     flexDirection: 'row',
@@ -136,9 +139,9 @@ const styles = StyleSheet.create({
     marginTop: 32,
   },
   tfaTextGroup: { flex: 1, gap: 4 },
-  tfaLabel: { color: StyleUTokens.colors.text, fontSize: 16, fontWeight: '600' },
-  tfaSubtext: { color: StyleUTokens.colors.mutedText, fontSize: 13, lineHeight: 18 },
+  tfaLabel: { color: colors.text, fontSize: 16, fontWeight: '600' },
+  tfaSubtext: { color: colors.mutedText, fontSize: 13, lineHeight: 18 },
   footer: { gap: 24, marginTop: 'auto', paddingTop: 60 },
-  terms: { color: StyleUTokens.colors.placeholder, fontSize: 14, lineHeight: 20, textAlign: 'center' },
-  status: { color: StyleUTokens.colors.text, fontSize: 14, textAlign: 'center' },
+  terms: { color: colors.placeholder, fontSize: 14, lineHeight: 20, textAlign: 'center' },
+  status: { color: colors.text, fontSize: 14, textAlign: 'center' },
 });
