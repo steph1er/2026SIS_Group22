@@ -163,7 +163,7 @@ export default function SettingsScreen() {
               <Ionicons name="search-outline" size={22} color={colors.text} />
             </TouchableOpacity>
 
-            <ThemedText type="title">Settings</ThemedText>
+            <ThemedText type="pageTitle">Settings</ThemedText>
 
             <View style={styles.headerSpacer} />
           </View>
@@ -179,7 +179,7 @@ export default function SettingsScreen() {
                   <ActivityIndicator />
                 ) : (
                   <>
-                    <ThemedText type="subtitle">
+                    <ThemedText type="sectionTitle">
                       {profile
                         ? savedName.trim() || 'Add your name below'
                         : 'Profile unavailable'}
@@ -315,7 +315,7 @@ export default function SettingsScreen() {
               style={styles.languageModal}
               onPress={(event) => event.stopPropagation()}
             >
-              <ThemedText type="subtitle" style={styles.modalTitle}>
+              <ThemedText type="sectionTitle" style={styles.modalTitle}>
                 Choose Language
               </ThemedText>
 
@@ -445,7 +445,7 @@ function ToggleRow({
   return (
     <View style={[styles.row, !last && styles.rowBorder]}>
       <View style={styles.rowContent}>
-        <ThemedText type="subtitle">{label}</ThemedText>
+        <ThemedText type="cardTitle">{label}</ThemedText>
 
         <ThemedText style={styles.muted}>
           {description}
@@ -483,7 +483,7 @@ function ChevronRow({
       activeOpacity={0.7}
     >
       <View style={styles.rowContent}>
-        <ThemedText type="subtitle">{label}</ThemedText>
+        <ThemedText type="cardTitle">{label}</ThemedText>
 
         <ThemedText style={styles.muted}>
           {description}
@@ -528,7 +528,7 @@ const createStyles = (colors: StyleUColors) =>
   },
 
   muted: {
-    opacity: 0.6,
+    color: colors.subtleText,
     fontSize: 13,
   },
 

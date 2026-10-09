@@ -29,12 +29,12 @@ export function ProfileHeader({ email, profile, isLoading, error, onRetry }: Pro
         <ActivityIndicator />
       ) : profile ? (
         <View style={styles.details}>
-          <ThemedText type="subtitle">{profile.display_name?.trim() || 'Add your name in Settings'}</ThemedText>
+          <ThemedText type="sectionTitle">{profile.display_name?.trim() || 'Add your name in Settings'}</ThemedText>
           {email ? <ThemedText style={styles.muted}>{email}</ThemedText> : null}
         </View>
       ) : (
         <View style={styles.details}>
-          <ThemedText type="subtitle">{error ? "Couldn't load your profile" : 'Profile not found'}</ThemedText>
+          <ThemedText type="sectionTitle">{error ? "Couldn't load your profile" : 'Profile not found'}</ThemedText>
           {error ? <ThemedText style={styles.muted}>{error}</ThemedText> : null}
           <TouchableOpacity onPress={onRetry}>
             <ThemedText style={styles.retry}>Try again</ThemedText>
@@ -64,7 +64,7 @@ const createStyles = (colors: StyleUColors) =>
     flex: 1,
   },
   muted: {
-    opacity: 0.6,
+    color: colors.subtleText,
     fontSize: 13,
   },
   retry: {

@@ -33,7 +33,7 @@ export default function ProfileScreen() {
       <SafeAreaView style={{ flex: 1 }} edges={['top']}>
         <ScrollView contentContainerStyle={styles.content}>
           <View style={styles.header}>
-            <ThemedText type="title">My Profile</ThemedText>
+            <ThemedText type="pageTitle">My Profile</ThemedText>
             <Link href="./settings" asChild>
               <TouchableOpacity hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
                 <Ionicons name="settings-outline" size={22} color={colors.text} />
@@ -49,7 +49,7 @@ export default function ProfileScreen() {
             onRetry={refetch}
           />
 
-          <ThemedText type="subtitle" style={styles.sectionTitle}>
+          <ThemedText type="sectionTitle" style={styles.sectionTitle}>
             Wardrobe Details
           </ThemedText>
 
@@ -64,7 +64,7 @@ export default function ProfileScreen() {
                     <Ionicons name="clipboard-outline" size={20} color={colors.text} />
                   </View>
                   <View style={{ flex: 1 }}>
-                    <ThemedText type="subtitle">{quiz.title}</ThemedText>
+                    <ThemedText type="cardTitle">{quiz.title}</ThemedText>
                     <ThemedText style={styles.muted}>{quiz.message}</ThemedText>
                     <ThemedText style={styles.muted}>{quiz.hint}</ThemedText>
                   </View>
@@ -95,7 +95,7 @@ export default function ProfileScreen() {
               <ActivityIndicator style={styles.analysisLoader} />
             ) : colourAnalysisError ? (
               <>
-                <ThemedText type="subtitle">Unable to load your result</ThemedText>
+                <ThemedText type="cardTitle">Unable to load your result</ThemedText>
                 <ThemedText style={styles.muted}>{colourAnalysisError}</ThemedText>
                 <TouchableOpacity style={styles.retryButton} onPress={refetchColourAnalysis}>
                   <ThemedText style={styles.retryLabel}>Try Again</ThemedText>
@@ -103,7 +103,7 @@ export default function ProfileScreen() {
               </>
             ) : colourAnalysis ? (
               <>
-                <ThemedText type="subtitle">{colourAnalysis.season}</ThemedText>
+                <ThemedText type="cardTitle">{colourAnalysis.season}</ThemedText>
                 <ThemedText style={styles.muted}>{colourAnalysis.undertone} Undertone</ThemedText>
                 <Link href={'/my-colour-analysis' as never} asChild>
                   <PrimaryButton label="View Colour Analysis →" />
@@ -111,7 +111,7 @@ export default function ProfileScreen() {
               </>
             ) : (
               <>
-                <ThemedText type="subtitle">Discover the colours that suit you best</ThemedText>
+                <ThemedText type="cardTitle">Discover the colours that suit you best</ThemedText>
                 <ThemedText style={styles.muted}>
                   Analyse a clear face photo to find your estimated seasonal palette.
                 </ThemedText>
@@ -127,7 +127,7 @@ export default function ProfileScreen() {
               <Ionicons name="sparkles-outline" size={20} color={colors.text} />
             </View>
             <View style={{ flex: 1 }}>
-              <ThemedText type="subtitle">Outfit Builder Canvas</ThemedText>
+              <ThemedText type="cardTitle">Outfit Builder Canvas</ThemedText>
               <ThemedText style={styles.muted}>
                 Experiment with visual layouts & styling
               </ThemedText>
@@ -164,7 +164,7 @@ const createStyles = (colors: StyleUColors) =>
     alignItems: 'center',
   },
   muted: {
-    opacity: 0.6,
+    color: colors.subtleText,
     fontSize: 13,
   },
   tabSwitcher: {
