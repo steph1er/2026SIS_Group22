@@ -9,6 +9,7 @@ Given a clothing photo, this service:
 
 """
 
+import base64
 import io
 import os
 
@@ -170,6 +171,13 @@ def strip_background(image_bytes: bytes) -> tuple[Image.Image, Image.Image]:
     return flattened, foreground
 
 
+def encode_png(image: Image.Image) -> str:
+    """Encode the background-removed (transparent) image as base64 PNG."""
+    buffer = io.BytesIO()
+    image.save(buffer, format="PNG")
+    return base64.b64encode(buffer.getvalue()).decode("ascii")
+
+
 @app.post("/analyze-item")
 async def analyze_item(file: UploadFile = File(...)):
     image_bytes = await file.read()
@@ -187,8 +195,8 @@ async def analyze_item(file: UploadFile = File(...)):
         "style_confidence": round(style_confidence, 3),
         "colour": colour,
         "embedding": embedding,
+        "image_png_base64": encode_png(foreground),
     }
-
 
 @app.post("/analyze-colours")
 async def analyze_colours(file: UploadFile = File(...)):
