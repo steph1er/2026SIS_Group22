@@ -5,11 +5,11 @@ item analysis and personal colour analysis from a portrait.
 
 ## Setup
 
-Requires Python 3.9+.
+Requires Python 3.12.
 
 ```bash
 cd ml-service
-python3 -m venv venv
+python3 -m venv venv # py -3.12 -m venv venv
 source venv/bin/activate      # Windows: venv\Scripts\activate
 pip install -r requirements.txt
 ```
