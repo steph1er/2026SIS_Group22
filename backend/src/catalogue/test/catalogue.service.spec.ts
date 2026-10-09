@@ -205,4 +205,64 @@ describe('CatalogueService', () => {
                 max_price)).rejects.toThrow(NotFoundException);
         });
     });
+
+    describe('Get Catalogue Item by ID', () => {
+        it('successfully get catalogue item', async () => {
+            const id = "catalogue item id";
+
+            const expectedResult = [{
+                "id": "catalogue item id",
+                "item_name": "jeans",
+                "image_url": "image",
+                "product_url": "url",
+                "clothing_category": "jeans",
+                "style": ['baggy', 'everyday'],
+                "avaliable_sizes": ['S', 'M', 'L', 'XL'],
+                "colour": ['blue'],
+                "brand_id": "brand id",
+                "material": ['cotton'],
+                "created_at": "2026-09-19T08:06:15.657186+00:00",
+                "price": 70
+            }];
+
+            jest.spyOn(supabaseClient.client, 'from').mockReturnValueOnce({
+                select: jest.fn().mockReturnValueOnce({
+                    eq: jest.fn().mockReturnValueOnce({ data: expectedResult, error: null })
+                })
+            } as any);
+
+            expect(await catalogueService.getCatalogueItem(id)).toBe(expectedResult);
+        });
+
+        it('HttpException when issue with database', async () => {
+            const id = "catalogue item id";
+
+            const errorMock = {
+                code: "error code",
+                details: "error details",
+                hint: "hint to solve error",
+                message: "error message"
+            };
+
+            jest.spyOn(supabaseClient.client, 'from').mockReturnValueOnce({
+                select: jest.fn().mockReturnValueOnce({
+                    eq: jest.fn().mockReturnValueOnce({ data: [], error: errorMock })
+                })
+            } as any);
+
+            await expect(catalogueService.getCatalogueItem(id)).rejects.toThrow(HttpException);
+        });
+
+        it('NotFoundException when no matching item', async () => {
+            const id = "catalogue item id";
+
+            jest.spyOn(supabaseClient.client, 'from').mockReturnValueOnce({
+                select: jest.fn().mockReturnValueOnce({
+                    eq: jest.fn().mockReturnValueOnce({ data: [], error: null })
+                })
+            } as any);
+
+            await expect(catalogueService.getCatalogueItem(id)).rejects.toThrow(NotFoundException);
+        });
+    });
 });
