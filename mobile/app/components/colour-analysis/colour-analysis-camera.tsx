@@ -36,7 +36,7 @@ export function ColourAnalysisCamera({ onCancel, onPhoto }: Props) {
       <View style={styles.permissionCard}>
         <Feather name="camera" size={34} color={StyleUTokens.colors.text} />
         <Text style={styles.permissionTitle}>Camera access needed</Text>
-        <Text style={styles.permissionText}>Allow camera access to take a face photo for colour analysis.</Text>
+        <Text style={styles.permissionText}>Allow access to take your photo.</Text>
         <Pressable style={styles.permissionButton} onPress={requestPermission}>
           <Text style={styles.buttonLabel}>Allow Camera</Text>
         </Pressable>
@@ -52,7 +52,7 @@ export function ColourAnalysisCamera({ onCancel, onPhoto }: Props) {
       <CameraView ref={cameraRef} style={styles.camera} facing="front" mirror />
       <View pointerEvents="none" style={styles.faceGuide} />
       <View style={styles.tipContainer} pointerEvents="none">
-        <Text style={styles.tip}>Face the camera in soft natural daylight</Text>
+        <Text style={styles.tip}>Natural light · face forward</Text>
       </View>
       <View style={styles.controls}>
         <Pressable onPress={onCancel} style={styles.sideButton} accessibilityLabel="Cancel camera">
@@ -73,14 +73,14 @@ export function ColourAnalysisCamera({ onCancel, onPhoto }: Props) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, minHeight: 420, overflow: 'hidden', backgroundColor: '#000', borderRadius: 24 },
+  container: { flex: 1, minHeight: 420, overflow: 'hidden', backgroundColor: '#000', borderRadius: 18 },
   camera: StyleSheet.absoluteFill,
   faceGuide: {
     position: 'absolute', alignSelf: 'center', top: '13%', width: '66%', height: '61%',
     borderRadius: 160, borderWidth: 2, borderColor: 'rgba(255,255,255,0.8)',
   },
   tipContainer: { position: 'absolute', top: 18, left: 16, right: 16, alignItems: 'center' },
-  tip: { color: '#FFFFFF', fontSize: 13, fontWeight: '700', backgroundColor: 'rgba(0,0,0,0.5)', borderRadius: 14, paddingHorizontal: 12, paddingVertical: 7 },
+  tip: { color: '#FFFFFF', fontSize: 13, fontWeight: '600', backgroundColor: 'rgba(0,0,0,0.5)', borderRadius: 14, paddingHorizontal: 12, paddingVertical: 7 },
   controls: { position: 'absolute', bottom: 22, left: 24, right: 24, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   shutterOuter: { width: 76, height: 76, borderRadius: 38, borderWidth: 3, borderColor: '#FFFFFF', alignItems: 'center', justifyContent: 'center' },
   shutterInner: { width: 60, height: 60, borderRadius: 30, backgroundColor: StyleUTokens.colors.accent },
@@ -88,10 +88,10 @@ const styles = StyleSheet.create({
   sidePlaceholder: { width: 46 },
   pressed: { opacity: 0.7 },
   loader: { flex: 1 },
-  permissionCard: { flex: 1, minHeight: 380, backgroundColor: StyleUTokens.colors.surface, borderRadius: 24, alignItems: 'center', justifyContent: 'center', padding: 28, gap: 14 },
-  permissionTitle: { color: StyleUTokens.colors.text, fontSize: 20, fontWeight: '700' },
-  permissionText: { color: StyleUTokens.colors.mutedText, textAlign: 'center', fontSize: 15, lineHeight: 22 },
-  permissionButton: { backgroundColor: StyleUTokens.colors.accent, borderRadius: 18, paddingVertical: 14, paddingHorizontal: 26, marginTop: 8 },
+  permissionCard: { flex: 1, minHeight: 380, backgroundColor: StyleUTokens.colors.surface, borderRadius: 18, alignItems: 'center', justifyContent: 'center', padding: 24, gap: 12 },
+  permissionTitle: { color: StyleUTokens.colors.text, fontSize: 19, lineHeight: 24, fontWeight: '600' },
+  permissionText: { color: StyleUTokens.colors.mutedText, textAlign: 'center', fontSize: 14, lineHeight: 20 },
+  permissionButton: { backgroundColor: StyleUTokens.colors.accent, borderRadius: 24, paddingVertical: 14, paddingHorizontal: 24, marginTop: 6 },
   buttonLabel: { color: StyleUTokens.colors.text, fontSize: 16, fontWeight: '700' },
-  cancelLabel: { color: StyleUTokens.colors.mutedText, fontSize: 15, fontWeight: '600', padding: 8 },
+  cancelLabel: { color: StyleUTokens.colors.mutedText, fontSize: 14, fontWeight: '500', padding: 8 },
 });
