@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useState } from 'react';
-import { ActivityIndicator, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Image, Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { router } from 'expo-router';
@@ -8,18 +8,39 @@ import { ThemedText } from '../../components/themed-text';
 import { ThemedView } from '../../components/themed-view';
 
 import { useSavedOutfits } from '../../hooks/use-saved-outfits';
+import { deleteSavedOutfit, type SavedOutfit } from '../../services/saved-outfits/saved-outfits-service';
 import { StyleUTokens } from '../../services/styleu-theme';
 
-const ACCENT = '#D98E73';
 const { colors } = StyleUTokens;
-
-const handleDeleteOutfit = (outfitId: string) => {
-  // TODO: implement delete outfit functionality
-}
 
 export default function OutfitsScreen() {
   const [notice, setNotice] = useState<string | null>(null);
   const { outfits, isLoading, error, refresh } = useSavedOutfits();
+
+  const [outfitToDelete, setOutfitToDelete] = useState<SavedOutfit | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  const closeDeleteModal = () => {
+    if (isDeleting) return;
+    setOutfitToDelete(null);
+    setDeleteError(null);
+  };
+
+  const confirmDeleteOutfit = async () => {
+    if (!outfitToDelete || isDeleting) return;
+    setIsDeleting(true);
+    setDeleteError(null);
+    try {
+      await deleteSavedOutfit(outfitToDelete.id);
+      setOutfitToDelete(null);
+      refresh();
+    } catch (e) {
+      setDeleteError(e instanceof Error ? e.message : 'Could not delete the outfit. Please try again.');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   const showEmptyState = !isLoading && !error && outfits.length === 0;
 
@@ -34,7 +55,7 @@ export default function OutfitsScreen() {
               </TouchableOpacity>
           </View>
 
-          {isLoading && outfits.length === 0 ? <ActivityIndicator color={ACCENT} /> : null}
+          {isLoading && outfits.length === 0 ? <ActivityIndicator color={'#D98E73'} /> : null}
 
           {error ? (
             <View style={styles.errorContainer}>
@@ -48,7 +69,7 @@ export default function OutfitsScreen() {
           {showEmptyState ? (
             <View style={styles.emptyState}>
               <View style={styles.emptyIcon}>
-                <Ionicons name="shirt-outline" size={28} color={ACCENT} />
+                <Ionicons name="shirt-outline" size={28} color={'#D98E73'} />
               </View>
               <ThemedText style={styles.emptyTitle}>No outfits yet</ThemedText>
               <ThemedText style={styles.muted}>
@@ -63,8 +84,13 @@ export default function OutfitsScreen() {
               {/* items in outfit */}
               <View style={styles.titleContainer}>
                 <Text style={styles.outfitName} numberOfLines={1}>{outfit.name}</Text>
-                <TouchableOpacity onPress={() => handleDeleteOutfit(outfit.id)} style={styles.deleteButton}>
-                  <Ionicons name="close" size={18} color={colors.buttonText} />
+                <TouchableOpacity
+                  onPress={() => setOutfitToDelete(outfit)}
+                  style={styles.deleteButton}
+                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                  accessibilityLabel="Delete outfit"
+                >
+                  <Ionicons name="close" size={14} color={colors.buttonText} />
                 </TouchableOpacity>
               </View>
               <ScrollView horizontal showsHorizontalScrollIndicator={false}>
@@ -75,7 +101,7 @@ export default function OutfitsScreen() {
                         <Image source={{ uri: outfitItem.imageUrl }} style={styles.itemImage} />
                       ) : (
                         <View style={[styles.itemImage, styles.itemImagePlaceholder]}>
-                          <Ionicons name="shirt-outline" size={24} color={ACCENT} />
+                          <Ionicons name="shirt-outline" size={24} color={'#D98E73'} />
                         </View>
                       )}
                       <Text style={styles.itemName} numberOfLines={1}>{outfitItem.label}</Text>
@@ -89,6 +115,34 @@ export default function OutfitsScreen() {
           {notice ? <ThemedText style={[styles.muted, styles.notice]}>{notice}</ThemedText> : null}
         </ScrollView>
       </SafeAreaView>
+
+      <Modal transparent animationType="fade" visible={outfitToDelete !== null} onRequestClose={closeDeleteModal}>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalCard}>
+            <Text style={styles.modalTitle}>Delete outfit?</Text>
+            <Text style={styles.modalMessage}>
+              Are you sure you want to delete this outfit? This action cannot be undone.
+            </Text>
+            {deleteError ? <Text style={styles.modalError}>{deleteError}</Text> : null}
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.modalCloseButton]}
+                onPress={closeDeleteModal}
+                disabled={isDeleting}
+              >
+                <Text style={styles.modalCloseText}>Close</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.modalDeleteButton, isDeleting && styles.modalButtonDisabled]}
+                onPress={confirmDeleteOutfit}
+                disabled={isDeleting}
+              >
+                {isDeleting ? <ActivityIndicator color="#FFFFFF" /> : <Text style={styles.modalDeleteText}>Delete</Text>}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </ThemedView>
   );
 }
@@ -109,10 +163,13 @@ const styles = StyleSheet.create({
   },
   deleteButton: {
     backgroundColor: colors.accent,
-    borderRadius: 16,
+    borderRadius: 11,
+    width: 22,
+    height: 22,
+    alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 8,
-    paddingHorizontal: 8,
+    marginRight: 12,
+    alignSelf: 'center',
   },
   outfitItemsGrid: {
     flexDirection: 'row',
@@ -206,8 +263,68 @@ const styles = StyleSheet.create({
     gap: 8
   },
   retryText: {
-    color: ACCENT,
+    color: '#D98E73',
     fontSize: 14,
     fontWeight: '600'
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 24,
+  },
+  modalCard: {
+    width: '100%',
+    maxWidth: 340,
+    backgroundColor: colors.background,
+    borderRadius: 18,
+    padding: 20,
+    gap: 12,
+  },
+  modalTitle: {
+    color: colors.text,
+    fontSize: 18,
+    fontWeight: '600',
+  },
+  modalMessage: {
+    color: colors.mutedText,
+    fontSize: 14,
+    lineHeight: 20,
+  },
+  modalError: {
+    color: colors.errorRed,
+    fontSize: 13,
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    gap: 10,
+    marginTop: 4,
+  },
+  modalButton: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 10,
+    borderRadius: 8,
+  },
+  modalCloseButton: {
+    backgroundColor: colors.button,
+  },
+  modalCloseText: {
+    color: colors.buttonText,
+    fontWeight: '600',
+    fontSize: 16,
+  },
+  modalDeleteButton: {
+    backgroundColor: colors.accent,
+  },
+  modalDeleteText: {
+    color: '#FFFFFF',
+    fontWeight: '600',
+    fontSize: 16,
+  },
+  modalButtonDisabled: {
+    opacity: 0.6,
   },
 });

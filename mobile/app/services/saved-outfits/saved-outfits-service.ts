@@ -82,3 +82,7 @@ export async function fetchSavedOutfits(): Promise<SavedOutfit[]> {
     throw error;
   }
 }
+
+export async function deleteSavedOutfit(outfitId: string): Promise<void> {
+  await requestJson(`outfits/${encodeURIComponent(outfitId)}`, { method: 'DELETE' });
+}
