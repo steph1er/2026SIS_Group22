@@ -8,15 +8,16 @@ import { ThemedText } from '../../components/themed-text';
 import { ThemedView } from '../../components/themed-view';
 
 import { useSavedOutfits } from '../../hooks/use-saved-outfits';
+import { useStyleUColors, useThemedStyles } from '../../hooks/use-theme';
 import { itemDetailHref } from '../../services/catalogue/catalogue-service';
-import { styles } from '../../services/saved-outfits/saved-outfit-theme';
+import { createStyles } from '../../services/saved-outfits/saved-outfit-theme';
 import { deleteSavedOutfit, type SavedOutfit, type SavedOutfitItem } from '../../services/saved-outfits/saved-outfits-service';
-import { StyleUTokens } from '../../services/styleu-theme';
 import { wardrobeItemHref } from '../../services/wardrobe/wardrobe-service';
 
-const { colors } = StyleUTokens;
-
 export default function OutfitsScreen() {
+  const styles = useThemedStyles(createStyles);
+  const colors = useStyleUColors();
+
   const [notice, setNotice] = useState<string | null>(null);
   const { outfits, isLoading, error, refresh } = useSavedOutfits();
 

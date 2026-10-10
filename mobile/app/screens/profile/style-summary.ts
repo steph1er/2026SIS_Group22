@@ -4,7 +4,17 @@ import { onboardingSteps } from '../../services/onboarding/onboarding-data';
 
 export type StyleQuizStatus = 'completed' | 'not-completed' | 'in-progress' | 'not-started';
 
-export type StyleQuizDetail = { label: string; value: string };
+/** A preference with several answers, shown as a group of chips. */
+export type StylePreferenceGroup = { label: string; values: string[] };
+
+/** A single-answer preference such as a size, shown as a small tile. */
+export type StylePreferenceValue = { label: string; value: string };
+
+export type StylePreferences = {
+  aesthetic: string | null;
+  groups: StylePreferenceGroup[];
+  sizes: StylePreferenceValue[];
+};
 
 export type StyleQuizSummary = {
   status: StyleQuizStatus;
@@ -12,8 +22,8 @@ export type StyleQuizSummary = {
   message: string;
   /** What tapping the card does. */
   hint: string;
-  /** Saved preferences to show. Only filled for a completed quiz that has saved answers. */
-  details: StyleQuizDetail[];
+  /** Saved preferences to show. Only set for a completed quiz that has saved answers. */
+  preferences: StylePreferences | null;
 };
 
 // Friendly labels for the ids stored in public.onboarding, read from the quiz's own data.
@@ -34,8 +44,8 @@ function labelFor(sectionId: string, optionId: string): string {
   );
 }
 
-function labelsFor(sectionId: string, optionIds: string[] | null | undefined): string {
-  return (optionIds ?? []).map((id) => labelFor(sectionId, id)).join(', ');
+function labelsFor(sectionId: string, optionIds: string[] | null | undefined): string[] {
+  return (optionIds ?? []).map((id) => labelFor(sectionId, id));
 }
 
 function formatDate(iso: string | null): string | null {
@@ -49,21 +59,26 @@ function formatDate(iso: string | null): string | null {
  * The saved preferences shown on the Profile. Height, price ranges and style no-gos are
  * stored and used elsewhere, but deliberately not shown here. Empty values are left out.
  */
-function preferenceDetails(row: OnboardingRow): StyleQuizDetail[] {
-  const details: StyleQuizDetail[] = [
-    { label: 'Aesthetic', value: row.primary_aesthetic ? labelFor('aesthetic', row.primary_aesthetic) : '' },
-    { label: 'Style keywords', value: labelsFor('style-keywords', row.style_keywords) },
-    { label: 'Colours', value: labelsFor('colour', row.colour_preferences) },
-    { label: 'Fit', value: labelsFor('fit', row.fit_preferences) },
-    { label: 'Fashion outlook', value: labelsFor('fashion-outlook', row.fashion_outlook) },
+function preferencesFor(row: OnboardingRow): StylePreferences {
+  const groups: StylePreferenceGroup[] = [
+    { label: 'Style keywords', values: labelsFor('style-keywords', row.style_keywords) },
+    { label: 'Colours', values: labelsFor('colour', row.colour_preferences) },
+    { label: 'Fit', values: labelsFor('fit', row.fit_preferences) },
+    { label: 'Fashion outlook', values: labelsFor('fashion-outlook', row.fashion_outlook) },
+    { label: 'Fabric sensitivities', values: labelsFor('fabric-sensitivities', row.fabric_sensitivities) },
+  ];
+  const sizes: StylePreferenceValue[] = [
     { label: 'Body type', value: row.body_type ? labelFor('body-type', row.body_type) : '' },
-    { label: 'Top size', value: row.top_size ?? '' },
-    { label: 'Bottom size', value: row.bottom_size ?? '' },
-    { label: 'Dress size', value: row.dress_size ?? '' },
-    { label: 'Fabric sensitivities', value: labelsFor('fabric-sensitivities', row.fabric_sensitivities) },
+    { label: 'Top', value: row.top_size ?? '' },
+    { label: 'Bottom', value: row.bottom_size ?? '' },
+    { label: 'Dress', value: row.dress_size ?? '' },
   ];
 
-  return details.filter((detail) => detail.value !== '');
+  return {
+    aesthetic: row.primary_aesthetic ? labelFor('aesthetic', row.primary_aesthetic) : null,
+    groups: groups.filter((group) => group.values.length > 0),
+    sizes: sizes.filter((size) => size.value !== ''),
+  };
 }
 
 /**
@@ -85,19 +100,18 @@ export function describeStyleQuiz(
         title: 'Style Quiz Not Completed',
         message: 'Take the style quiz to set up your style preferences.',
         hint: 'Tap to take the quiz.',
-        details: [],
+        preferences: null,
       };
     }
 
     const completedAt = formatDate(profile.onboarding_completed_at);
-    const vibe = row.primary_aesthetic ? labelFor('aesthetic', row.primary_aesthetic) : null;
 
     return {
       status: 'completed',
       title: 'Your Style Quiz Results',
-      message: [completedAt ? `Completed ${completedAt}` : 'Completed', vibe].filter(Boolean).join(' · '),
-      hint: 'Tap to retake the quiz and update your preferences.',
-      details: preferenceDetails(row),
+      message: completedAt ? `Completed ${completedAt}` : 'Completed',
+      hint: 'Use Retake to update your preferences.',
+      preferences: preferencesFor(row),
     };
   }
 
@@ -110,7 +124,7 @@ export function describeStyleQuiz(
       title: 'Style Quiz In Progress',
       message: `Step ${step} of ${totalSteps}`,
       hint: 'Tap to continue where you left off.',
-      details: [],
+      preferences: null,
     };
   }
 
@@ -119,6 +133,6 @@ export function describeStyleQuiz(
     title: 'Style Quiz Not Started',
     message: 'Answer a few questions to personalise your recommendations.',
     hint: 'Tap to start the quiz.',
-    details: [],
+    preferences: null,
   };
 }

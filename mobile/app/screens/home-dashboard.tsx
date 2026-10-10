@@ -24,10 +24,9 @@ import { useWishlist } from '../hooks/use-wishlist';
 import { itemDetailHref } from '../services/catalogue/catalogue-service';
 import { fetchRecommendations } from '../services/wishlist/wishlist-service';
 import type { CatalogueItem } from '../services/wishlist/wishlist-types';
+import { useStyleUColors, useThemedStyles } from '../hooks/use-theme';
+import type { StyleUColors } from '../services/styleu-theme';
 
-const ACCENT = '#D98E73';
-const TEXT = '#22201F';
-const MUTED = '#8A8683';
 const PLACEHOLDER_IMAGE = 'https://placehold.co/300x360/F2EFEC/ABABAB/png?text=No+image';
 
 /** Image heights that repeat down each column, giving the staggered look from the design. */
@@ -78,6 +77,8 @@ function appendUnique(items: CatalogueItem[], page: CatalogueItem[]) {
 }
 
 export default function HomeDashboardScreen() {
+  const colors = useStyleUColors();
+  const styles = useThemedStyles(createStyles);
   const { user } = useAuth();
   const userId = user?.id ?? null;
   const { profile } = useProfile();
@@ -199,7 +200,7 @@ export default function HomeDashboardScreen() {
               {name ? (
                 <ThemedText style={styles.avatarInitial}>{name[0].toUpperCase()}</ThemedText>
               ) : (
-                <Ionicons name="person-outline" size={22} color={TEXT} />
+                <Ionicons name="person-outline" size={22} color={colors.text} />
               )}
             </TouchableOpacity>
           </View>
@@ -284,6 +285,7 @@ type FeedCardProps = {
 };
 
 function FeedCard({ item, imageHeight, onPress }: FeedCardProps) {
+  const styles = useThemedStyles(createStyles);
   const price = formatPrice(item.price);
 
   return (
@@ -311,9 +313,11 @@ type StateMessageProps = {
 };
 
 function StateMessage({ icon, title, message, actionLabel, onAction }: StateMessageProps) {
+  const colors = useStyleUColors();
+  const styles = useThemedStyles(createStyles);
   return (
     <View style={styles.stateMessage}>
-      <Ionicons name={icon} size={28} color={ACCENT} />
+      <Ionicons name={icon} size={28} color={colors.accentStrong} />
       <ThemedText style={styles.stateTitle}>{title}</ThemedText>
       <ThemedText style={styles.stateBody}>{message}</ThemedText>
       {actionLabel && onAction ? (
@@ -325,7 +329,8 @@ function StateMessage({ icon, title, message, actionLabel, onAction }: StateMess
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: StyleUColors) =>
+  StyleSheet.create({
   content: {
     padding: 20,
     gap: 18,
@@ -339,7 +344,7 @@ const styles = StyleSheet.create({
   },
   greeting: {
     fontSize: 16,
-    color: MUTED,
+    color: colors.subtleText,
   },
   name: {
     fontSize: 26,
@@ -351,15 +356,15 @@ const styles = StyleSheet.create({
     height: 52,
     borderRadius: 26,
     borderWidth: 2,
-    borderColor: '#E8C3B5',
-    backgroundColor: '#FBEEE9',
+    borderColor: colors.accent,
+    backgroundColor: colors.accentSoft,
     alignItems: 'center',
     justifyContent: 'center',
   },
   avatarInitial: {
     fontSize: 20,
     fontWeight: '600',
-    color: TEXT,
+    color: colors.text,
   },
   sectionTitle: {
     fontSize: 19,
@@ -380,7 +385,7 @@ const styles = StyleSheet.create({
   cardImage: {
     width: '100%',
     borderRadius: 18,
-    backgroundColor: '#F2EFEC',
+    backgroundColor: colors.imageBackdrop,
   },
   cardName: {
     fontSize: 15,
@@ -396,7 +401,7 @@ const styles = StyleSheet.create({
   cardBrand: {
     flex: 1,
     fontSize: 13,
-    color: MUTED,
+    color: colors.subtleText,
   },
   cardPrice: {
     fontSize: 15,
@@ -412,7 +417,7 @@ const styles = StyleSheet.create({
     paddingVertical: 24,
     paddingHorizontal: 16,
     borderRadius: 16,
-    backgroundColor: '#F8F6F4',
+    backgroundColor: colors.surface,
   },
   stateTitle: {
     fontWeight: '600',
@@ -421,11 +426,11 @@ const styles = StyleSheet.create({
   stateBody: {
     fontSize: 13,
     lineHeight: 18,
-    color: MUTED,
+    color: colors.subtleText,
     textAlign: 'center',
   },
   stateAction: {
-    color: ACCENT,
+    color: colors.accentStrong,
     fontWeight: '600',
     marginTop: 4,
   },

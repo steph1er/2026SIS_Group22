@@ -8,9 +8,11 @@ import { getPostAuthRoute, resetPassword, signIn } from '../../src/auth/auth-ser
 import { BackButton } from '../components/back-button';
 import { OnboardingFormField } from '../components/onboarding-form-field';
 import { PrimaryButton } from '../components/primary-button';
-import { StyleUTokens } from '../services/styleu-theme';
+import { useThemedStyles } from '../hooks/use-theme';
+import type { StyleUColors } from '../services/styleu-theme';
 
 export default function LoginScreen() {
+  const styles = useThemedStyles(createStyles);
   const { created } = useLocalSearchParams<{ created?: string }>();
   const { configurationError } = useAuth();
   const [email, setEmail] = useState('');
@@ -67,7 +69,7 @@ export default function LoginScreen() {
   return (
     <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.content}>
-        <BackButton />
+        <BackButton fallback="/" />
         <Text accessibilityRole="header" style={styles.title}>Welcome back</Text>
 
         <View style={styles.form}>
@@ -91,12 +93,13 @@ export default function LoginScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  safeArea: { backgroundColor: StyleUTokens.colors.background, flex: 1 },
+const createStyles = (colors: StyleUColors) =>
+  StyleSheet.create({
+  safeArea: { backgroundColor: colors.background, flex: 1 },
   content: { flex: 1, paddingHorizontal: 28, paddingTop: 60, paddingBottom: 28 },
-  title: { color: StyleUTokens.colors.text, fontSize: 32, fontWeight: '800', marginBottom: 40 },
+  title: { color: colors.text, fontSize: 32, fontWeight: '800', marginBottom: 40 },
   form: { gap: 16 },
-  forgotPassword: { color: StyleUTokens.colors.accent, fontSize: 14, textAlign: 'right' },
-  status: { color: StyleUTokens.colors.text, fontSize: 14, textAlign: 'center' },
+  forgotPassword: { color: colors.accent, fontSize: 14, textAlign: 'right' },
+  status: { color: colors.text, fontSize: 14, textAlign: 'center' },
   footer: { gap: 24, marginTop: 'auto', paddingTop: 60 },
 });

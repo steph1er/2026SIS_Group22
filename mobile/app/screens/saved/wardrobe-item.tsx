@@ -15,17 +15,16 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { router, useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
 
 import { ThemedView } from '../../components/themed-view';
 import { ThemedText } from '../../components/themed-text';
 import { deleteWardrobeItem, fetchWardrobeItem, updateWardrobeItem } from '../../services/wardrobe/wardrobe-service';
 import type { WardrobeItem, WardrobeItemChanges } from '../../services/wardrobe/wardrobe-types';
+import { useStyleUColors, useThemedStyles } from '../../hooks/use-theme';
+import type { StyleUColors } from '../../services/styleu-theme';
+import { BackButton, goBackOr } from '../../components/back-button';
 
-const ACCENT = '#D98E73';
-const TEXT = '#22201F';
-const MUTED = '#8A8683';
-const DANGER = '#B3412A';
 const PLACEHOLDER_IMAGE = 'https://placehold.co/600x800/F2EFEC/ABABAB/png?text=No+image';
 
 function formatPrice(price: number | null) {
@@ -41,11 +40,6 @@ function formatDate(value: string | null) {
   if (!value) return null;
   const date = new Date(value);
   return Number.isNaN(date.getTime()) ? null : date.toLocaleDateString();
-}
-
-function goBack() {
-  if (router.canGoBack()) router.back();
-  else router.replace('/wardrobe' as never);
 }
 
 // The edit form keeps every field as text; lists are comma-separated.
@@ -112,6 +106,8 @@ type Loaded = { id: string; data: WardrobeItem | null; error: string | null };
  * Shows the item's details and lets the user edit or delete it.
  */
 export default function WardrobeItemScreen() {
+  const colors = useStyleUColors();
+  const styles = useThemedStyles(createStyles);
   const { id } = useLocalSearchParams<{ id: string }>();
   const insets = useSafeAreaInsets();
   const { width: screenWidth } = useWindowDimensions();
@@ -156,12 +152,10 @@ export default function WardrobeItemScreen() {
   if (!shown) {
     return (
       <ThemedView style={[styles.centered, { paddingTop: insets.top }]}>
-        <TouchableOpacity style={[styles.circleButton, styles.floatingBack, { top: insets.top + 8 }]} onPress={goBack} accessibilityLabel="Back">
-          <Ionicons name="chevron-back" size={22} color={TEXT} />
-        </TouchableOpacity>
+        <BackButton variant="floating" fallback="/saved?tab=wardrobe" style={[styles.floatingBack, { top: insets.top + 8 }]} />
         {current?.error ? (
           <View style={styles.stateMessage}>
-            <Ionicons name="cloud-offline-outline" size={28} color={ACCENT} />
+            <Ionicons name="cloud-offline-outline" size={28} color={colors.accentStrong} />
             <ThemedText style={styles.stateTitle}>Couldn't load this item</ThemedText>
             <ThemedText style={styles.stateBody}>{current.error}</ThemedText>
             <TouchableOpacity onPress={() => setReloadCount((count) => count + 1)}>
@@ -216,7 +210,7 @@ export default function WardrobeItemScreen() {
     setIsDeleting(true);
     try {
       await deleteWardrobeItem(shown.id);
-      goBack();
+      goBackOr('/saved?tab=wardrobe');
     } catch (error) {
       setNotice(error instanceof Error ? error.message : 'Could not delete the item.');
       setIsDeleting(false);
@@ -233,9 +227,7 @@ export default function WardrobeItemScreen() {
           <View>
             <Image source={{ uri: shown.imageUrl ?? PLACEHOLDER_IMAGE }} style={[styles.hero, { height: screenWidth * 0.95 }]} resizeMode="contain" />
             <View style={[styles.heroButtons, { top: insets.top + 8 }]}>
-              <TouchableOpacity style={styles.circleButton} onPress={goBack} accessibilityLabel="Back">
-                <Ionicons name="chevron-back" size={22} color={TEXT} />
-              </TouchableOpacity>
+              <BackButton variant="floating" fallback="/saved?tab=wardrobe" />
             </View>
           </View>
 
@@ -292,10 +284,10 @@ export default function WardrobeItemScreen() {
 
             {notice ? (
               <View style={styles.errorBanner}>
-                <Ionicons name="alert-circle-outline" size={18} color="#8A2D1B" />
+                <Ionicons name="alert-circle-outline" size={18} color={colors.errorText} />
                 <ThemedText style={styles.errorBannerText}>{notice}</ThemedText>
                 <TouchableOpacity onPress={() => setNotice(null)} accessibilityLabel="Dismiss">
-                  <Ionicons name="close" size={18} color="#8A2D1B" />
+                  <Ionicons name="close" size={18} color={colors.errorText} />
                 </TouchableOpacity>
               </View>
             ) : null}
@@ -316,7 +308,7 @@ export default function WardrobeItemScreen() {
                 <ThemedText style={styles.secondaryButtonText}>Cancel</ThemedText>
               </TouchableOpacity>
               <TouchableOpacity style={[styles.primaryButton, isBusy && { opacity: 0.6 }]} onPress={() => void save()} disabled={isBusy}>
-                {isSaving ? <ActivityIndicator color="#fff" /> : <ThemedText style={styles.primaryButtonText}>Save changes</ThemedText>}
+                {isSaving ? <ActivityIndicator color={colors.onAccent} /> : <ThemedText style={styles.primaryButtonText}>Save changes</ThemedText>}
               </TouchableOpacity>
             </>
           ) : (
@@ -327,7 +319,7 @@ export default function WardrobeItemScreen() {
                 disabled={isBusy}
                 accessibilityLabel={`Delete ${title} from wardrobe`}
               >
-                {isDeleting ? <ActivityIndicator color={DANGER} /> : <Ionicons name="trash-outline" size={22} color={DANGER} />}
+                {isDeleting ? <ActivityIndicator color={colors.danger} /> : <Ionicons name="trash-outline" size={22} color={colors.danger} />}
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.primaryButton, isBusy && { opacity: 0.6 }]}
@@ -337,7 +329,7 @@ export default function WardrobeItemScreen() {
                 }}
                 disabled={isBusy}
               >
-                <Ionicons name="create-outline" size={20} color="#fff" />
+                <Ionicons name="create-outline" size={20} color={colors.onAccent} />
                 <ThemedText style={styles.primaryButtonText}>Edit item</ThemedText>
               </TouchableOpacity>
             </>
@@ -354,7 +346,7 @@ export default function WardrobeItemScreen() {
               <TouchableOpacity style={styles.secondaryButton} onPress={() => setConfirmDelete(false)}>
                 <ThemedText style={styles.secondaryButtonText}>Cancel</ThemedText>
               </TouchableOpacity>
-              <TouchableOpacity style={[styles.primaryButton, { backgroundColor: DANGER }]} onPress={() => void remove()}>
+              <TouchableOpacity style={[styles.primaryButton, { backgroundColor: colors.danger }]} onPress={() => void remove()}>
                 <ThemedText style={styles.primaryButtonText}>Delete</ThemedText>
               </TouchableOpacity>
             </View>
@@ -376,18 +368,20 @@ type FormFieldProps = {
 };
 
 function FormField({ label, value, onChangeText, required, hint, placeholder, keyboardType = 'default' }: FormFieldProps) {
+  const colors = useStyleUColors();
+  const styles = useThemedStyles(createStyles);
   return (
     <View style={styles.field}>
       <ThemedText style={styles.fieldLabel}>
         {label}
-        {required ? <ThemedText style={{ color: ACCENT }}> *</ThemedText> : null}
+        {required ? <ThemedText style={{ color: colors.accentStrong }}> *</ThemedText> : null}
         {hint ? <ThemedText style={styles.fieldHint}>{`  ${hint}`}</ThemedText> : null}
       </ThemedText>
       <TextInput
         value={value}
         onChangeText={onChangeText}
         placeholder={placeholder}
-        placeholderTextColor="#B5B1AE"
+        placeholderTextColor={colors.placeholder}
         keyboardType={keyboardType}
         autoCapitalize="none"
         autoCorrect={false}
@@ -398,7 +392,8 @@ function FormField({ label, value, onChangeText, required, hint, placeholder, ke
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: StyleUColors) =>
+  StyleSheet.create({
   centered: {
     flex: 1,
     alignItems: 'center',
@@ -411,7 +406,7 @@ const styles = StyleSheet.create({
   },
   hero: {
     width: '100%',
-    backgroundColor: '#F2EFEC',
+    backgroundColor: colors.imageBackdrop,
   },
   heroButtons: {
     position: 'absolute',
@@ -424,7 +419,7 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: '#fff',
+    backgroundColor: colors.card,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -442,7 +437,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 14,
     letterSpacing: 0.5,
-    color: MUTED,
+    color: colors.subtleText,
   },
   price: {
     fontSize: 20,
@@ -458,7 +453,7 @@ const styles = StyleSheet.create({
   },
   detailLabel: {
     fontSize: 13,
-    color: MUTED,
+    color: colors.subtleText,
   },
   chips: {
     flexDirection: 'row',
@@ -467,19 +462,19 @@ const styles = StyleSheet.create({
   },
   chip: {
     borderWidth: 1,
-    borderColor: '#E6E2DE',
+    borderColor: colors.borderSoft,
     borderRadius: 18,
     paddingHorizontal: 14,
     paddingVertical: 6,
-    backgroundColor: '#FAF9F7',
+    backgroundColor: colors.surface,
   },
   chipText: {
     fontSize: 13,
-    color: TEXT,
+    color: colors.text,
   },
   meta: {
     fontSize: 12,
-    color: MUTED,
+    color: colors.subtleText,
     marginTop: 4,
   },
   field: {
@@ -496,17 +491,17 @@ const styles = StyleSheet.create({
   fieldHint: {
     fontSize: 12,
     fontWeight: '400',
-    color: MUTED,
+    color: colors.subtleText,
   },
   input: {
     height: 48,
     borderWidth: 1,
-    borderColor: '#ECE8E4',
+    borderColor: colors.borderSoft,
     borderRadius: 14,
-    backgroundColor: '#F6F4F2',
+    backgroundColor: colors.input,
     paddingHorizontal: 14,
     fontSize: 15,
-    color: TEXT,
+    color: colors.text,
   },
   actionBar: {
     position: 'absolute',
@@ -517,20 +512,20 @@ const styles = StyleSheet.create({
     gap: 14,
     paddingHorizontal: 20,
     paddingTop: 12,
-    backgroundColor: '#fff',
+    backgroundColor: colors.card,
   },
   primaryButton: {
     flex: 1,
     height: 58,
     borderRadius: 18,
-    backgroundColor: ACCENT,
+    backgroundColor: colors.accentStrong,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
   },
   primaryButtonText: {
-    color: '#fff',
+    color: colors.onAccent,
     fontSize: 16,
     fontWeight: '600',
   },
@@ -539,13 +534,13 @@ const styles = StyleSheet.create({
     height: 58,
     borderRadius: 18,
     borderWidth: 1,
-    borderColor: '#ECE8E4',
-    backgroundColor: '#FAF9F7',
+    borderColor: colors.borderSoft,
+    backgroundColor: colors.surface,
     alignItems: 'center',
     justifyContent: 'center',
   },
   secondaryButtonText: {
-    color: TEXT,
+    color: colors.text,
     fontSize: 16,
     fontWeight: '600',
   },
@@ -554,8 +549,8 @@ const styles = StyleSheet.create({
     height: 58,
     borderRadius: 18,
     borderWidth: 1,
-    borderColor: '#F0D5CE',
-    backgroundColor: '#FBF0EC',
+    borderColor: colors.dangerBorder,
+    backgroundColor: colors.accentSoft,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -563,14 +558,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    backgroundColor: '#FBE3DD',
+    backgroundColor: colors.errorSurface,
     borderRadius: 12,
     padding: 12,
   },
   errorBannerText: {
     flex: 1,
     fontSize: 13,
-    color: '#8A2D1B',
+    color: colors.errorText,
   },
   stateMessage: {
     alignItems: 'center',
@@ -584,17 +579,17 @@ const styles = StyleSheet.create({
   stateBody: {
     fontSize: 13,
     lineHeight: 18,
-    color: MUTED,
+    color: colors.subtleText,
     textAlign: 'center',
   },
   stateAction: {
-    color: ACCENT,
+    color: colors.accentStrong,
     fontWeight: '600',
     marginTop: 4,
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.35)',
+    backgroundColor: colors.overlay,
     alignItems: 'center',
     justifyContent: 'center',
     padding: 24,
@@ -602,7 +597,7 @@ const styles = StyleSheet.create({
   modalCard: {
     width: '100%',
     maxWidth: 380,
-    backgroundColor: '#fff',
+    backgroundColor: colors.card,
     borderRadius: 20,
     padding: 20,
     gap: 10,
@@ -610,12 +605,12 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: TEXT,
+    color: colors.text,
   },
   modalBody: {
     fontSize: 14,
     lineHeight: 20,
-    color: MUTED,
+    color: colors.subtleText,
   },
   modalButtons: {
     flexDirection: 'row',

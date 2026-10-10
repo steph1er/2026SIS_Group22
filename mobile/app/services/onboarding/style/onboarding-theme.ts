@@ -1,11 +1,10 @@
 // main styles for onboarding
 
 import { StyleSheet } from 'react-native';
-import { StyleUTokens } from '../../styleu-theme';
+import type { StyleUColors } from '../../styleu-theme';
 
-const { colors } = StyleUTokens;
-
-export const layoutStyles =  StyleSheet.create({
+export const createLayoutStyles = (colors: StyleUColors) =>
+  StyleSheet.create({
     container: {
       flex: 1,
       backgroundColor: colors.background,
@@ -46,14 +45,10 @@ export const layoutStyles =  StyleSheet.create({
       alignItems: 'center',
     },
 
+    // Pulls the back button's 44pt tap area in so it sits snugly beside the step label.
     backChevron: {
-      paddingRight: 4,
-    },
-
-    backChevronText: {
-      fontSize: 20,
-      color: colors.mutedText,
-      lineHeight: 20,
+      marginVertical: -12,
+      marginRight: -6,
     },
 
     stepLabel: {
