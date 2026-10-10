@@ -307,5 +307,6 @@ export function useOnboardingHandler(initial: OnboardingProgress) {
     isSectionAnswered,
     handleContinue,
     handleBack,
+    finishOnboarding,
   };
 }
