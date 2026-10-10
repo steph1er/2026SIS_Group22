@@ -5,7 +5,8 @@ import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from
 import { useColourRecommendations } from '../../../src/colour-analysis/use-colour-recommendations';
 import type { ColourAnalysisResult } from '../../../src/colour-analysis/types';
 import { itemDetailHref } from '../../services/catalogue/catalogue-service';
-import { StyleUTokens } from '../../services/styleu-theme';
+import { useStyleUColors, useThemedStyles } from '../../hooks/use-theme';
+import type { StyleUColors } from '../../services/styleu-theme';
 import { CatalogueItemCard } from '../catalogue-item-card';
 
 function titleCase(value: string) {
@@ -18,6 +19,8 @@ function formatPrice(price: number | null) {
 }
 
 export function ColourRecommendations({ result }: { result: ColourAnalysisResult }) {
+  const colors = useStyleUColors();
+  const styles = useThemedStyles(createStyles);
   const recommendations = useColourRecommendations(result);
 
   return (
@@ -27,12 +30,12 @@ export function ColourRecommendations({ result }: { result: ColourAnalysisResult
 
       {recommendations.isLoading ? (
         <View style={styles.stateRow}>
-          <ActivityIndicator color={StyleUTokens.colors.accent} />
+          <ActivityIndicator color={colors.accent} />
           <Text style={styles.stateText}>Finding your best matches…</Text>
         </View>
       ) : recommendations.error ? (
         <View style={styles.stateCard} accessibilityRole="alert">
-          <Ionicons name="cloud-offline-outline" size={24} color={StyleUTokens.colors.errorRed} />
+          <Ionicons name="cloud-offline-outline" size={24} color={colors.errorRed} />
           <Text style={styles.stateText}>{recommendations.error}</Text>
           <Pressable onPress={recommendations.refetch} accessibilityRole="button">
             <Text style={styles.retry}>Try Again</Text>
@@ -40,12 +43,12 @@ export function ColourRecommendations({ result }: { result: ColourAnalysisResult
         </View>
       ) : !recommendations.isSignedIn ? (
         <View style={styles.stateCard}>
-          <Ionicons name="person-outline" size={24} color={StyleUTokens.colors.accent} />
+          <Ionicons name="person-outline" size={24} color={colors.accent} />
           <Text style={styles.stateText}>Sign in to combine your colour result with your saved onboarding preferences.</Text>
         </View>
       ) : recommendations.reason === 'no-items' ? (
         <View style={styles.stateCard}>
-          <Ionicons name="shirt-outline" size={24} color={StyleUTokens.colors.accent} />
+          <Ionicons name="shirt-outline" size={24} color={colors.accent} />
           <Text style={styles.stateText}>There are no catalogue items available to recommend right now.</Text>
         </View>
       ) : (
@@ -79,15 +82,16 @@ export function ColourRecommendations({ result }: { result: ColourAnalysisResult
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: StyleUColors) =>
+  StyleSheet.create({
   section: { gap: 10, marginTop: 2 },
-  title: { color: StyleUTokens.colors.text, fontSize: 20, lineHeight: 26, fontWeight: '600' },
-  intro: { color: StyleUTokens.colors.mutedText, fontSize: 13, lineHeight: 18 },
+  title: { color: colors.text, fontSize: 20, lineHeight: 26, fontWeight: '600' },
+  intro: { color: colors.mutedText, fontSize: 13, lineHeight: 18 },
   carousel: { gap: 12, paddingRight: 4, paddingVertical: 2 },
   stateRow: { minHeight: 82, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10 },
-  stateCard: { minHeight: 100, borderRadius: 18, backgroundColor: StyleUTokens.colors.surface, padding: 16, alignItems: 'center', justifyContent: 'center', gap: 8 },
-  stateText: { flexShrink: 1, color: StyleUTokens.colors.mutedText, fontSize: 14, lineHeight: 20, textAlign: 'center' },
-  retry: { color: StyleUTokens.colors.errorRed, fontSize: 14, fontWeight: '700' },
-  matchBadge: { minWidth: 42, height: 26, borderRadius: 13, backgroundColor: 'rgba(255,255,255,0.94)', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 8 },
-  matchBadgeText: { color: StyleUTokens.colors.text, fontSize: 12, fontWeight: '700' },
+  stateCard: { minHeight: 100, borderRadius: 18, backgroundColor: colors.surface, padding: 16, alignItems: 'center', justifyContent: 'center', gap: 8 },
+  stateText: { flexShrink: 1, color: colors.mutedText, fontSize: 14, lineHeight: 20, textAlign: 'center' },
+  retry: { color: colors.errorRed, fontSize: 14, fontWeight: '700' },
+  matchBadge: { minWidth: 42, height: 26, borderRadius: 13, backgroundColor: colors.frosted, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 8 },
+  matchBadgeText: { color: colors.text, fontSize: 12, fontWeight: '700' },
 });

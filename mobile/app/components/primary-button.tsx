@@ -9,7 +9,7 @@ type PrimaryButtonProps = Pick<PressableProps, 'onPress' | 'disabled'> & {
   compact?: boolean;
 };
 
-export function PrimaryButton({ label, onPress, disabled }: PrimaryButtonProps) {
+export function PrimaryButton({ label, onPress, disabled, compact = false }: PrimaryButtonProps) {
   const styles = useThemedStyles(createStyles);
   return (
     <Pressable
@@ -27,5 +27,7 @@ const createStyles = (colors: StyleUColors) =>
   StyleSheet.create({
   button: { alignItems: 'center', backgroundColor: colors.accent, borderRadius: StyleUTokens.radius.button, height: 72, justifyContent: 'center' },
   label: { color: colors.buttonText, fontSize: 20, fontWeight: '700' },
+  compactButton: { height: 52, borderRadius: 24 },
+  compactLabel: { fontSize: 16 },
   pressed: { opacity: 0.84 },
 });

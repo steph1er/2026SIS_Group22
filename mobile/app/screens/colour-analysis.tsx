@@ -87,10 +87,8 @@ export default function ColourAnalysisScreen() {
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
       <View style={styles.header}>
-        <View style={styles.headerRow}>
-          <BackButton icon="close" fallback="/profile" style={styles.close} />
-          <Text style={styles.title}>Colour Analysis</Text>
-        </View>
+        <BackButton icon="close" fallback="/profile" style={styles.close} />
+        <Text style={styles.title}>Colour Analysis</Text>
         {mode === 'intro' ? <Text style={styles.subtitle}>Find the colours that suit you best.</Text> : null}
       </View>
       {mode === 'camera' ? (
@@ -111,7 +109,7 @@ export default function ColourAnalysisScreen() {
                     ['slash', 'No filters'],
                   ].map(([icon, label]) => (
                     <View key={label} style={styles.tipItem}>
-                      <Feather name={icon as keyof typeof Feather.glyphMap} size={17} color={StyleUTokens.colors.mutedText} />
+                      <Feather name={icon as keyof typeof Feather.glyphMap} size={17} color={colors.mutedText} />
                       <Text style={styles.tipLabel}>{label}</Text>
                     </View>
                   ))}
@@ -190,10 +188,13 @@ const createStyles = (colors: StyleUColors) =>
   secondaryButton: { minHeight: 52, borderRadius: 24, borderWidth: 1, borderColor: colors.border, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 9, backgroundColor: colors.card },
   secondaryLabel: { color: colors.text, fontSize: 15, fontWeight: '600' },
   tipRow: { flexDirection: 'row', gap: 9, alignItems: 'center', backgroundColor: colors.surface, borderRadius: 14, padding: 12 },
+  tipsRow: { flexDirection: 'row', width: '100%', gap: 8 },
+  tipItem: { flex: 1, alignItems: 'center', gap: 5 },
+  tipLabel: { color: colors.mutedText, fontSize: 12, lineHeight: 16, textAlign: 'center' },
   tipText: { flex: 1, color: colors.mutedText, fontSize: 13, lineHeight: 18 },
-  loadingCard: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: StyleUTokens.colors.surface, borderRadius: 14, padding: 14 },
+  loadingCard: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: colors.surface, borderRadius: 14, padding: 14 },
   loadingCopy: { flex: 1 },
-  loadingTitle: { color: StyleUTokens.colors.text, fontSize: 14, lineHeight: 20, fontWeight: '600' },
+  loadingTitle: { color: colors.text, fontSize: 14, lineHeight: 20, fontWeight: '600' },
   loadingText: { color: colors.mutedText, fontSize: 12, lineHeight: 17 },
   errorCard: { flexDirection: 'row', alignItems: 'flex-start', gap: 10, borderRadius: 14, backgroundColor: colors.errorSurface, padding: 12 },
   errorText: { flex: 1, color: colors.errorRed, fontSize: 13, lineHeight: 18, fontWeight: '500' },
