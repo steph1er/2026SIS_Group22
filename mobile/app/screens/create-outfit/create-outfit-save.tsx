@@ -4,9 +4,9 @@ import { ActivityIndicator, Image, ScrollView, Text, TextInput, TouchableOpacity
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, { runOnJS, useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { OUTFIT_SEASONS, OUTFIT_STYLES } from '../../services/create-outfit/create-outfit-service';
-import { OutfitItem, OutfitSaveDetails } from '../../services/create-outfit/createOutfitTypes';
+import { OutfitItem, OutfitSaveDetails } from '../../services/create-outfit/create-outfit-types';
 import { StyleUTokens } from '../../services/styleu-theme';
-import { styles } from './createOutfit';
+import { styles } from './create-outfit';
 
 const getItemLabel = (outfitItem: OutfitItem) =>
   'name' in outfitItem.item ? outfitItem.item.name : outfitItem.item.clothing_category;

@@ -5,12 +5,12 @@ import { ActivityIndicator, Image, ScrollView, Text, TouchableOpacity, View } fr
 import RangeSlider from 'react-native-fast-range-slider';
 import Animated from 'react-native-reanimated';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
-import { onboardingSteps } from '../../services/onboarding/onboardingData';
+import { onboardingSteps } from '../../services/onboarding/onboarding-data';
 
 import { useAuth } from '../../../src/auth/auth-provider';
 import type { OnboardingLayout, OnboardingProgress } from '../../../src/onboarding/onboarding-service';
 import { useOnboardingProgress } from '../../../src/onboarding/use-onboarding-progress';
-import { useOnboardingHandler } from '../../services/onboarding/onboardingHandler';
+import { useOnboardingHandler } from '../../services/onboarding/onboarding-handler';
 import { inputStyles } from '../../services/onboarding/style/onboarding-inputs';
 import { optionStyles } from '../../services/onboarding/style/onboarding-options';
 import { layoutStyles } from '../../services/onboarding/style/onboarding-theme';

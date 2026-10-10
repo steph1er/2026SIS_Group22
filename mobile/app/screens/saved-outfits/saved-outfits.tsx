@@ -8,7 +8,7 @@ import { ThemedText } from '../../components/themed-text';
 import { ThemedView } from '../../components/themed-view';
 
 import { useSavedOutfits } from '../../hooks/use-saved-outfits';
-import { styles } from '../../services/saved-outfits/saved-outfit-styles';
+import { styles } from '../../services/saved-outfits/saved-outfit-theme';
 import { deleteSavedOutfit, type SavedOutfit } from '../../services/saved-outfits/saved-outfits-service';
 import { StyleUTokens } from '../../services/styleu-theme';
 

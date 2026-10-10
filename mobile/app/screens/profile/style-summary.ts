@@ -1,6 +1,6 @@
 import type { OnboardingRow } from '../../../src/onboarding/onboarding-service';
 import type { Profile } from '../../../src/profile/profile-service';
-import { onboardingSteps } from '../../services/onboarding/onboardingData';
+import { onboardingSteps } from '../../services/onboarding/onboarding-data';
 
 export type StyleQuizStatus = 'completed' | 'not-completed' | 'in-progress' | 'not-started';
 
