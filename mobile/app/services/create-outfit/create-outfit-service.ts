@@ -1,4 +1,4 @@
-import type { Ionicons } from '@expo/vector-icons';
+import type { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import type { ComponentProps } from 'react';
 import { addToWishlist, fetchRecommendations, normaliseCatalogueItem, requestJson, toArray, WishlistApiError } from '../wishlist/wishlist-service';
 import type { CatalogueItem } from '../wishlist/wishlist-types';
@@ -15,6 +15,23 @@ export const CATEGORY_MAP: Record<string, FilterCategory> = {
   Shoes: 'shoes',
   Other: 'other',
 };
+
+// mirrors backend/src/common/constants/filter-category.constant.ts
+const CATEGORY_TO_FILTER_GROUP: Record<string, FilterCategory> = {
+  top: 'tops', tops: 'tops', shirt: 'tops', shirts: 'tops', 't-shirt': 'tops', 't-shirts': 'tops',
+  tshirt: 'tops', tshirts: 'tops', blouse: 'tops', hoodie: 'tops', hoodies: 'tops',
+  jumper: 'tops', jumpers: 'tops', sweater: 'tops', sweaters: 'tops',
+  pants: 'bottoms', jeans: 'bottoms', skirt: 'bottoms', skirts: 'bottoms', shorts: 'bottoms',
+  sweatpants: 'bottoms', leggings: 'bottoms',
+  jacket: 'outerwear', jackets: 'outerwear', coat: 'outerwear', coats: 'outerwear',
+  cardigan: 'outerwear', blazer: 'outerwear',
+  dress: 'dresses', dresses: 'dresses',
+  shoes: 'shoes', sneakers: 'shoes', boots: 'shoes', sandals: 'shoes', heels: 'shoes', flats: 'shoes',
+};
+
+// anything unmapped or missing falls into 'other', same as the backend
+export const resolveFilterGroup = (rawCategory?: string | null): FilterCategory =>
+  (rawCategory && CATEGORY_TO_FILTER_GROUP[rawCategory.trim().toLowerCase()]) || 'other';
 
 export type BuilderResult = {
   recommendations: BuilderItem[];
@@ -124,6 +141,17 @@ export const SOURCE_ICONS: Record<ItemDetails['source'], ComponentProps<typeof I
   Wishlist: 'heart-outline',
   Catalogue: 'storefront-outline',
 };
+
+export const CATEGORY_ICONS: Record<FilterCategory, ComponentProps<typeof MaterialCommunityIcons>['name']> = {
+  tops: 'tshirt-crew-outline',
+  bottoms: 'hanger',
+  outerwear: 'coat-rack',
+  dresses: 'human-female',
+  shoes: 'shoe-sneaker',
+  other: 'glasses',
+};
+
+export const getCategoryIcon = (rawCategory?: string | null) => CATEGORY_ICONS[resolveFilterGroup(rawCategory)];
 
 // options for the save popup dropdowns
 export const OUTFIT_STYLES = ['Y2K', 'Classy', 'Casual', 'Streetwear', 'Bohemian', 'Minimalist', 'Preppy', 'Active', 'Vintage'];

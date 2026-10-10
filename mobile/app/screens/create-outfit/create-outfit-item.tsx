@@ -1,9 +1,9 @@
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { Image, Text, TouchableOpacity, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, { runOnJS, useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { useThemedStyles } from '../../hooks/use-theme';
-import { getItemDetails, SOURCE_ICONS } from '../../services/create-outfit/create-outfit-service';
+import { getCategoryIcon, getItemDetails, SOURCE_ICONS } from '../../services/create-outfit/create-outfit-service';
 import { RecommendedItem, WardrobeItem } from '../../services/create-outfit/create-outfit-types';
 import { createStyles } from './create-outfit';
 
@@ -81,18 +81,16 @@ export default function CreateOutfitItem({ item, onClose, onAddToOutfit, already
           {subtitle ? <Text style={styles.descriptionSubtitle}>{subtitle}</Text> : null}
           {details.description ? <Text style={styles.descriptionText}>{details.description}</Text> : null}
           <View style={styles.descriptionCardContainer}>
-            <View style={styles.descriptionCard}>
-              <Text style={styles.descriptionCardSymbol}>
-                {/* symbol */}
-              </Text>
+            <View style={[styles.descriptionCard, styles.descriptionCardCentered]}>
               <Text style={styles.descriptionCardText}>
-                {details.colour ?? 'Colour: n/a'}
+                {details.colour ?? 'n/a'}
               </Text>
+              <Text style={[styles.descriptionCardText, { marginTop: 10 }]}>Colour</Text>
             </View>
 
             <View style={styles.descriptionCard}>
               <Text style={styles.descriptionCardSymbol}>
-                {/* symbol */}
+                <MaterialCommunityIcons style={styles.descriptionCardSymbol} name={getCategoryIcon(details.category)} size={20} />
               </Text>
               <Text style={styles.descriptionCardText}>
                 {details.category ?? 'Category: n/a'}
