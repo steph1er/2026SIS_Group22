@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { ActivityIndicator, Image, Modal, ScrollView, Text, TouchableOpacity, useWindowDimensions, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { addOutfitToWishlist, fetchBuilderItems, fetchGeneralRecommendations, getItemLabel, saveOutfit, type BuilderItem } from '../../services/create-outfit/create-outfit-service';
 
@@ -35,6 +35,7 @@ export default function CreateOutfits() {
   // the discard modal reuses the saved-outfits delete modal styles (modalOverlay, modalCard, ...)
   const modalStyles = useThemedStyles(createSavedOutfitStyles);
   const colors = useStyleUColors();
+  const insets = useSafeAreaInsets();
 
   const { height: screenHeight, width: screenWidth } = useWindowDimensions();
 
@@ -152,7 +153,6 @@ export default function CreateOutfits() {
       {
         instanceId: `${item.id}-${Date.now()}`, item,
         // stagger so they dont land  on top of each other
-        // TODO: set top bottoms etc template?
         x: 20 + (prev.length % 4) * 24,
         y: 20 + (prev.length % 4) * 24,
       },
@@ -162,6 +162,10 @@ export default function CreateOutfits() {
 
   const handleRemoveFromOutfit = (instanceId: string) => {
     setOutfitItems((prev) => prev.filter((outfitItem) => outfitItem.instanceId !== instanceId));
+  };
+
+  const handleClearVisualiser = () => {
+    setOutfitItems([]);
   };
 
   const handleItemSelect = (item: WardrobeItem | RecommendedItem) => {
@@ -211,6 +215,17 @@ export default function CreateOutfits() {
             Outfit Builder
           </Text>
         </View>
+        
+        <TouchableOpacity
+          onPress={handleClearVisualiser}
+          disabled={!hasOutfitItems}
+          hitSlop={8}
+          accessibilityRole="button"
+          accessibilityLabel="Clear outfit"
+          style={[styles.headerClearButton, !hasOutfitItems && styles.headerClearButtonDisabled]}
+        >
+          <Text style={styles.headerClearText}>Clear</Text>
+        </TouchableOpacity>
       </View>
 
       <View style={styles.contentContainer}>
@@ -252,8 +267,6 @@ export default function CreateOutfits() {
                 ))}
               </View>
             </ScrollView>
-
-            {/* TODO: add search bar */}
 
             {/* recommended items */}
             <View style={styles.suggestedContainer}>
@@ -332,7 +345,7 @@ export default function CreateOutfits() {
         </Animated.View>
 
         {/* bottom bar */}
-        <View style={styles.buttonContainer}>
+        <View style={[styles.buttonContainer, { bottom: -insets.bottom }]}>
           <TouchableOpacity
             onPress={handleAddToWishlist}
             disabled={!hasOutfitItems || addingToWishlist}
