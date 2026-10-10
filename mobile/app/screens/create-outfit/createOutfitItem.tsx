@@ -4,7 +4,8 @@ import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, { runOnJS, useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { getItemDetails, SOURCE_ICONS } from '../../services/create-outfit/create-outfit-service';
 import { RecommendedItem, WardrobeItem } from '../../services/create-outfit/createOutfitTypes';
-import { styles } from './createOutfit';
+import { createStyles } from './createOutfit';
+import { useThemedStyles } from '../../hooks/use-theme';
 
 type Props = {
   item: WardrobeItem | RecommendedItem;
@@ -14,6 +15,7 @@ type Props = {
 };
 
 export default function CreateOutfitItem({ item, onClose, onAddToOutfit, alreadyAdded }: Props) {
+  const styles = useThemedStyles(createStyles);
   const startY = useSharedValue(0);
   const translateY = useSharedValue(0);
   const panGesture = Gesture.Pan()

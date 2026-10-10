@@ -11,13 +11,20 @@ import { useAuth } from '../../../src/auth/auth-provider';
 import type { OnboardingLayout, OnboardingProgress } from '../../../src/onboarding/onboarding-service';
 import { useOnboardingProgress } from '../../../src/onboarding/use-onboarding-progress';
 import { useOnboardingHandler } from '../../services/onboarding/onboardingHandler';
-import { inputStyles } from '../../services/onboarding/style/onboarding-inputs';
-import { optionStyles } from '../../services/onboarding/style/onboarding-options';
-import { layoutStyles } from '../../services/onboarding/style/onboarding-theme';
-import { wardrobeStyles } from '../../services/onboarding/style/onboarding-wardrobe';
-import { StyleUTokens } from '../../services/styleu-theme';
+import { BackButton } from '../../components/back-button';
+import { createInputStyles } from '../../services/onboarding/style/onboarding-inputs';
+import { createOptionStyles } from '../../services/onboarding/style/onboarding-options';
+import { createLayoutStyles } from '../../services/onboarding/style/onboarding-theme';
+import { createWardrobeStyles } from '../../services/onboarding/style/onboarding-wardrobe';
+import { useStyleUColors, useThemedStyles } from '../../hooks/use-theme';
+import type { StyleUColors } from '../../services/styleu-theme';
 
-const styles = { ...layoutStyles, ...optionStyles, ...inputStyles, ...wardrobeStyles };
+const createStyles = (colors: StyleUColors) => ({
+  ...createLayoutStyles(colors),
+  ...createOptionStyles(colors),
+  ...createInputStyles(colors),
+  ...createWardrobeStyles(colors),
+});
 
 // Tells the restore logic which screen holds the price ranges and what their full ranges are.
 const priceStepIndex = onboardingSteps.findIndex((step) => step.sections?.some((section) => section.type === 'price-select'));
@@ -35,6 +42,8 @@ const priceLabelWidth = 40;
 // Loads where this user's onboarding should start before showing the quiz. Nothing is shown
 // (and nothing can be saved) until that is known, and a failed load never falls back to a blank quiz.
 export default function OnboardingQuiz() {
+  const styles = useThemedStyles(createStyles);
+  const colors = useStyleUColors();
   const { user, isLoading: isAuthLoading } = useAuth();
   const { progress, error, isLoading, retry } = useOnboardingProgress(onboardingLayout);
 
@@ -42,7 +51,7 @@ export default function OnboardingQuiz() {
   if (isAuthLoading) {
     return (
       <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-        <ActivityIndicator color={StyleUTokens.colors.accent} size="large" />
+        <ActivityIndicator color={colors.accent} size="large" />
       </View>
     );
   }
@@ -60,7 +69,7 @@ export default function OnboardingQuiz() {
           justifyContent: 'center',
           gap: 20,
           paddingHorizontal: 28,
-          backgroundColor: StyleUTokens.colors.background,
+          backgroundColor: colors.background,
         }}
       >
         <Text accessibilityRole="alert" style={styles.footerErrorText}>
@@ -76,7 +85,7 @@ export default function OnboardingQuiz() {
   if (isLoading || !progress) {
     return (
       <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-        <ActivityIndicator color={StyleUTokens.colors.accent} size="large" />
+        <ActivityIndicator color={colors.accent} size="large" />
       </View>
     );
   }
@@ -86,6 +95,8 @@ export default function OnboardingQuiz() {
 }
 
 function OnboardingQuizContent({ initial }: { initial: OnboardingProgress }) {
+  const styles = useThemedStyles(createStyles);
+  const colors = useStyleUColors();
   const {
     isSaving,
     saveError,
@@ -132,9 +143,7 @@ function OnboardingQuizContent({ initial }: { initial: OnboardingProgress }) {
           <View style={styles.header}>
             <View style={styles.stepLabelRow}>
               {currentStep > 0 && (
-                <TouchableOpacity onPress={handleBack} style={styles.backChevron}>
-                  <Text style={styles.backChevronText}>‹</Text>
-                </TouchableOpacity>
+                <BackButton onPress={handleBack} style={styles.backChevron} />
               )}
 
               <Text style={styles.stepLabel}>
@@ -237,9 +246,9 @@ function OnboardingQuizContent({ initial }: { initial: OnboardingProgress }) {
                                   maximumValue={section.max}
                                   value={typeof answers[section.id] === 'number' ? (answers[section.id] as number) : section.defaultValue}
                                   step={1}
-                                  minimumTrackTintColor={isSkipped ? StyleUTokens.colors.placeholder : StyleUTokens.colors.text}
-                                  maximumTrackTintColor={StyleUTokens.colors.placeholder}
-                                  thumbTintColor={isSkipped ? StyleUTokens.colors.placeholder : StyleUTokens.colors.text}
+                                  minimumTrackTintColor={isSkipped ? colors.placeholder : colors.text}
+                                  maximumTrackTintColor={colors.placeholder}
+                                  thumbTintColor={isSkipped ? colors.placeholder : colors.text}
                                   onValueChange={(value) =>
                                     handleSelect(section.id, value)
                                   }
@@ -424,7 +433,7 @@ function OnboardingQuizContent({ initial }: { initial: OnboardingProgress }) {
                                   initialMaxValue={maxVal}
                                   width={priceSliderWidth}
                                   enabled={!isSkipped}
-                                  selectedTrackColor={StyleUTokens.colors.text}
+                                  selectedTrackColor={colors.text}
                                   onValuesChange={([low, high]) =>
                                     setLivePriceValues((prev) => ({ ...prev, [fieldKey]: [low, high] }))
                                   }

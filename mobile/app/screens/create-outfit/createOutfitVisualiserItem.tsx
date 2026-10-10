@@ -4,7 +4,9 @@ import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, { useAnimatedStyle, useSharedValue } from 'react-native-reanimated';
 
 import { OutfitItem } from '../../services/create-outfit/createOutfitTypes';
-import { styles } from './createOutfit';
+import { createStyles } from './createOutfit';
+import { useStyleUColors, useThemedStyles } from '../../hooks/use-theme';
+import type { StyleUColors } from '../../services/styleu-theme';
 
 type Props = {
   outfitItem: OutfitItem;
@@ -12,6 +14,8 @@ type Props = {
 };
 
 export default function CreateOutfitVisualiserItem({ outfitItem, onRemove }: Props) {
+  const styles = useThemedStyles(createStyles);
+  const colors = useStyleUColors();
   const startX = useSharedValue(outfitItem.x);
   const startY = useSharedValue(outfitItem.y);
   const translateX = useSharedValue(outfitItem.x);
@@ -47,7 +51,7 @@ export default function CreateOutfitVisualiserItem({ outfitItem, onRemove }: Pro
         onPress={() => onRemove(outfitItem.instanceId)}
         hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
       >
-        <Ionicons name="close" size={14} color="#FFFFFF" />
+        <Ionicons name="close" size={14} color={colors.onAccent} />
       </TouchableOpacity>
     </Animated.View>
   );

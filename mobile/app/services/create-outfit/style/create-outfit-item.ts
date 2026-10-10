@@ -1,9 +1,8 @@
 import { StyleSheet } from 'react-native';
-import { StyleUTokens } from '../../styleu-theme';
+import type { StyleUColors } from '../../styleu-theme';
 
-const { colors } = StyleUTokens;
-
-export const itemStyles = StyleSheet.create ({
+export const createItemStyles = (colors: StyleUColors) =>
+  StyleSheet.create({
   topContainer: {
     paddingVertical: 12,
     flexDirection: 'row',
@@ -30,6 +29,7 @@ export const itemStyles = StyleSheet.create ({
   },
   
   price: {
+    color: colors.text,
     fontSize: 16,
     fontWeight: 700,
   },

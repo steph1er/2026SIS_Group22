@@ -5,8 +5,9 @@ import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, { runOnJS, useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { OUTFIT_SEASONS, OUTFIT_STYLES } from '../../services/create-outfit/create-outfit-service';
 import { OutfitItem, OutfitSaveDetails } from '../../services/create-outfit/createOutfitTypes';
-import { StyleUTokens } from '../../services/styleu-theme';
-import { styles } from './createOutfit';
+import { createStyles } from './createOutfit';
+import { useStyleUColors, useThemedStyles } from '../../hooks/use-theme';
+import type { StyleUColors } from '../../services/styleu-theme';
 
 const getItemLabel = (outfitItem: OutfitItem) =>
   'name' in outfitItem.item ? outfitItem.item.name : outfitItem.item.clothing_category;
@@ -27,6 +28,8 @@ type DropdownProps = {
 };
 
 function DetailDropdown({ label, options, value, open, onToggle, onSelect }: DropdownProps) {
+  const styles = useThemedStyles(createStyles);
+  const colors = useStyleUColors();
   return (
     <View>
       <TouchableOpacity style={styles.outfitDetailsField} onPress={onToggle}>
@@ -35,7 +38,7 @@ function DetailDropdown({ label, options, value, open, onToggle, onSelect }: Dro
           <Text style={value ? styles.dropdownTriggerText : styles.dropdownPlaceholderText} numberOfLines={1}>
             {value ?? 'Select'}
           </Text>
-          <Ionicons name={open ? 'chevron-up' : 'chevron-down'} size={16} color={StyleUTokens.colors.mutedText}/>
+          <Ionicons name={open ? 'chevron-up' : 'chevron-down'} size={16} color={colors.mutedText}/>
         </View>
       </TouchableOpacity>
 
@@ -65,6 +68,8 @@ function DetailDropdown({ label, options, value, open, onToggle, onSelect }: Dro
 }
 
 export default function CreateOutfitSave({ onClose, onConfirmSave, outfitItems }: Props) {
+  const styles = useThemedStyles(createStyles);
+  const colors = useStyleUColors();
   const [outfitName, setOutfitName] = useState('');
   const [style, setStyle] = useState<string | undefined>();
   const [season, setSeason] = useState<string | undefined>();
@@ -145,7 +150,7 @@ export default function CreateOutfitSave({ onClose, onConfirmSave, outfitItems }
             <TextInput
               style={styles.outfitDetailsInput}
               placeholder="Enter outfit name"
-              placeholderTextColor={StyleUTokens.colors.placeholder}
+              placeholderTextColor={colors.placeholder}
               maxLength={60}
               value={outfitName}
               onChangeText={setOutfitName}
@@ -177,7 +182,7 @@ export default function CreateOutfitSave({ onClose, onConfirmSave, outfitItems }
             <TextInput
               style={styles.outfitDetailsInput}
               placeholder="Enter occasion"
-              placeholderTextColor={StyleUTokens.colors.placeholder}
+              placeholderTextColor={colors.placeholder}
               maxLength={60}
               value={occasion}
               onChangeText={setOccasion}

@@ -8,15 +8,18 @@ import { ColourAnalysisCamera } from '../components/colour-analysis/colour-analy
 import { ColourAnalysisResultView } from '../components/colour-analysis/colour-analysis-result';
 import { BackButton } from '../components/back-button';
 import { PrimaryButton } from '../components/primary-button';
-import { StyleUTokens } from '../services/styleu-theme';
 import { useAuth } from '../../src/auth/auth-provider';
 import { analyseColourPhoto } from '../../src/colour-analysis/colour-analysis-service';
 import { saveColourAnalysis } from '../../src/colour-analysis/colour-analysis-storage';
 import type { ColourAnalysisPhoto, ColourAnalysisResult } from '../../src/colour-analysis/types';
+import { useStyleUColors, useThemedStyles } from '../hooks/use-theme';
+import type { StyleUColors } from '../services/styleu-theme';
 
 type Mode = 'intro' | 'camera' | 'preview' | 'result';
 
 export default function ColourAnalysisScreen() {
+  const colors = useStyleUColors();
+  const styles = useThemedStyles(createStyles);
   const { user, isLoading: isAuthLoading } = useAuth();
   const [mode, setMode] = useState<Mode>('intro');
   const [photo, setPhoto] = useState<ColourAnalysisPhoto | null>(null);
@@ -84,10 +87,8 @@ export default function ColourAnalysisScreen() {
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
       <View style={styles.header}>
-        <View style={styles.headerRow}>
-          <BackButton />
-          <Text style={styles.title}>Colour Analysis</Text>
-        </View>
+        <BackButton icon="close" fallback="/profile" style={styles.close} />
+        <Text style={styles.title}>Colour Analysis</Text>
         {mode === 'intro' ? <Text style={styles.subtitle}>Find the colours that suit you best.</Text> : null}
       </View>
       {mode === 'camera' ? (
@@ -99,7 +100,7 @@ export default function ColourAnalysisScreen() {
           {mode === 'intro' ? (
             <View style={styles.introContent}>
               <View style={styles.guideCard}>
-                <View style={styles.faceIcon}><Feather name="user" size={32} color={StyleUTokens.colors.text} /></View>
+                <View style={styles.faceIcon}><Feather name="user" size={32} color={colors.text} /></View>
                 <Text style={styles.guideTitle}>Use a clear face photo</Text>
                 <View style={styles.tipsRow}>
                   {[
@@ -108,7 +109,7 @@ export default function ColourAnalysisScreen() {
                     ['slash', 'No filters'],
                   ].map(([icon, label]) => (
                     <View key={label} style={styles.tipItem}>
-                      <Feather name={icon as keyof typeof Feather.glyphMap} size={17} color={StyleUTokens.colors.mutedText} />
+                      <Feather name={icon as keyof typeof Feather.glyphMap} size={17} color={colors.mutedText} />
                       <Text style={styles.tipLabel}>{label}</Text>
                     </View>
                   ))}
@@ -117,7 +118,7 @@ export default function ColourAnalysisScreen() {
               {error ? <ErrorMessage message={error} /> : null}
               <PrimaryButton compact label="Take Photo" onPress={() => { setError(null); setMode('camera'); }} />
               <Pressable style={styles.secondaryButton} onPress={chooseFromLibrary}>
-                <Feather name="image" size={20} color={StyleUTokens.colors.text} />
+                <Feather name="image" size={20} color={colors.text} />
                 <Text style={styles.secondaryLabel}>Choose from Library</Text>
               </Pressable>
             </View>
@@ -137,14 +138,14 @@ export default function ColourAnalysisScreen() {
                 disabled={isAnalysing || isSaving || isAuthLoading}
               />
               {isAnalysing || isSaving ? <View style={styles.loadingCard}>
-                <ActivityIndicator color={StyleUTokens.colors.accent} size="small" />
+                <ActivityIndicator color={colors.accent} size="small" />
                 <View style={styles.loadingCopy}>
                   <Text style={styles.loadingTitle}>{isSaving ? 'Saving your result' : 'Analysing your colours'}</Text>
                   <Text style={styles.loadingText}>{isSaving ? 'Almost done…' : 'Checking face and skin tones…'}</Text>
                 </View>
               </View> : null}
               <Pressable style={styles.secondaryButton} onPress={reset} disabled={isAnalysing || isSaving}>
-                <Feather name="refresh-cw" size={19} color={StyleUTokens.colors.text} />
+                <Feather name="refresh-cw" size={19} color={colors.text} />
                 <Text style={styles.secondaryLabel}>Choose Another Photo</Text>
               </Pressable>
             </View>
@@ -157,38 +158,44 @@ export default function ColourAnalysisScreen() {
 }
 
 function ErrorMessage({ message }: { message: string }) {
+  const colors = useStyleUColors();
+  const styles = useThemedStyles(createStyles);
   return <View style={styles.errorCard} accessibilityRole="alert">
-    <Feather name="alert-circle" size={20} color={StyleUTokens.colors.errorRed} />
+    <Feather name="alert-circle" size={20} color={colors.errorRed} />
     <Text style={styles.errorText}>{message}</Text>
   </View>;
 }
 
-const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: StyleUTokens.colors.background },
-  header: { paddingHorizontal: 20, paddingTop: 10, paddingBottom: 12 },
-  headerRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  title: { color: StyleUTokens.colors.text, fontSize: 26, lineHeight: 32, fontWeight: '600' },
-  subtitle: { color: StyleUTokens.colors.mutedText, fontSize: 14, lineHeight: 20, marginTop: 6, marginLeft: 36 },
+const createStyles = (colors: StyleUColors) =>
+  StyleSheet.create({
+  safeArea: { flex: 1, backgroundColor: colors.background },
+  // Wider page margins than the ✕, so the title and text sit inset from it rather than right under it.
+  header: { paddingHorizontal: 28, paddingTop: 8, paddingBottom: 12 },
+  close: { marginLeft: -22 },
+  // Same page title size as Saved and Profile.
+  title: { color: colors.text, fontSize: 26, lineHeight: 32, fontWeight: '600', marginTop: 12 },
+  subtitle: { color: colors.mutedText, fontSize: 15, lineHeight: 22, marginTop: 8 },
   scroll: { flex: 1 },
-  scrollContent: { paddingHorizontal: 20, paddingTop: 8, paddingBottom: 28 },
-  introContent: { gap: 12 },
-  guideCard: { backgroundColor: StyleUTokens.colors.surface, borderRadius: 18, padding: 20, alignItems: 'center', marginBottom: 6 },
-  faceIcon: { width: 70, height: 70, borderRadius: 35, backgroundColor: StyleUTokens.colors.chipSelectedBg, borderWidth: 1, borderColor: StyleUTokens.colors.accent, alignItems: 'center', justifyContent: 'center', marginBottom: 12 },
-  guideTitle: { color: StyleUTokens.colors.text, fontSize: 19, lineHeight: 24, fontWeight: '600', marginBottom: 14 },
-  tipsRow: { flexDirection: 'row', width: '100%', gap: 8 },
-  tipItem: { flex: 1, alignItems: 'center', gap: 5 },
-  tipLabel: { color: StyleUTokens.colors.mutedText, fontSize: 12, lineHeight: 16, textAlign: 'center' },
+  scrollContent: { paddingHorizontal: 28, paddingTop: 8, paddingBottom: 28 },
+  introContent: { gap: 14 },
+  guideCard: { backgroundColor: colors.surface, borderRadius: 24, padding: 24, alignItems: 'center', marginBottom: 8 },
+  faceIcon: { width: 92, height: 112, borderRadius: 46, borderWidth: 2, borderColor: colors.accent, alignItems: 'center', justifyContent: 'center', marginBottom: 16 },
+  guideTitle: { color: colors.text, fontSize: 19, fontWeight: '700', marginBottom: 8 },
+  guideText: { color: colors.mutedText, fontSize: 14, lineHeight: 21, textAlign: 'center' },
   cameraWrap: { flex: 1, paddingHorizontal: 16, paddingBottom: 14 },
   previewContent: { gap: 12 },
-  preview: { width: '100%', aspectRatio: 4 / 5, maxHeight: 470, borderRadius: 18, backgroundColor: StyleUTokens.colors.surface },
-  secondaryButton: { minHeight: 52, borderRadius: 24, borderWidth: 1, borderColor: StyleUTokens.colors.border, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 9, backgroundColor: '#FFFFFF' },
-  secondaryLabel: { color: StyleUTokens.colors.text, fontSize: 15, fontWeight: '600' },
-  tipRow: { flexDirection: 'row', gap: 9, alignItems: 'center', backgroundColor: '#FFF8EB', borderRadius: 14, padding: 12 },
-  tipText: { flex: 1, color: StyleUTokens.colors.mutedText, fontSize: 13, lineHeight: 18 },
-  loadingCard: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: StyleUTokens.colors.surface, borderRadius: 14, padding: 14 },
+  preview: { width: '100%', aspectRatio: 4 / 5, maxHeight: 470, borderRadius: 18, backgroundColor: colors.surface },
+  secondaryButton: { minHeight: 52, borderRadius: 24, borderWidth: 1, borderColor: colors.border, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 9, backgroundColor: colors.card },
+  secondaryLabel: { color: colors.text, fontSize: 15, fontWeight: '600' },
+  tipRow: { flexDirection: 'row', gap: 9, alignItems: 'center', backgroundColor: colors.surface, borderRadius: 14, padding: 12 },
+  tipsRow: { flexDirection: 'row', width: '100%', gap: 8 },
+  tipItem: { flex: 1, alignItems: 'center', gap: 5 },
+  tipLabel: { color: colors.mutedText, fontSize: 12, lineHeight: 16, textAlign: 'center' },
+  tipText: { flex: 1, color: colors.mutedText, fontSize: 13, lineHeight: 18 },
+  loadingCard: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: colors.surface, borderRadius: 14, padding: 14 },
   loadingCopy: { flex: 1 },
-  loadingTitle: { color: StyleUTokens.colors.text, fontSize: 14, lineHeight: 20, fontWeight: '600' },
-  loadingText: { color: StyleUTokens.colors.mutedText, fontSize: 12, lineHeight: 17 },
-  errorCard: { flexDirection: 'row', alignItems: 'flex-start', gap: 10, borderRadius: 14, backgroundColor: '#FFF0EF', padding: 12 },
-  errorText: { flex: 1, color: StyleUTokens.colors.errorRed, fontSize: 13, lineHeight: 18, fontWeight: '500' },
+  loadingTitle: { color: colors.text, fontSize: 14, lineHeight: 20, fontWeight: '600' },
+  loadingText: { color: colors.mutedText, fontSize: 12, lineHeight: 17 },
+  errorCard: { flexDirection: 'row', alignItems: 'flex-start', gap: 10, borderRadius: 14, backgroundColor: colors.errorSurface, padding: 12 },
+  errorText: { flex: 1, color: colors.errorRed, fontSize: 13, lineHeight: 18, fontWeight: '500' },
 });
