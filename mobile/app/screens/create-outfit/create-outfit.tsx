@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, Image, ScrollView, Text, TouchableOpacity, useWindowDimensions, View } from 'react-native';
+import { ActivityIndicator, Image, Modal, ScrollView, Text, TouchableOpacity, useWindowDimensions, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -19,6 +19,7 @@ import { createVisualiserStyles } from '../../services/create-outfit/style/creat
 
 import { BackButton, goBackOr } from '../../components/back-button';
 import { useStyleUColors, useThemedStyles } from '../../hooks/use-theme';
+import { createStyles as createSavedOutfitStyles } from '../../services/saved-outfits/saved-outfit-theme';
 import type { StyleUColors } from '../../services/styleu-theme';
 
 export const createStyles = (colors: StyleUColors) => ({
@@ -31,6 +32,8 @@ export const createStyles = (colors: StyleUColors) => ({
 
 export default function CreateOutfits() {
   const styles = useThemedStyles(createStyles);
+  // the discard modal reuses the saved-outfits delete modal styles (modalOverlay, modalCard, ...)
+  const modalStyles = useThemedStyles(createSavedOutfitStyles);
   const colors = useStyleUColors();
 
   const { height: screenHeight, width: screenWidth } = useWindowDimensions();
@@ -76,14 +79,17 @@ export default function CreateOutfits() {
       goBackOr('/outfits');
       return;
     }
-    Alert.alert('Discard this outfit?', "The items you've added won't be saved.", [
-      { text: 'Keep editing', style: 'cancel' },
-      { text: 'Discard', style: 'destructive', onPress: () => goBackOr('/outfits') },
-    ]);
+    setShowDiscard(true);
+  };
+
+  const handleConfirmDiscard = () => {
+    setShowDiscard(false);
+    goBackOr('/outfits');
   };
 
   const [selectedCategory, setSelectedCategory] = useState('Tops');
   const [showSave, setShowSave] = useState(false);
+  const [showDiscard, setShowDiscard] = useState(false);
   const [addingToWishlist, setAddingToWishlist] = useState(false);
   const [reloadCount, setReloadCount] = useState(0); // bump to refetch wardrobe/wishlist items
 
@@ -367,6 +373,30 @@ export default function CreateOutfits() {
         )}
       </View>
 
+      <Modal transparent animationType="fade" visible={showDiscard} onRequestClose={() => setShowDiscard(false)}>
+        <View style={modalStyles.modalOverlay}>
+          <View style={modalStyles.modalCard}>
+            <Text style={modalStyles.modalTitle}>Discard this outfit?</Text>
+            <Text style={modalStyles.modalMessage}>
+              The items you've added won't be saved.
+            </Text>
+            <View style={modalStyles.modalButtons}>
+              <TouchableOpacity
+                style={[modalStyles.modalButton, modalStyles.modalCloseButton]}
+                onPress={() => setShowDiscard(false)}
+              >
+                <Text style={modalStyles.modalCloseText}>Keep editing</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[modalStyles.modalButton, modalStyles.modalDeleteButton]}
+                onPress={handleConfirmDiscard}
+              >
+                <Text style={modalStyles.modalDeleteText}>Discard</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   )
 }
