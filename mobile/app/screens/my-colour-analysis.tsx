@@ -19,8 +19,10 @@ export default function MyColourAnalysisScreen() {
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
       <View style={styles.header}>
-        <BackButton fallback="/profile" />
-        <Text style={styles.title}>My Colour Analysis</Text>
+        <View style={styles.headerRow}>
+          <BackButton fallback="/profile" />
+          <Text style={styles.title}>My Colour Analysis</Text>
+        </View>
       </View>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         {isLoading ? (
@@ -44,12 +46,10 @@ export default function MyColourAnalysisScreen() {
             <View style={styles.iconCircle}>
               <Feather name="droplet" size={34} color={colors.text} />
             </View>
-            <Text style={styles.stateTitle}>{isSignedIn ? 'Discover your best colours' : 'Sign in to save your result'}</Text>
-            <Text style={styles.stateText}>
-              Take a clear face photo to receive an estimated seasonal palette and styling suggestions.
-            </Text>
+            <Text style={styles.stateTitle}>{isSignedIn ? 'Find your best colours' : 'Sign in to save a result'}</Text>
+            <Text style={styles.stateText}>Use one clear face photo to get your palette.</Text>
             <View style={styles.fullWidth}>
-              <PrimaryButton label="Start Colour Analysis" onPress={redo} />
+              <PrimaryButton compact label="Start Colour Analysis" onPress={redo} />
             </View>
           </View>
         )}
@@ -61,15 +61,16 @@ export default function MyColourAnalysisScreen() {
 const createStyles = (colors: StyleUColors) =>
   StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: colors.background },
-  header: { paddingHorizontal: 22, paddingTop: 8, paddingBottom: 10 },
-  title: { color: colors.text, fontSize: 32, lineHeight: 39, fontWeight: '700' },
-  content: { paddingHorizontal: 22, paddingTop: 10, paddingBottom: 36 },
-  stateCard: { minHeight: 320, borderRadius: 24, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center', padding: 26, gap: 14 },
-  iconCircle: { width: 82, height: 82, borderRadius: 41, backgroundColor: colors.accentSoft, alignItems: 'center', justifyContent: 'center' },
-  stateTitle: { color: colors.text, fontSize: 22, fontWeight: '700', textAlign: 'center' },
-  stateText: { color: colors.mutedText, fontSize: 15, lineHeight: 22, textAlign: 'center' },
-  errorText: { color: colors.errorRed, fontSize: 14, lineHeight: 20, textAlign: 'center' },
-  retryButton: { borderRadius: 18, backgroundColor: colors.accent, paddingHorizontal: 24, paddingVertical: 13 },
-  retryLabel: { color: colors.buttonText, fontSize: 15, fontWeight: '700' },
+  header: { paddingHorizontal: 20, paddingTop: 10, paddingBottom: 10 },
+  headerRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  title: { color: colors.text, fontSize: 26, lineHeight: 32, fontWeight: '600' },
+  content: { paddingHorizontal: 20, paddingTop: 10, paddingBottom: 36 },
+  stateCard: { minHeight: 260, borderRadius: 18, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center', padding: 24, gap: 12 },
+  iconCircle: { width: 68, height: 68, borderRadius: 34, backgroundColor: colors.accentSoft, alignItems: 'center', justifyContent: 'center' },
+  stateTitle: { color: colors.text, fontSize: 20, lineHeight: 26, fontWeight: '600', textAlign: 'center' },
+  stateText: { color: colors.mutedText, fontSize: 14, lineHeight: 20, textAlign: 'center' },
+  errorText: { color: colors.errorRed, fontSize: 13, lineHeight: 18, textAlign: 'center' },
+  retryButton: { borderRadius: 22, backgroundColor: colors.accent, paddingHorizontal: 22, paddingVertical: 12 },
+  retryLabel: { color: colors.buttonText, fontSize: 15, fontWeight: '600' },
   fullWidth: { alignSelf: 'stretch', marginTop: 8 },
 });

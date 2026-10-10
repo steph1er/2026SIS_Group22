@@ -39,7 +39,7 @@ export function ColourAnalysisCamera({ onCancel, onPhoto }: Props) {
       <View style={styles.permissionCard}>
         <Feather name="camera" size={34} color={colors.text} />
         <Text style={styles.permissionTitle}>Camera access needed</Text>
-        <Text style={styles.permissionText}>Allow camera access to take a face photo for colour analysis.</Text>
+        <Text style={styles.permissionText}>Allow access to take your photo.</Text>
         <Pressable style={styles.permissionButton} onPress={requestPermission}>
           <Text style={styles.buttonLabel}>Allow Camera</Text>
         </Pressable>
@@ -55,7 +55,7 @@ export function ColourAnalysisCamera({ onCancel, onPhoto }: Props) {
       <CameraView ref={cameraRef} style={styles.camera} facing="front" mirror />
       <View pointerEvents="none" style={styles.faceGuide} />
       <View style={styles.tipContainer} pointerEvents="none">
-        <Text style={styles.tip}>Face the camera in soft natural daylight</Text>
+        <Text style={styles.tip}>Natural light · face forward</Text>
       </View>
       <View style={styles.controls}>
         <Pressable onPress={onCancel} style={styles.sideButton} accessibilityLabel="Cancel camera">

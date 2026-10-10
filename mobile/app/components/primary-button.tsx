@@ -4,7 +4,10 @@ import { StyleUTokens } from '../services/styleu-theme';
 import { useThemedStyles } from '../hooks/use-theme';
 import type { StyleUColors } from '../services/styleu-theme';
 
-type PrimaryButtonProps = Pick<PressableProps, 'onPress' | 'disabled'> & { label: string };
+type PrimaryButtonProps = Pick<PressableProps, 'onPress' | 'disabled'> & {
+  label: string;
+  compact?: boolean;
+};
 
 export function PrimaryButton({ label, onPress, disabled }: PrimaryButtonProps) {
   const styles = useThemedStyles(createStyles);
@@ -14,8 +17,8 @@ export function PrimaryButton({ label, onPress, disabled }: PrimaryButtonProps) 
       accessibilityState={{ disabled: Boolean(disabled) }}
       disabled={disabled}
       onPress={onPress}
-      style={({ pressed }) => [styles.button, (pressed || disabled) && styles.pressed]}>
-      <Text style={styles.label}>{label}</Text>
+      style={({ pressed }) => [styles.button, compact && styles.compactButton, (pressed || disabled) && styles.pressed]}>
+      <Text style={[styles.label, compact && styles.compactLabel]}>{label}</Text>
     </Pressable>
   );
 }

@@ -16,6 +16,7 @@ import { router } from 'expo-router';
 
 import { ThemedView } from '../../components/themed-view';
 import { ThemedText } from '../../components/themed-text';
+import { CatalogueItemCard } from '../../components/catalogue-item-card';
 import { useWishlist } from '../../hooks/use-wishlist';
 import { itemDetailHref } from '../../services/catalogue/catalogue-service';
 import type { CatalogueItem, WishlistEntry } from '../../services/wishlist/wishlist-types';
@@ -302,27 +303,26 @@ function RecommendationCard({ item, isSaved, isPending, onToggleSaved, onPress }
   const price = formatPrice(item.price);
 
   return (
-    <Pressable style={styles.recCard} onPress={onPress}>
-      <Image source={{ uri: item.imageUrl ?? PLACEHOLDER_IMAGE }} style={styles.recImage} />
-      <TouchableOpacity
-        style={styles.heartButton}
-        onPress={onToggleSaved}
-        disabled={isPending}
-        accessibilityLabel={isSaved ? `Remove ${item.name} from wishlist` : `Add ${item.name} to wishlist`}
-      >
-        {isPending ? (
-          <ActivityIndicator size="small" color={colors.accentStrong} />
-        ) : (
-          <Ionicons name={isSaved ? 'heart' : 'heart-outline'} size={18} color={colors.accentStrong} />
-        )}
-      </TouchableOpacity>
-      <ThemedText style={styles.tileName} numberOfLines={1}>
-        {item.name}
-      </ThemedText>
-      <ThemedText style={styles.tileSubtitle} numberOfLines={1}>
-        {[item.brand, price].filter(Boolean).join(' • ')}
-      </ThemedText>
-    </Pressable>
+    <CatalogueItemCard
+      item={item}
+      details={[[item.brand, price].filter(Boolean).join(' • ')].filter(Boolean)}
+      onPress={onPress}
+      nameLines={1}
+      action={(
+        <TouchableOpacity
+          style={styles.heartButton}
+          onPress={onToggleSaved}
+          disabled={isPending}
+          accessibilityLabel={isSaved ? `Remove ${item.name} from wishlist` : `Add ${item.name} to wishlist`}
+        >
+          {isPending ? (
+            <ActivityIndicator size="small" color={colors.accentStrong} />
+          ) : (
+            <Ionicons name={isSaved ? 'heart' : 'heart-outline'} size={18} color={colors.accentStrong} />
+          )}
+        </TouchableOpacity>
+      )}
+    />
   );
 }
 
@@ -513,9 +513,6 @@ const createStyles = (colors: StyleUColors) =>
     backgroundColor: colors.imageBackdrop,
   },
   heartButton: {
-    position: 'absolute',
-    top: 8,
-    right: 8,
     width: 32,
     height: 32,
     borderRadius: 16,
