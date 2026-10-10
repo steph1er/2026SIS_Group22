@@ -5,17 +5,17 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { SupabaseService } from '../supabase/supabase.service';
-import { CreateOutfitDto } from './dto/create-outfit.dto';
-import { CreateOutfitItemDto } from './dto/create-outfit-item.dto';
-import { UpdateOutfitDto } from './dto/update-outfit.dto';
-import { OutfitWithItems } from './interfaces/outfit-with-item.interface';
-import { Outfit } from './interfaces/outfit.interface';
-import { OutfitBuilderTab } from './interfaces/outfit-builder-tab.interface';
 import {
   FilterCategory,
   resolveFilterGroup,
 } from '../common/constants/filter-category.constant';
+import { SupabaseService } from '../supabase/supabase.service';
+import { CreateOutfitItemDto } from './dto/create-outfit-item.dto';
+import { CreateOutfitDto } from './dto/create-outfit.dto';
+import { UpdateOutfitDto } from './dto/update-outfit.dto';
+import { OutfitBuilderTab } from './interfaces/outfit-builder-tab.interface';
+import { OutfitWithItems } from './interfaces/outfit-with-item.interface';
+import { Outfit } from './interfaces/outfit.interface';
 
 type OutfitUpdateFields = Partial<
   Pick<Outfit, 'name' | 'occasion' | 'style' | 'season'>
@@ -30,7 +30,7 @@ export class OutfitsService {
 
     const { data, error } = await supabase
       .from('outfits')
-      .select('*, outfit_items(*)')
+      .select('*, outfit_items(*, wardrobe_items(*), catalogue_items(*))')
       .eq('user_id', auth_id);
 
     if (error) {

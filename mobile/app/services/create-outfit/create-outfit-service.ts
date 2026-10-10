@@ -2,7 +2,7 @@ import type { Ionicons } from '@expo/vector-icons';
 import type { ComponentProps } from 'react';
 import { addToWishlist, fetchRecommendations, normaliseCatalogueItem, requestJson, toArray, WishlistApiError } from '../wishlist/wishlist-service';
 import type { CatalogueItem } from '../wishlist/wishlist-types';
-import type { OutfitSaveDetails, RecommendedItem, WardrobeItem } from './createOutfitTypes';
+import type { OutfitSaveDetails, RecommendedItem, WardrobeItem } from './create-outfit-types';
 
 export type FilterCategory = 'tops' | 'bottoms' | 'outerwear' | 'dresses' | 'shoes' | 'other';
 export type BuilderItem = WardrobeItem | RecommendedItem;

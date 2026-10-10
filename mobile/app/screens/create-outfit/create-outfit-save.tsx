@@ -3,11 +3,10 @@ import { useState } from 'react';
 import { ActivityIndicator, Image, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, { runOnJS, useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
-import { OUTFIT_SEASONS, OUTFIT_STYLES } from '../../services/create-outfit/create-outfit-service';
-import { OutfitItem, OutfitSaveDetails } from '../../services/create-outfit/createOutfitTypes';
-import { createStyles } from './createOutfit';
 import { useStyleUColors, useThemedStyles } from '../../hooks/use-theme';
-import type { StyleUColors } from '../../services/styleu-theme';
+import { OUTFIT_SEASONS, OUTFIT_STYLES } from '../../services/create-outfit/create-outfit-service';
+import { OutfitItem, OutfitSaveDetails } from '../../services/create-outfit/create-outfit-types';
+import { createStyles } from './create-outfit';
 
 const getItemLabel = (outfitItem: OutfitItem) =>
   'name' in outfitItem.item ? outfitItem.item.name : outfitItem.item.clothing_category;

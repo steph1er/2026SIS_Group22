@@ -6,10 +6,10 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { addOutfitToWishlist, fetchBuilderItems, fetchGeneralRecommendations, getItemLabel, saveOutfit, type BuilderItem } from '../../services/create-outfit/create-outfit-service';
 
-import { OutfitItem, OutfitSaveDetails, RecommendedItem, WardrobeItem } from '../../services/create-outfit/createOutfitTypes';
-import CreateOutfitItem from './createOutfitItem';
-import CreateOutfitSave from './createOutfitSave';
-import CreateOutfitVisualiserItem from './createOutfitVisualiserItem';
+import { OutfitItem, OutfitSaveDetails, RecommendedItem, WardrobeItem } from '../../services/create-outfit/create-outfit-types';
+import CreateOutfitItem from './create-outfit-item';
+import CreateOutfitSave from './create-outfit-save';
+import CreateOutfitVisualiserItem from './create-outfit-visualiser';
 
 import { createSaveStyles } from '@/services/create-outfit/style/create-outfit-save';
 import { createCatalogueStyles } from '../../services/create-outfit/style/create-outfit-catalogue';

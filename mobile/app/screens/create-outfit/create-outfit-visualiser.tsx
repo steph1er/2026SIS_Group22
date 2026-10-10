@@ -3,10 +3,9 @@ import { Image, TouchableOpacity } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, { useAnimatedStyle, useSharedValue } from 'react-native-reanimated';
 
-import { OutfitItem } from '../../services/create-outfit/createOutfitTypes';
-import { createStyles } from './createOutfit';
 import { useStyleUColors, useThemedStyles } from '../../hooks/use-theme';
-import type { StyleUColors } from '../../services/styleu-theme';
+import { OutfitItem } from '../../services/create-outfit/create-outfit-types';
+import { createStyles } from './create-outfit';
 
 type Props = {
   outfitItem: OutfitItem;
