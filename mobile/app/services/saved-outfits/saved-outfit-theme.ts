@@ -4,7 +4,7 @@ import type { StyleUColors } from '../../services/styleu-theme';
 export const createStyles = (colors: StyleUColors) =>
   StyleSheet.create({
     itemsInOutfitContainer: {
-      backgroundColor: colors.mutedAccent,
+      backgroundColor: colors.mutedBackground,
       borderRadius: 16,
       paddingVertical: 8,
     },
@@ -17,7 +17,7 @@ export const createStyles = (colors: StyleUColors) =>
       flexShrink: 1,
     },
     deleteButton: {
-      backgroundColor: colors.accent,
+      backgroundColor: colors.badgeBg,
       borderRadius: 11,
       width: 22,
       height: 22,
@@ -25,6 +25,9 @@ export const createStyles = (colors: StyleUColors) =>
       justifyContent: 'center',
       marginRight: 12,
       alignSelf: 'center',
+    },
+    deleteButtonText: {
+      color: colors.buttonText,
     },
     outfitItemsGrid: {
       flexDirection: 'row',
@@ -34,7 +37,7 @@ export const createStyles = (colors: StyleUColors) =>
     },
     itemCard: {
       width: 100,
-      backgroundColor: colors.mutedBackground,
+      backgroundColor: colors.card,
       borderRadius: 16,
       overflow: 'hidden',
       alignItems: 'center',

@@ -8,7 +8,7 @@ import { ThemedText } from '../../components/themed-text';
 import { ThemedView } from '../../components/themed-view';
 
 import { useSavedOutfits } from '../../hooks/use-saved-outfits';
-import { useStyleUColors, useThemedStyles } from '../../hooks/use-theme';
+import { useThemedStyles } from '../../hooks/use-theme';
 import { itemDetailHref } from '../../services/catalogue/catalogue-service';
 import { createStyles } from '../../services/saved-outfits/saved-outfit-theme';
 import { deleteSavedOutfit, type SavedOutfit, type SavedOutfitItem } from '../../services/saved-outfits/saved-outfits-service';
@@ -16,7 +16,6 @@ import { wardrobeItemHref } from '../../services/wardrobe/wardrobe-service';
 
 export default function OutfitsScreen() {
   const styles = useThemedStyles(createStyles);
-  const colors = useStyleUColors();
 
   const [notice, setNotice] = useState<string | null>(null);
   const { outfits, isLoading, error, refresh } = useSavedOutfits();
@@ -97,7 +96,7 @@ export default function OutfitsScreen() {
                   hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                   accessibilityLabel="Delete outfit"
                 >
-                  <Ionicons name="close" size={14} color={colors.buttonText} />
+                  <Ionicons name="close" size={14} style={styles.deleteButtonText} />
                 </TouchableOpacity>
               </View>
               <ScrollView horizontal showsHorizontalScrollIndicator={false}>
