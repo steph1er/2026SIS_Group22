@@ -3,6 +3,7 @@ import { normaliseCatalogueItem, requestJson, toArray, WishlistApiError } from '
 
 export type SavedOutfitItem = {
   id: string;
+  itemId: string;
   label: string;
   imageUrl: string | null;
   source: 'Wardrobe' | 'Catalogue';
@@ -34,20 +35,21 @@ function normaliseOutfitItem(raw: unknown): SavedOutfitItem | null {
   if (!row) return null;
 
   const id = asString(row.id) ?? '';
+  const itemId = asString(row.wardrobe_items_id) ?? asString(row.catalogue_items_id) ?? '';
   const wardrobeRow = asRow(row.wardrobe_items);
   const catalogueRow = asRow(row.catalogue_items);
 
   if (wardrobeRow) {
     const item = normaliseWardrobeItem(wardrobeRow);
-    return { id, label: item.category ?? 'Item', imageUrl: item.imageUrl, source: 'Wardrobe' };
+    return { id, itemId, label: item.category ?? 'Item', imageUrl: item.imageUrl, source: 'Wardrobe' };
   }
 
   if (catalogueRow) {
     const item = normaliseCatalogueItem(catalogueRow);
-    return { id, label: item.name, imageUrl: item.imageUrl, source: 'Catalogue' };
+    return { id, itemId, label: item.name, imageUrl: item.imageUrl, source: 'Catalogue' };
   }
 
-  return { id, label: 'Item', imageUrl: null, source: row.wardrobe_items_id ? 'Wardrobe' : 'Catalogue' };
+  return { id, itemId, label: 'Item', imageUrl: null, source: row.wardrobe_items_id ? 'Wardrobe' : 'Catalogue' };
 }
 
 function normaliseOutfit(raw: unknown): SavedOutfit | null {
@@ -57,7 +59,7 @@ function normaliseOutfit(raw: unknown): SavedOutfit | null {
 
   return {
     id,
-    name: asString(row.name) ?? 'Untitled outfit',
+    name: asString(row.name) ?? 'My outfit',
     style: asString(row.style),
     season: asString(row.season),
     occasion: asString(row.occasion),

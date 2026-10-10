@@ -8,9 +8,11 @@ import { ThemedText } from '../../components/themed-text';
 import { ThemedView } from '../../components/themed-view';
 
 import { useSavedOutfits } from '../../hooks/use-saved-outfits';
+import { itemDetailHref } from '../../services/catalogue/catalogue-service';
 import { styles } from '../../services/saved-outfits/saved-outfit-theme';
-import { deleteSavedOutfit, type SavedOutfit } from '../../services/saved-outfits/saved-outfits-service';
+import { deleteSavedOutfit, type SavedOutfit, type SavedOutfitItem } from '../../services/saved-outfits/saved-outfits-service';
 import { StyleUTokens } from '../../services/styleu-theme';
+import { wardrobeItemHref } from '../../services/wardrobe/wardrobe-service';
 
 const { colors } = StyleUTokens;
 
@@ -41,6 +43,10 @@ export default function OutfitsScreen() {
     } finally {
       setIsDeleting(false);
     }
+  };
+
+  const openItem = (item: SavedOutfitItem) => {
+    router.push(item.source === 'Wardrobe' ? wardrobeItemHref(item.itemId) : itemDetailHref(item.itemId));
   };
 
   const showEmptyState = !isLoading && !error && outfits.length === 0;
@@ -80,7 +86,6 @@ export default function OutfitsScreen() {
           ) : null}
 
           {outfits.map((outfit) => (
-
             <View key={outfit.id} style={styles.itemsInOutfitContainer}>
               {/* items in outfit */}
               <View style={styles.titleContainer}>
@@ -97,7 +102,12 @@ export default function OutfitsScreen() {
               <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                 <View style={styles.outfitItemsGrid}>
                   {outfit.items.map((outfitItem) => (
-                    <View key={outfitItem.id} style={styles.itemCard}>
+                    <TouchableOpacity
+                      key={outfitItem.id}
+                      style={styles.itemCard}
+                      onPress={() => openItem(outfitItem)}
+                      disabled={!outfitItem.itemId}
+                    >
                       {outfitItem.imageUrl ? (
                         <Image source={{ uri: outfitItem.imageUrl }} style={styles.itemImage} />
                       ) : (
@@ -106,7 +116,7 @@ export default function OutfitsScreen() {
                         </View>
                       )}
                       <Text style={styles.itemName} numberOfLines={1}>{outfitItem.label}</Text>
-                    </View>
+                    </TouchableOpacity>
                   ))}
                 </View>
               </ScrollView>
