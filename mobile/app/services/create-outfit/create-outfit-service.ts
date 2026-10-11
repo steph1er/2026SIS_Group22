@@ -33,6 +33,9 @@ const CATEGORY_TO_FILTER_GROUP: Record<string, FilterCategory> = {
 export const resolveFilterGroup = (rawCategory?: string | null): FilterCategory =>
   (rawCategory && CATEGORY_TO_FILTER_GROUP[rawCategory.trim().toLowerCase()]) || 'other';
 
+export const matchesUiCategory = (item: { category?: string | null }, uiCategory: string): boolean =>
+  resolveFilterGroup(item.category) === (CATEGORY_MAP[uiCategory] ?? 'tops');
+
 export type BuilderResult = {
   recommendations: BuilderItem[];
   items: BuilderItem[];
@@ -56,7 +59,7 @@ const catalogueToRecommended = (c: CatalogueItem, source: 'Wishlist' | 'Catalogu
 
 // general catalogue recommendations, to be updated when ml
 export async function fetchGeneralRecommendations(): Promise<RecommendedItem[]> {
-  const items = await fetchRecommendations({ limit: 10 });
+  const items = await fetchRecommendations({ limit: 50 });
   return items.map((c) => catalogueToRecommended(c, 'Catalogue'));
 }
 

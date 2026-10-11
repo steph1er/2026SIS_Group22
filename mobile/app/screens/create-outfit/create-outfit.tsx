@@ -8,7 +8,7 @@ import { captureRef } from 'react-native-view-shot';
 import { Ionicons } from '@expo/vector-icons';
 import * as MediaLibrary from 'expo-media-library';
 
-import { addOutfitToWishlist, fetchBuilderItems, fetchGeneralRecommendations, getItemLabel, saveOutfit, type BuilderItem } from '../../services/create-outfit/create-outfit-service';
+import { addOutfitToWishlist, fetchBuilderItems, fetchGeneralRecommendations, getItemLabel, matchesUiCategory, saveOutfit, type BuilderItem } from '../../services/create-outfit/create-outfit-service';
 
 import { OutfitItem, OutfitSaveDetails, RecommendedItem, WardrobeItem } from '../../services/create-outfit/create-outfit-types';
 import CreateOutfitItem from './create-outfit-item';
@@ -146,7 +146,7 @@ export default function CreateOutfits() {
 
   // don't repeat anything already shown in "Suggested for you" or the grid
   const shownIds = new Set([...suggested, ...gridItems].map((i) => i.id));
-  const youMightLike = generalRecs.filter((i) => !shownIds.has(i.id));
+  const youMightLike = generalRecs.filter((i) => !shownIds.has(i.id) && matchesUiCategory(i, selectedCategory));
 
   const renderCard = (item: BuilderItem, width?: number) => (
     <TouchableOpacity
