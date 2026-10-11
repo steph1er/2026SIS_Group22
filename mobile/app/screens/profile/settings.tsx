@@ -7,18 +7,22 @@ import { Ionicons } from '@expo/vector-icons';
 import { ThemedView } from '../../components/themed-view';
 import { ThemedText } from '../../components/themed-text';
 import { PrimaryButton } from '../../components/primary-button';
+import { BackButton } from '../../components/back-button';
 
 import { signOut } from '../../../src/auth/auth-service';
 import { useProfile } from '../../../src/profile/use-profile';
 import { router } from 'expo-router';
+import { useThemePreference } from '../../hooks/theme-preference';
+import { useStyleUColors, useThemedStyles } from '../../hooks/use-theme';
+import type { StyleUColors } from '../../services/styleu-theme';
 
-// Only the toggles below are local UI state. There are no database fields for
-// them yet, so they are not saved anywhere. Account details (display name,
+// Dark Mode is the app-wide theme choice (saved on the device). The other toggles
+// below are local UI state: there are no database fields for them yet, so they
+// are not saved anywhere. Account details (display name,
 // email) come from the signed-in user's profile and auth account instead.
 type SettingsState = {
   preferences: {
     notifications: boolean;
-    darkMode: boolean;
     language: string;
   };
   privacy: {
@@ -30,7 +34,6 @@ type SettingsState = {
 const initialSettingsState: SettingsState = {
   preferences: {
     notifications: true,
-    darkMode: false,
     language: 'English',
   },
   privacy: {
@@ -48,7 +51,10 @@ const languageOptions = [
 ];
 
 export default function SettingsScreen() {
+  const colors = useStyleUColors();
+  const styles = useThemedStyles(createStyles);
   const { user, profile, error, isLoading, refetch, update } = useProfile();
+  const { colorScheme, setColorScheme } = useThemePreference();
 
   const [settings, setSettings] =
     useState<SettingsState>(initialSettingsState);
@@ -154,11 +160,9 @@ export default function SettingsScreen() {
         keyboardShouldPersistTaps="handled"
         >
           <View style={styles.header}>
-            <TouchableOpacity>
-              <Ionicons name="search-outline" size={22} />
-            </TouchableOpacity>
+            <BackButton fallback="/profile" />
 
-            <ThemedText type="title">Settings</ThemedText>
+            <ThemedText type="pageTitle">Settings</ThemedText>
 
             <View style={styles.headerSpacer} />
           </View>
@@ -166,7 +170,7 @@ export default function SettingsScreen() {
           <Section title="Profile">
             <View style={styles.profileRow}>
               <View style={styles.avatarPlaceholder}>
-                <Ionicons name="person-outline" size={24} />
+                <Ionicons name="person-outline" size={24} color={colors.text} />
               </View>
 
               <View style={styles.profileInfo}>
@@ -174,7 +178,7 @@ export default function SettingsScreen() {
                   <ActivityIndicator />
                 ) : (
                   <>
-                    <ThemedText type="subtitle">
+                    <ThemedText type="sectionTitle">
                       {profile
                         ? savedName.trim() || 'Add your name below'
                         : 'Profile unavailable'}
@@ -240,9 +244,9 @@ export default function SettingsScreen() {
             <ToggleRow
               label="Dark Mode"
               description="Switch to a darker interface"
-              value={settings.preferences.darkMode}
+              value={colorScheme === 'dark'}
               onValueChange={(darkMode) =>
-                updateSettings('preferences', { darkMode })
+                setColorScheme(darkMode ? 'dark' : 'light')
               }
             />
 
@@ -310,7 +314,7 @@ export default function SettingsScreen() {
               style={styles.languageModal}
               onPress={(event) => event.stopPropagation()}
             >
-              <ThemedText type="subtitle" style={styles.modalTitle}>
+              <ThemedText type="sectionTitle" style={styles.modalTitle}>
                 Choose Language
               </ThemedText>
 
@@ -329,7 +333,7 @@ export default function SettingsScreen() {
                     <Ionicons
                       name="checkmark"
                       size={20}
-                      color="#C97B63"
+                      color={colors.accentStrong}
                     />
                   )}
                 </TouchableOpacity>
@@ -349,6 +353,7 @@ function Section({
   title: string;
   children: ReactNode;
 }) {
+  const styles = useThemedStyles(createStyles);
   return (
     <View style={styles.section}>
       <ThemedText style={styles.sectionTitle}>
@@ -377,6 +382,8 @@ function EditableRow({
   autoCapitalize?: 'none' | 'sentences' | 'words' | 'characters';
   last?: boolean;
 }) {
+  const colors = useStyleUColors();
+  const styles = useThemedStyles(createStyles);
   return (
     <View style={[styles.editableRow, !last && styles.rowBorder]}>
       <ThemedText style={styles.inputLabel}>
@@ -390,7 +397,7 @@ function EditableRow({
         keyboardType={keyboardType}
         autoCapitalize={autoCapitalize}
         style={styles.input}
-        placeholderTextColor="rgba(0,0,0,0.35)"
+        placeholderTextColor={colors.placeholder}
       />
     </View>
   );
@@ -405,6 +412,7 @@ function ReadOnlyRow({
   value: string;
   last?: boolean;
 }) {
+  const styles = useThemedStyles(createStyles);
   return (
     <View style={[styles.editableRow, !last && styles.rowBorder]}>
       <ThemedText style={styles.inputLabel}>
@@ -431,10 +439,12 @@ function ToggleRow({
   onValueChange: (value: boolean) => void;
   last?: boolean;
 }) {
+  const colors = useStyleUColors();
+  const styles = useThemedStyles(createStyles);
   return (
     <View style={[styles.row, !last && styles.rowBorder]}>
       <View style={styles.rowContent}>
-        <ThemedText type="subtitle">{label}</ThemedText>
+        <ThemedText type="cardTitle">{label}</ThemedText>
 
         <ThemedText style={styles.muted}>
           {description}
@@ -444,6 +454,7 @@ function ToggleRow({
       <Switch
         value={value}
         onValueChange={onValueChange}
+        trackColor={{ true: colors.accentStrong }}
       />
     </View>
   );
@@ -462,6 +473,8 @@ function ChevronRow({
   onPress: () => void;
   last?: boolean;
 }) {
+  const colors = useStyleUColors();
+  const styles = useThemedStyles(createStyles);
   return (
     <TouchableOpacity
       style={[styles.row, !last && styles.rowBorder]}
@@ -469,7 +482,7 @@ function ChevronRow({
       activeOpacity={0.7}
     >
       <View style={styles.rowContent}>
-        <ThemedText type="subtitle">{label}</ThemedText>
+        <ThemedText type="cardTitle">{label}</ThemedText>
 
         <ThemedText style={styles.muted}>
           {description}
@@ -481,13 +494,14 @@ function ChevronRow({
           {value}
         </ThemedText>
 
-        <Ionicons name="chevron-forward" size={16} />
+        <Ionicons name="chevron-forward" size={16} color={colors.text} />
       </View>
     </TouchableOpacity>
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: StyleUColors) =>
+  StyleSheet.create({
   container: {
     flex: 1,
   },
@@ -508,17 +522,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
 
+  // Matches the back button's visible width, so the title stays centred.
   headerSpacer: {
-    width: 22,
+    width: 34,
   },
 
   muted: {
-    opacity: 0.6,
+    color: colors.subtleText,
     fontSize: 13,
   },
 
   link: {
-    color: '#C97B63',
+    color: colors.accentStrong,
     fontWeight: '600',
     fontSize: 13,
   },
@@ -535,7 +550,7 @@ const styles = StyleSheet.create({
   },
 
   sectionBody: {
-    backgroundColor: 'rgba(0,0,0,0.03)',
+    backgroundColor: colors.subtle,
     borderRadius: 16,
     paddingHorizontal: 16,
   },
@@ -551,7 +566,7 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: 'rgba(0,0,0,0.08)',
+    backgroundColor: colors.subtleStrong,
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
@@ -579,7 +594,7 @@ const styles = StyleSheet.create({
 
   rowBorder: {
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(0,0,0,0.06)',
+    borderBottomColor: colors.divider,
   },
 
   inputLabel: {
@@ -589,6 +604,7 @@ const styles = StyleSheet.create({
   },
 
   input: {
+    color: colors.text,
     fontSize: 15,
     paddingVertical: 2,
     paddingHorizontal: 0,
@@ -612,7 +628,7 @@ const styles = StyleSheet.create({
   },
 
   saveButton: {
-    backgroundColor: '#C97B63',
+    backgroundColor: colors.accentStrong,
     borderRadius: 16,
     paddingVertical: 16,
     alignItems: 'center',
@@ -623,18 +639,19 @@ const styles = StyleSheet.create({
   },
 
   saveText: {
+    color: colors.onAccent,
     fontWeight: '600',
   },
 
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.35)',
+    backgroundColor: colors.overlay,
     justifyContent: 'center',
     padding: 24,
   },
 
   languageModal: {
-    backgroundColor: '#F6FAF0',
+    backgroundColor: colors.card,
     borderRadius: 20,
     padding: 20,
   },
@@ -649,6 +666,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingVertical: 15,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(0,0,0,0.06)',
+    borderBottomColor: colors.divider,
   },
 });

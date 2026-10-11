@@ -1,10 +1,14 @@
 import { StyleSheet, Text, TextInput, View, type TextInputProps } from 'react-native';
 
 import { StyleUTokens } from '../services/styleu-theme';
+import { useStyleUColors, useThemedStyles } from '../hooks/use-theme';
+import type { StyleUColors } from '../services/styleu-theme';
 
 type OnboardingFormFieldProps = TextInputProps & { label: string };
 
 export function OnboardingFormField({ label, keyboardType = 'default', ...props }: OnboardingFormFieldProps) {
+  const colors = useStyleUColors();
+  const styles = useThemedStyles(createStyles);
   return (
     <View style={styles.field}>
       <Text style={styles.label}>{label}</Text>
@@ -12,7 +16,7 @@ export function OnboardingFormField({ label, keyboardType = 'default', ...props 
         accessibilityLabel={label}
         autoCapitalize={keyboardType === 'email-address' ? 'none' : 'words'}
         keyboardType={keyboardType}
-        placeholderTextColor={StyleUTokens.colors.placeholder}
+        placeholderTextColor={colors.placeholder}
         style={styles.input}
         {...props}
       />
@@ -20,8 +24,9 @@ export function OnboardingFormField({ label, keyboardType = 'default', ...props 
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: StyleUColors) =>
+  StyleSheet.create({
   field: { gap: 10 },
-  label: { color: StyleUTokens.colors.mutedText, fontSize: 16, fontWeight: '600' },
-  input: { backgroundColor: StyleUTokens.colors.surface, borderRadius: StyleUTokens.radius.field, color: StyleUTokens.colors.text, fontSize: 17, height: 68, paddingHorizontal: 22 },
+  label: { color: colors.mutedText, fontSize: 16, fontWeight: '600' },
+  input: { backgroundColor: colors.surface, borderRadius: StyleUTokens.radius.field, color: colors.text, fontSize: 17, height: 68, paddingHorizontal: 22 },
 });

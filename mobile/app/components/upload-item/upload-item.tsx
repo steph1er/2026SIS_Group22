@@ -12,13 +12,19 @@ import {
 } from 'react-native';
 import { ThemedText } from '../themed-text';
 import PhotoPreviewSection from './photo-preview';
+import { useStyleUColors, useThemedStyles } from '../../hooks/use-theme';
+import type { StyleUColors } from '../../services/styleu-theme';
 import * as ImagePicker from 'expo-image-picker'; 
 import ItemTagsForm, { type ConfirmedItem } from './edit-item-tags';
 import { preparePhotoForUpload } from '../../services/upload-item/prep-image';
 import { analyseItemPhoto, type AnalyseItemResult } from '../../services/upload-item/analyse-item-service';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { BackButton } from '../back-button';
 
 
 export default function Camera() {
+  const colors = useStyleUColors();
+  const styles = useThemedStyles(createStyles);
   const [facing, setFacing] = useState<CameraType>('back');
   const [permission, requestPermission] = useCameraPermissions();
   const [photo, setPhoto] = useState<any>(null);
@@ -28,6 +34,12 @@ export default function Camera() {
   const [result, setResult] = useState<AnalyseItemResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   
+  const insets = useSafeAreaInsets();
+
+  // Uploading is a task started from the + menu, so it closes (✕) rather than going back.
+  const closeButton = (
+    <BackButton icon="close" variant="floating" fallback="/home-dashboard" style={[styles.closeButton, { top: insets.top + 8 }]} />
+  );
 
   if (!permission) {
     // Camera permissions are still loading.
@@ -41,6 +53,7 @@ export default function Camera() {
         We need your permission to show the camera
       </Text> 
       <Button onPress={requestPermission} title="Grant Permission" />
+      {closeButton}
     </View>); 
   }
 
@@ -172,10 +185,12 @@ export default function Camera() {
         )}
       </View>
 
+      <CameraView style={styles.camera} facing={facing} ref={cameraRef} />
+      {closeButton}
       <View style={styles.sheet}>
         <View style={styles.controlsRow}>
           <TouchableOpacity style={styles.wardrobeThumb} onPress={handlePickFromLibrary}>
-            <Feather name="image" size={20} color="#fff" />
+            <Feather name="image" size={20} color={colors.onAccent} />
           </TouchableOpacity>
           <Pressable style={styles.shutterOuter} onPress={handleTakePhoto}>
             <View style={styles.shutterInner} />
@@ -185,7 +200,7 @@ export default function Camera() {
               style={[styles.iconButton, styles.iconButtonActive]}
               onPress={toggleCameraFacing}
             >
-              <Feather name="camera" size={18} color="#D98E73" />
+              <Feather name="camera" size={18} color={colors.accentStrong} />
             </TouchableOpacity>
 
         </View>
@@ -193,8 +208,8 @@ export default function Camera() {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
+const createStyles = (colors: StyleUColors) =>
+  StyleSheet.create({ 
     statusContainer: {
     flex: 1,
     backgroundColor: '#FAF6F2',
@@ -245,12 +260,16 @@ const styles = StyleSheet.create({
   gap: 12,                  
 },
 permissionText: {
-  color: '#fff',
+  color: colors.onAccent,
   fontSize: 16,
   textAlign: 'center',
 },
   camera: {
     flex: 1,
+  },
+  closeButton: {
+    position: 'absolute',
+    left: 20,
   },
   header: {
     flexDirection: 'row',
@@ -262,7 +281,7 @@ permissionText: {
   headerTitle: {
     fontSize: 20,
     fontWeight: '800',
-    color: '#fff',
+    color: colors.onAccent,
   },
   headerRight: {
     flexDirection: 'row',
@@ -272,15 +291,15 @@ permissionText: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#fff',
+    backgroundColor: colors.card,
     alignItems: 'center',
     justifyContent: 'center',
   },
   iconButtonActive: {
-    backgroundColor: '#FBEAE3',
+    backgroundColor: colors.accentSoft,
   },
   sheet: {
-    backgroundColor: '#FAF6F2',
+    backgroundColor: colors.surface,
     paddingTop: 18,
     paddingBottom: 28,
     borderTopLeftRadius: 24,
@@ -299,13 +318,13 @@ permissionText: {
     fontSize: 12,
     fontWeight: '600',
     letterSpacing: 0.5,
-    color: '#999',
+    color: colors.iconInactive,
   },
   tabLabelActive: {
     fontSize: 12,
     fontWeight: '700',
     letterSpacing: 0.5,
-    color: '#D98E73',
+    color: colors.accentStrong,
   },
   tipBanner: {
   position: 'absolute',
@@ -335,7 +354,7 @@ permissionText: {
     width: 4,
     height: 4,
     borderRadius: 2,
-    backgroundColor: '#D98E73',
+    backgroundColor: colors.accentStrong,
     marginTop: 4,
   },
   controlsRow: {
@@ -357,7 +376,7 @@ permissionText: {
     height: 76,
     borderRadius: 38,
     borderWidth: 3,
-    borderColor: '#EDBBA3',
+    borderColor: colors.accent,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -365,13 +384,13 @@ permissionText: {
     width: 60,
     height: 60,
     borderRadius: 30,
-    backgroundColor: '#EDBBA3',
+    backgroundColor: colors.accent,
   },
   uploadButton: {
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: '#fff',
+    backgroundColor: colors.card,
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#000',

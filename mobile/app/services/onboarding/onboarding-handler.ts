@@ -10,8 +10,8 @@ import {
   type OnboardingProgress,
   saveOnboardingProgress,
 } from '../../../src/onboarding/onboarding-service';
-import { onboardingSteps } from './onboardingData';
-import { OnboardingAnswers, QuestionSection } from './onboardingTypes';
+import { onboardingSteps } from './onboarding-data';
+import { OnboardingAnswers, QuestionSection } from './onboarding-types';
 
 export function useOnboardingHandler(initial: OnboardingProgress) {
   const { user } = useAuth();
@@ -269,13 +269,7 @@ export function useOnboardingHandler(initial: OnboardingProgress) {
     if (currentStep < onboardingSteps.length - 1) {
       void goToNextStep();
     } else {
-<<<<<<< HEAD:mobile/app/screens/onboarding/onboardingHandler.ts
-        // TODO: save onboarding answers
-        console.log(answers); // temp
-        router.replace('./home-dashboard');
-=======
       void finishOnboarding();
->>>>>>> origin/main:mobile/app/services/onboarding/onboardingHandler.ts
     }
   };
 

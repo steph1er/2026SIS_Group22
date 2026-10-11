@@ -1,11 +1,10 @@
 // styles for user input
 
 import { StyleSheet } from 'react-native';
-import { StyleUTokens } from '../../styleu-theme';
+import type { StyleUColors } from '../../styleu-theme';
 
-const { colors } = StyleUTokens;
-
-export const inputStyles = StyleSheet.create({
+export const createInputStyles = (colors: StyleUColors) =>
+  StyleSheet.create({
   sliderContainer: {
     marginTop: 4,
   },

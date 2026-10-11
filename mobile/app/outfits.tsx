@@ -1,1 +1,1 @@
-export { default } from './screens/outfits/outfits';
+export { default } from './screens/saved-outfits/saved-outfits';

@@ -5,10 +5,9 @@ import { Ionicons } from '@expo/vector-icons';
 
 import { ThemedText } from './themed-text';
 import type { CatalogueItem } from '../services/wishlist/wishlist-types';
+import { useStyleUColors, useThemedStyles } from '../hooks/use-theme';
+import type { StyleUColors } from '../services/styleu-theme';
 
-const ACCENT = '#D98E73';
-const TEXT = '#22201F';
-const MUTED = '#8A8683';
 
 export type FilterKey = 'price' | 'category' | 'colour' | 'style' | 'size' | 'brand';
 
@@ -113,6 +112,8 @@ export function CatalogueSearch({
   items,
   placeholder = 'Search for clothes, styles, colours...',
 }: CatalogueSearchProps) {
+  const colors = useStyleUColors();
+  const styles = useThemedStyles(createStyles);
   const [openFilter, setOpenFilter] = useState<FilterKey | null>(null);
   const options = useMemo(() => (openFilter ? optionsFor(items, openFilter) : []), [items, openFilter]);
 
@@ -132,19 +133,19 @@ export function CatalogueSearch({
   return (
     <View style={styles.container}>
       <View style={styles.searchBar}>
-        <Ionicons name="search" size={20} color={MUTED} />
+        <Ionicons name="search" size={20} color={colors.subtleText} />
         <TextInput
           value={query}
           onChangeText={onQueryChange}
           placeholder={placeholder}
-          placeholderTextColor={MUTED}
+          placeholderTextColor={colors.subtleText}
           style={styles.searchInput}
           returnKeyType="search"
           autoCorrect={false}
         />
         {query ? (
           <TouchableOpacity onPress={() => onQueryChange('')} accessibilityLabel="Clear search">
-            <Ionicons name="close-circle" size={18} color={MUTED} />
+            <Ionicons name="close-circle" size={18} color={colors.subtleText} />
           </TouchableOpacity>
         ) : null}
       </View>
@@ -169,10 +170,10 @@ export function CatalogueSearch({
               </ThemedText>
               {chosen ? (
                 <TouchableOpacity onPress={() => setFilter(key, null)} hitSlop={8} accessibilityLabel={`Clear ${label} filter`}>
-                  <Ionicons name="close-circle-outline" size={18} color={TEXT} />
+                  <Ionicons name="close-circle-outline" size={18} color={colors.text} />
                 </TouchableOpacity>
               ) : (
-                <Ionicons name="chevron-down" size={14} color={MUTED} />
+                <Ionicons name="chevron-down" size={14} color={colors.subtleText} />
               )}
             </TouchableOpacity>
           );
@@ -204,6 +205,8 @@ type FilterSheetProps = {
 };
 
 function FilterSheet({ title, visible, options, selected, onClose, onSelect }: FilterSheetProps) {
+  const colors = useStyleUColors();
+  const styles = useThemedStyles(createStyles);
   const insets = useSafeAreaInsets();
 
   return (
@@ -238,7 +241,7 @@ function FilterSheet({ title, visible, options, selected, onClose, onSelect }: F
                     <ThemedText style={[styles.sheetRowText, isSelected && styles.sheetRowTextSelected]}>
                       {option.label}
                     </ThemedText>
-                    {isSelected ? <Ionicons name="checkmark" size={20} color={ACCENT} /> : null}
+                    {isSelected ? <Ionicons name="checkmark" size={20} color={colors.accentStrong} /> : null}
                   </TouchableOpacity>
                 );
               })}
@@ -250,7 +253,8 @@ function FilterSheet({ title, visible, options, selected, onClose, onSelect }: F
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: StyleUColors) =>
+  StyleSheet.create({
   container: {
     gap: 14,
   },
@@ -258,9 +262,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
-    backgroundColor: '#F6F4F2',
+    backgroundColor: colors.input,
     borderWidth: 1,
-    borderColor: '#ECE8E4',
+    borderColor: colors.borderSoft,
     borderRadius: 28,
     paddingHorizontal: 18,
     height: 56,
@@ -268,7 +272,7 @@ const styles = StyleSheet.create({
   searchInput: {
     flex: 1,
     fontSize: 16,
-    color: TEXT,
+    color: colors.text,
   },
   chips: {
     gap: 8,
@@ -279,31 +283,31 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 6,
     borderWidth: 1,
-    borderColor: '#E6E2DE',
+    borderColor: colors.borderSoft,
     borderRadius: 18,
     paddingHorizontal: 14,
     paddingVertical: 8,
-    backgroundColor: '#FAF9F7',
+    backgroundColor: colors.surface,
   },
   chipSelected: {
-    borderColor: '#E2B7A9',
-    backgroundColor: '#FBEEE9',
+    borderColor: colors.accent,
+    backgroundColor: colors.accentSoft,
   },
   chipText: {
     fontSize: 14,
-    color: MUTED,
+    color: colors.subtleText,
   },
   chipTextSelected: {
-    color: TEXT,
+    color: colors.text,
     fontWeight: '600',
   },
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.3)',
+    backgroundColor: colors.overlay,
     justifyContent: 'flex-end',
   },
   sheet: {
-    backgroundColor: '#fff',
+    backgroundColor: colors.card,
     borderTopLeftRadius: 22,
     borderTopRightRadius: 22,
     paddingTop: 20,
@@ -321,12 +325,12 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   sheetClear: {
-    color: ACCENT,
+    color: colors.accentStrong,
     fontWeight: '600',
   },
   sheetEmpty: {
     fontSize: 14,
-    color: MUTED,
+    color: colors.subtleText,
     paddingVertical: 16,
   },
   sheetList: {
@@ -338,11 +342,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 14,
     borderBottomWidth: 1,
-    borderBottomColor: '#F1EEEB',
+    borderBottomColor: colors.surface,
   },
   sheetRowText: {
     fontSize: 16,
-    color: TEXT,
+    color: colors.text,
   },
   sheetRowTextSelected: {
     fontWeight: '600',

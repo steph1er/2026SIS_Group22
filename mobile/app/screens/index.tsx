@@ -6,12 +6,14 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../../src/auth/auth-provider';
 import { getPostAuthRoute, type PostAuthRoute } from '../../src/auth/auth-service';
 import { PrimaryButton } from '../components/primary-button';
-import { StyleUTokens } from '../services/styleu-theme';
+import { useThemedStyles } from '../hooks/use-theme';
+import type { StyleUColors } from '../services/styleu-theme';
 
 // The outcome of checking one user's onboarding status. `route` is null when the check failed.
 type Resolution = { userId: string; route: PostAuthRoute | null };
 
 export default function WelcomeScreen() {
+  const styles = useThemedStyles(createStyles);
   const { user, isLoading, configurationError } = useAuth();
   const userId = user?.id ?? null;
   const [resolution, setResolution] = useState<Resolution | null>(null);
@@ -88,14 +90,15 @@ export default function WelcomeScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  safeArea: { backgroundColor: StyleUTokens.colors.background, flex: 1 },
+const createStyles = (colors: StyleUColors) =>
+  StyleSheet.create({
+  safeArea: { backgroundColor: colors.background, flex: 1 },
   content: { flex: 1, justifyContent: 'space-between', paddingHorizontal: 28, paddingTop: 82, paddingBottom: 28 },
   hero: { alignItems: 'center', gap: 24 },
-  logo: { color: StyleUTokens.colors.text, fontSize: 58, fontWeight: '800', letterSpacing: -1.5 },
-  logoAccent: { color: StyleUTokens.colors.accent },
-  subtitle: { color: StyleUTokens.colors.mutedText, fontSize: 20, lineHeight: 30, textAlign: 'center' },
+  logo: { color: colors.text, fontSize: 58, fontWeight: '800', letterSpacing: -1.5 },
+  logoAccent: { color: colors.accent },
+  subtitle: { color: colors.mutedText, fontSize: 20, lineHeight: 30, textAlign: 'center' },
   footer: { gap: 16 },
-  status: { color: StyleUTokens.colors.text, fontSize: 14, textAlign: 'center' },
-  terms: { color: StyleUTokens.colors.placeholder, fontSize: 14, lineHeight: 20, textAlign: 'center', marginTop: 8 },
+  status: { color: colors.text, fontSize: 14, textAlign: 'center' },
+  terms: { color: colors.placeholder, fontSize: 14, lineHeight: 20, textAlign: 'center', marginTop: 8 },
 });

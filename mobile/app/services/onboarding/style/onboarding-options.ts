@@ -1,11 +1,10 @@
 // styling for question options
 
 import { StyleSheet } from 'react-native';
-import { StyleUTokens } from '../../styleu-theme';
+import type { StyleUColors } from '../../styleu-theme';
 
-const { colors } = StyleUTokens;
-
-export const optionStyles = StyleSheet.create({
+export const createOptionStyles = (colors: StyleUColors) =>
+  StyleSheet.create({
   optionsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -17,7 +16,7 @@ export const optionStyles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 24,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.card,
     borderWidth: 1,
     borderColor:  colors.border,
     justifyContent: 'center',
@@ -151,7 +150,7 @@ export const optionStyles = StyleSheet.create({
     position: 'absolute',
     top: 4,
     left: 4,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.card,
     borderRadius: 20,
     paddingHorizontal: 8,
     paddingVertical: 3,
@@ -160,6 +159,6 @@ export const optionStyles = StyleSheet.create({
   aestheticBadgeText: {
     fontSize: 11,
     fontWeight: '700',
-    color: '#1A1A1A',
+    color: colors.text,
   },
 });

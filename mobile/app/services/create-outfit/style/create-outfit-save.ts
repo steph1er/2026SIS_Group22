@@ -1,9 +1,8 @@
 import { StyleSheet } from 'react-native';
-import { StyleUTokens } from '../../styleu-theme';
+import type { StyleUColors } from '../../styleu-theme';
 
-const { colors } = StyleUTokens;
-
-export const saveStyles = StyleSheet.create ({
+export const createSaveStyles = (colors: StyleUColors) =>
+  StyleSheet.create({
   saveHeader: {
     fontSize: 26,
     fontWeight: 700,

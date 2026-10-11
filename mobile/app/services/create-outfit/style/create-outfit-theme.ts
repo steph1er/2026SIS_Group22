@@ -1,9 +1,8 @@
 import { StyleSheet } from 'react-native';
-import { StyleUTokens } from '../../styleu-theme';
+import type { StyleUColors } from '../../styleu-theme';
 
-const { colors } = StyleUTokens;
-
-export const themeStyles = StyleSheet.create ({
+export const createThemeStyles = (colors: StyleUColors) =>
+  StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
@@ -15,12 +14,12 @@ export const themeStyles = StyleSheet.create ({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+    backgroundColor: colors.overlay,
     justifyContent: 'flex-end' as const,
   },
 
   popup: {
-    backgroundColor: 'white',
+    backgroundColor: colors.card,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     paddingHorizontal: 36,
@@ -72,6 +71,13 @@ export const themeStyles = StyleSheet.create ({
 
   buttonText: {
     color: colors.buttonText,
+    fontSize: 16,
+    fontWeight: '700',
+  },
+
+  // Text on the outlined Add to Wishlist button, which sits on the page surface rather than the accent.
+  secondaryButtonText: {
+    color: colors.text,
     fontSize: 16,
     fontWeight: '700',
   },
