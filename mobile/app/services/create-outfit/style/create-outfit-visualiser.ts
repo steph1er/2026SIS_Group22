@@ -13,7 +13,7 @@ export const createVisualiserStyles = (colors: StyleUColors) =>
 
     visualiserEmptyText: {
       color: colors.mutedText,
-      fontSize: 24,
+      fontSize: 20,
       textAlign: 'center',
       alignSelf: 'center',
       marginTop: '30%',

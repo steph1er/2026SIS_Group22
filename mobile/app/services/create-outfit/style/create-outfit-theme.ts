@@ -49,8 +49,14 @@ export const createThemeStyles = (colors: StyleUColors) =>
     fontWeight: '700',
   },
 
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+
   headerClearButton: {
-    paddingVertical: 10,
+    paddingVertical: 4,
     paddingHorizontal: 8,
   },
 

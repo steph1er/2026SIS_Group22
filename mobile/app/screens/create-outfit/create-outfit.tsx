@@ -1,8 +1,12 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Image, Modal, ScrollView, Text, TouchableOpacity, useWindowDimensions, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { captureRef } from 'react-native-view-shot';
+
+import { Ionicons } from '@expo/vector-icons';
+import * as MediaLibrary from 'expo-media-library';
 
 import { addOutfitToWishlist, fetchBuilderItems, fetchGeneralRecommendations, getItemLabel, saveOutfit, type BuilderItem } from '../../services/create-outfit/create-outfit-service';
 
@@ -70,6 +74,9 @@ export default function CreateOutfits() {
   const [selectedItem, setSelectedItem] = useState<WardrobeItem | RecommendedItem | null>(null);
   const [itemsCategory, setItemsCategory] = useState<'Wardrobe' | 'Wishlist'>('Wardrobe'); // wardrobe or wishlist
   const togglePosition = useSharedValue(0);
+  const toggleActiveStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: togglePosition.value * toggleMove }],
+  }));
   const topZ = useSharedValue(0); // highest zIndex given to a visualiser item, so a touched item can go on top
 
   const [outfitItems, setOutfitItems] = useState<OutfitItem[]>([]);
@@ -110,28 +117,32 @@ export default function CreateOutfits() {
   }, []);
 
   // wardrobe/wishlist items: reload on toggle or category change
-  const [suggested, setSuggested] = useState<BuilderItem[]>([]);
-  const [gridItems, setGridItems] = useState<BuilderItem[]>([]);
+  const builderKey = `${itemsCategory}:${selectedCategory}:${reloadCount}`;
+  const [builder, setBuilder] = useState<{
+    key: string;
+    suggested: BuilderItem[];
+    items: BuilderItem[];
+    error: string | null;
+  } | null>(null);
 
-  const [loading, setLoading] = useState(false);
-  const [loadError, setLoadError] = useState<string | null>(null);
+  const loading = builder?.key !== builderKey;
+  const loadError = builder?.key === builderKey ? builder.error : null;
+  const suggested = builder?.suggested ?? [];
+  const gridItems = builder?.items ?? [];
 
   useEffect(() => {
     let cancelled = false;
-    setLoading(true);
-    setLoadError(null);
 
     fetchBuilderItems(itemsCategory, selectedCategory)
       .then(({ recommendations, items }) => {
-        if (cancelled) return;
-          setSuggested(recommendations);
-          setGridItems(items);
+        if (!cancelled) setBuilder({ key: builderKey, suggested: recommendations, items, error: null });
       })
-      .catch((e) => { if (!cancelled) setLoadError(e.message ?? 'Could not load items.'); })
-      .finally(() => { if (!cancelled) setLoading(false); });
+      .catch((e) => {
+        if (!cancelled) setBuilder({ key: builderKey, suggested: [], items: [], error: e.message ?? 'Could not load items.' });
+      });
 
     return () => { cancelled = true; };
-  }, [itemsCategory, selectedCategory, reloadCount]);
+  }, [itemsCategory, selectedCategory, reloadCount, builderKey]);
 
   // don't repeat anything already shown in "Suggested for you" or the grid
   const shownIds = new Set([...suggested, ...gridItems].map((i) => i.id));
@@ -163,6 +174,42 @@ export default function CreateOutfits() {
 
   const handleRemoveFromOutfit = (instanceId: string) => {
     setOutfitItems((prev) => prev.filter((outfitItem) => outfitItem.instanceId !== instanceId));
+  };
+
+  // saves a picture of the visualiser to the phone's photos, without the delete/resize badges
+  const visualiserRef = useRef<View>(null);
+  const [hideControls, setHideControls] = useState(false);
+  const [downloading, setDownloading] = useState(false);
+  const [notice, setNotice] = useState<{ title: string; message: string } | null>(null);
+
+  const handleDownloadVisualiser = async () => {
+    if (!hasOutfitItems || downloading) return;
+    setDownloading(true);
+    try {
+      const permission = await MediaLibrary.requestPermissionsAsync(true, ['photo']);
+      if (!permission.granted) {
+        setNotice({ title: 'Permission needed', message: 'Allow access to your photos in settings to save your outfit.' });
+        return;
+      }
+
+      setHideControls(true);
+      await new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
+
+      const uri = await captureRef(visualiserRef, { format: 'png', quality: 1, result: 'tmpfile' });
+      await MediaLibrary.Asset.create(uri);
+      setNotice({ title: 'Saved', message: 'Your outfit image was saved to your photos.' });
+    } catch (e) {
+      console.warn('Could not save outfit image', e);
+      setNotice({ title: 'Could not save', message: 'Something went wrong saving the image. Please try again.' });
+    } finally {
+      setHideControls(false);
+      setDownloading(false);
+    }
+  };
+
+  const handleSelectItemsCategory = (category: 'Wardrobe' | 'Wishlist') => {
+    setItemsCategory(category);
+    togglePosition.value = withTiming(category === 'Wardrobe' ? 0 : 1);
   };
 
   const handleClearVisualiser = () => {
@@ -217,27 +264,41 @@ export default function CreateOutfits() {
           </Text>
         </View>
         
-        <TouchableOpacity
-          onPress={handleClearVisualiser}
-          disabled={!hasOutfitItems}
-          hitSlop={8}
-          accessibilityRole="button"
-          accessibilityLabel="Clear outfit"
-          style={[styles.headerClearButton, !hasOutfitItems && styles.headerClearButtonDisabled]}
-        >
-          <Text style={styles.headerClearText}>Clear</Text>
-        </TouchableOpacity>
+        <View style={styles.headerActions}>
+          <TouchableOpacity
+            onPress={handleDownloadVisualiser}
+            disabled={!hasOutfitItems || downloading}
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel="Save outfit image to photos"
+            style={[styles.headerClearButton, (!hasOutfitItems || downloading) && styles.headerClearButtonDisabled]}
+          >
+            {downloading ? <ActivityIndicator /> : <Ionicons name="download-outline" size={22} color={colors.accent} />}
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={handleClearVisualiser}
+            disabled={!hasOutfitItems}
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel="Clear outfit"
+            style={[styles.headerClearButton, !hasOutfitItems && styles.headerClearButtonDisabled]}
+          >
+            <Text style={styles.headerClearText}>Clear</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       <View style={styles.contentContainer}>
         {/* outfit */}
-        <View style={styles.visualiserContainer}>
+        <View ref={visualiserRef} collapsable={false} style={styles.visualiserContainer}>
           {hasOutfitItems ? (
             outfitItems.map((outfitItem) => (
               <CreateOutfitVisualiserItem
                 key={outfitItem.instanceId}
                 outfitItem={outfitItem}
                 topZ={topZ}
+                hideControls={hideControls}
                 onRemove={handleRemoveFromOutfit}
               />
             ))
@@ -289,17 +350,10 @@ export default function CreateOutfits() {
 
             {/* wishlist or wardrobe toggle */}
             <View style={styles.catalogueToggleContainer}>
-              <Animated.View style={[styles.catalogueToggleActive,
-                useAnimatedStyle(() => ({
-                  transform: [{translateX: togglePosition.value * toggleMove}]
-                }))
-              ]}/>
+              <Animated.View style={[styles.catalogueToggleActive, toggleActiveStyle]}/>
 
               <TouchableOpacity
-                onPress={() => {
-                  setItemsCategory('Wardrobe');
-                  togglePosition.value = withTiming(0);
-                }}
+                onPress={() => handleSelectItemsCategory('Wardrobe')}
                 style={styles.catalogueToggleButton}
               >
                 <Text style={[styles.catalogueToggleText, itemsCategory === 'Wardrobe' && styles.catalogueToggleTextActive]}>
@@ -307,10 +361,7 @@ export default function CreateOutfits() {
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
-                onPress={() => {
-                  setItemsCategory('Wishlist');
-                  togglePosition.value = withTiming(1);
-                }}
+                onPress={() => handleSelectItemsCategory('Wishlist')}
                 style={styles.catalogueToggleButton}
               >
                 <Text style={[styles.catalogueToggleText, itemsCategory === 'Wishlist' && styles.catalogueToggleTextActive]}>
@@ -393,8 +444,9 @@ export default function CreateOutfits() {
           <View style={modalStyles.modalCard}>
             <Text style={modalStyles.modalTitle}>Discard this outfit?</Text>
             <Text style={modalStyles.modalMessage}>
-              The items you've added won't be saved.
+              The items you added won&apos;t be saved.
             </Text>
+
             <View style={modalStyles.modalButtons}>
               <TouchableOpacity
                 style={[modalStyles.modalButton, modalStyles.modalCloseButton]}
@@ -407,6 +459,23 @@ export default function CreateOutfits() {
                 onPress={handleConfirmDiscard}
               >
                 <Text style={modalStyles.modalDeleteText}>Discard</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      <Modal transparent animationType="fade" visible={notice !== null} onRequestClose={() => setNotice(null)}>
+        <View style={modalStyles.modalOverlay}>
+          <View style={modalStyles.modalCard}>
+            <Text style={modalStyles.modalTitle}>{notice?.title}</Text>
+            <Text style={modalStyles.modalMessage}>{notice?.message}</Text>
+            <View style={modalStyles.modalButtons}>
+              <TouchableOpacity
+                style={[modalStyles.modalButton, modalStyles.modalCloseButton]}
+                onPress={() => setNotice(null)}
+              >
+                <Text style={modalStyles.modalCloseText}>OK</Text>
               </TouchableOpacity>
             </View>
           </View>

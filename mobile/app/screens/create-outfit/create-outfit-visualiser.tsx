@@ -18,9 +18,10 @@ type Props = {
   onRemove: (instanceId: string) => void;
   /** Highest zIndex handed out so far; shared by every item so touching one can put it on top of the rest. */
   topZ: SharedValue<number>;
+  hideControls?: boolean,
 };
 
-export default function CreateOutfitVisualiserItem({ outfitItem, onRemove, topZ }: Props) {
+export default function CreateOutfitVisualiserItem({ outfitItem, onRemove, topZ, hideControls }: Props) {
   const styles = useThemedStyles(createStyles);
   const colors = useStyleUColors();
   const startX = useSharedValue(outfitItem.x);
@@ -33,14 +34,14 @@ export default function CreateOutfitVisualiserItem({ outfitItem, onRemove, topZ 
 
   // a newly added item lands on top
   useEffect(() => {
-    topZ.value += 1;
-    zIndex.value = topZ.value;
+    topZ.set(topZ.get() + 1);
+    zIndex.set(topZ.get());
   }, [topZ, zIndex]);
 
   const bringToFront = () => {
     'worklet';
-    topZ.value += 1;
-    zIndex.value = topZ.value;
+    topZ.set(topZ.get() + 1);
+    zIndex.set(topZ.get());
   };
 
   const panGesture = Gesture.Pan()
@@ -88,19 +89,23 @@ export default function CreateOutfitVisualiserItem({ outfitItem, onRemove, topZ 
         </Animated.View>
       </GestureDetector>
 
-      <TouchableOpacity
-        style={styles.visualiserDeleteButton}
-        onPress={() => onRemove(outfitItem.instanceId)}
-        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-      >
-        <Ionicons name="close" size={14} color={colors.onAccent} />
-      </TouchableOpacity>
+      {!hideControls && (
+        <>
+          <TouchableOpacity
+            style={styles.visualiserDeleteButton}
+            onPress={() => onRemove(outfitItem.instanceId)}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          >
+            <Ionicons name="close" size={14} color={colors.onAccent} />
+          </TouchableOpacity>
 
-      <GestureDetector gesture={resizeGesture}>
-        <Animated.View style={styles.visualiserResizeHandle}>
-          <MaterialCommunityIcons name="arrow-top-left-bottom-right" size={14} color={colors.onAccent} />
-        </Animated.View>
-      </GestureDetector>
+          <GestureDetector gesture={resizeGesture}>
+            <Animated.View style={styles.visualiserResizeHandle}>
+              <MaterialCommunityIcons name="arrow-top-left-bottom-right" size={14} color={colors.onAccent} />
+            </Animated.View>
+          </GestureDetector>
+        </>
+      )}
     </Animated.View>
   );
 }

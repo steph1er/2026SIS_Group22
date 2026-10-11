@@ -16,6 +16,13 @@
     "plugins": [
       "expo-router",
       [
+        "expo-media-library",
+        {
+          "savePhotosPermission": "Allow $(PRODUCT_NAME) to save your outfit images to your photos.",
+          "granularPermissions": ["photo"]
+        }
+      ],
+      [
         "expo-splash-screen",
         {
           "backgroundColor": "#208AEF"
