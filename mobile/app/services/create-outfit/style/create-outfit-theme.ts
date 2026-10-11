@@ -49,6 +49,27 @@ export const createThemeStyles = (colors: StyleUColors) =>
     fontWeight: '700',
   },
 
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+
+  headerClearButton: {
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+  },
+
+  headerClearButtonDisabled: {
+    opacity: 0.3,
+  },
+
+  headerClearText: {
+    color: colors.accent,
+    fontSize: 16,
+    fontWeight: '600',
+  },
+
   contentContainer: {
     backgroundColor: colors.backgroundElement,
     flex: 1,
