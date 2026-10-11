@@ -33,6 +33,7 @@ export default function Camera() {
   const [analysing, setAnalysing] = useState(false);
   const [result, setResult] = useState<AnalyseItemResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [cameraReady, setCameraReady] = useState(false);
   
   const insets = useSafeAreaInsets();
 
@@ -62,7 +63,8 @@ export default function Camera() {
   }
 
   const handleTakePhoto = async () => {
-    if (cameraRef.current) {
+    if (!cameraRef.current || !cameraReady) return;
+    try {
       const options = {
         quality: 1,
         base64: true,
@@ -70,10 +72,14 @@ export default function Camera() {
       };
       const takedPhoto = await cameraRef.current.takePictureAsync(options);
       setPhoto(takedPhoto);
+    } catch (e) {
+      console.warn('Could not take photo', e);
     }
   };
+  
 
   const handleRetakePhoto = () => {
+    setCameraReady(false);
     setPhoto(null);
     setAnalysing(false);
     setResult(null);
