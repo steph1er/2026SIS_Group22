@@ -70,6 +70,7 @@ export default function CreateOutfits() {
   const [selectedItem, setSelectedItem] = useState<WardrobeItem | RecommendedItem | null>(null);
   const [itemsCategory, setItemsCategory] = useState<'Wardrobe' | 'Wishlist'>('Wardrobe'); // wardrobe or wishlist
   const togglePosition = useSharedValue(0);
+  const topZ = useSharedValue(0); // highest zIndex given to a visualiser item, so a touched item can go on top
 
   const [outfitItems, setOutfitItems] = useState<OutfitItem[]>([]);
   const hasOutfitItems = outfitItems.length > 0;
@@ -236,6 +237,7 @@ export default function CreateOutfits() {
               <CreateOutfitVisualiserItem
                 key={outfitItem.instanceId}
                 outfitItem={outfitItem}
+                topZ={topZ}
                 onRemove={handleRemoveFromOutfit}
               />
             ))
