@@ -62,6 +62,10 @@ export const createItemStyles = (colors: StyleUColors) =>
     borderRadius: 12,
   },
 
+  descriptionCardCentered: {
+    justifyContent: 'center',
+  },
+
   descriptionCardSymbol: {
     color: colors.mutedText,
     marginBottom: 8,
@@ -74,6 +78,7 @@ export const createItemStyles = (colors: StyleUColors) =>
 
   descriptionTagsContainer: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: 8,
   },
 

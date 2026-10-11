@@ -36,7 +36,6 @@ export default function OutfitsScreen() {
             </ThemedText>
           </View>
 
-          {/* TODO: open the outfit builder once it exists. */}
           <PrimaryButton label="Create Outfit" onPress={() => router.push('./create-outfit')} />
 
           {notice ? <ThemedText style={[styles.muted, styles.notice]}>{notice}</ThemedText> : null}
