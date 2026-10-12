@@ -5,6 +5,7 @@ import type { CatalogueItem, WishlistEntry } from './wishlist-types';
  * Client for the backend wishlist endpoints (backend/src/wishlist/wishlist.controller.ts):
  *
  *   GET    /wishlist              -> the user's wishlist rows joined with catalogue_items (404 when empty)
+ *   GET    /wishlist/search       -> the matching wishlist rows, joined the same way (404 when nothing matches)
  *   POST   /wishlist/add          -> body { item_id, created_at }            (409 if already added)
  *   DELETE /wishlist/delete/:id   -> removes one wishlist row (id = wishlist.id, not the catalogue id)
  *
@@ -172,6 +173,18 @@ export async function fetchWishlist(): Promise<WishlistEntry[]> {
   }
 }
 
+/** Wishlist entries matching a query from buildSearchQuery, newest first. Nothing matching returns []. */
+export async function searchWishlist(query: string): Promise<WishlistEntry[]> {
+  try {
+    const rows = toArray(await requestJson(`wishlist/search?${query}`));
+    return rows
+      .map(normaliseWishlistEntry)
+      .sort((a, b) => (b.createdAt ?? '').localeCompare(a.createdAt ?? ''));
+  } catch (error) {
+    if (error instanceof WishlistApiError && error.status === 404) return [];
+    throw error;
+  }
+}
 
 // Add a catalogue item to the wishlist. `catalogueItemId` is catalogue_items.id.
 export async function addToWishlist(catalogueItemId: string): Promise<void> {
