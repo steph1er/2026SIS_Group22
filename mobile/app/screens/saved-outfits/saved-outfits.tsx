@@ -13,12 +13,23 @@ import { itemDetailHref } from '../../services/catalogue/catalogue-service';
 import { createStyles } from '../../services/saved-outfits/saved-outfit-theme';
 import { deleteSavedOutfit, type SavedOutfit, type SavedOutfitItem } from '../../services/saved-outfits/saved-outfits-service';
 import { wardrobeItemHref } from '../../services/wardrobe/wardrobe-service';
+import SavedOutfitDetails from './saved-outfit-details';
 
 export default function OutfitsScreen() {
   const styles = useThemedStyles(createStyles);
 
   const [notice, setNotice] = useState<string | null>(null);
   const { outfits, isLoading, error, refresh } = useSavedOutfits();
+
+  const [outfitToView, setOutfitToView] = useState<SavedOutfit | null>(null);
+  const [detailsVisible, setDetailsVisible] = useState(false);
+  const [detailsKey, setDetailsKey] = useState(0);
+
+  const viewOutfit = (outfit: SavedOutfit) => {
+    setOutfitToView(outfit);
+    setDetailsVisible(true);
+    setDetailsKey((key) => key + 1);
+  };
 
   const [outfitToDelete, setOutfitToDelete] = useState<SavedOutfit | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -86,7 +97,13 @@ export default function OutfitsScreen() {
           ) : null}
 
           {outfits.map((outfit) => (
-            <View key={outfit.id} style={styles.itemsInOutfitContainer}>
+            <TouchableOpacity
+              key={outfit.id}
+              style={styles.itemsInOutfitContainer}
+              activeOpacity={0.85}
+              onPress={() => viewOutfit(outfit)}
+              accessibilityLabel={`View details for ${outfit.name}`}
+            >
               {/* items in outfit */}
               <View style={styles.titleContainer}>
                 <Text style={styles.outfitName} numberOfLines={1}>{outfit.name}</Text>
@@ -120,12 +137,27 @@ export default function OutfitsScreen() {
                   ))}
                 </View>
               </ScrollView>
-            </View>
+            </TouchableOpacity>
           ))}
 
           {notice ? <ThemedText style={[styles.muted, styles.notice]}>{notice}</ThemedText> : null}
         </ScrollView>
       </SafeAreaView>
+
+      <SavedOutfitDetails
+        outfit={outfitToView}
+        visible={detailsVisible}
+        onClose={() => setDetailsVisible(false)}
+        onSaved={() => {
+          setDetailsVisible(false);
+          refresh();
+        }}
+        onOpenItem={(item: SavedOutfitItem) => {
+          setDetailsVisible(false);
+          openItem(item);
+        }}
+        key={detailsKey}
+      />
 
       <Modal transparent animationType="fade" visible={outfitToDelete !== null} onRequestClose={closeDeleteModal}>
         <View style={styles.modalOverlay}>

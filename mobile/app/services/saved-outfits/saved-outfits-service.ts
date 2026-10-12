@@ -85,6 +85,25 @@ export async function fetchSavedOutfits(): Promise<SavedOutfit[]> {
   }
 }
 
+export type SavedOutfitEdits = {
+  name: string;
+  season: string | null;
+  style: string | null;
+  occasion: string;
+};
+
+export async function updateSavedOutfit(outfitId: string, edits: SavedOutfitEdits): Promise<void> {
+  await requestJson(`outfits/${encodeURIComponent(outfitId)}`, {
+    method: 'PATCH',
+    body: JSON.stringify({
+      name: edits.name.trim() || null,
+      season: edits.season,
+      style: edits.style,
+      occasion: edits.occasion.trim() || null,
+    }),
+  });
+}
+
 export async function deleteSavedOutfit(outfitId: string): Promise<void> {
   await requestJson(`outfits/${encodeURIComponent(outfitId)}`, { method: 'DELETE' });
 }

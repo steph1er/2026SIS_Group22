@@ -25,6 +25,7 @@ export const createStyles = (colors: StyleUColors) =>
       justifyContent: 'center',
       marginRight: 12,
       alignSelf: 'center',
+      maxHeight: '90%',
     },
     deleteButtonText: {
       color: colors.buttonText,
@@ -184,5 +185,137 @@ export const createStyles = (colors: StyleUColors) =>
     },
     modalButtonDisabled: {
       opacity: 0.6,
+    },
+    detailsOverlay: {
+      flex: 1,
+      backgroundColor: colors.overlay,
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: 24,
+    },
+    detailsBackdrop: {
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+    },
+    detailsPopup: {
+      width: '100%',
+      maxWidth: 360,
+      maxHeight: '85%',
+      backgroundColor: colors.background,
+      borderRadius: 18,
+      padding: 20,
+    },
+    detailsHeader: {
+      color: colors.text,
+      fontSize: 22,
+      fontWeight: 700,
+      paddingBottom: 0,
+    },
+    detailsRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      paddingVertical: 12,
+    },
+    detailsLabel: {
+      color: colors.mutedText,
+      fontSize: 14,
+      fontWeight: 300,
+    },
+    detailsInput: {
+      color: colors.text,
+      fontSize: 14,
+      textAlign: 'right',
+      flex: 1,
+      marginLeft: 16,
+      padding: 0,
+    },
+    dropdownTrigger: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+      maxWidth: '60%',
+    },
+    dropdownTriggerText: {
+      color: colors.text,
+      fontSize: 14,
+    },
+    dropdownPlaceholderText: {
+      color: colors.placeholder,
+      fontSize: 14,
+    },
+    dropdownOptions: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: 8,
+      paddingBottom: 8,
+    },
+    dropdownChip: {
+      paddingHorizontal: 14,
+      paddingVertical: 7,
+      borderRadius: 20,
+      backgroundColor: colors.background,
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    dropdownChipSelected: {
+      backgroundColor: colors.chipSelectedBg,
+      borderColor: colors.accent,
+    },
+    dropdownChipText: {
+      color: colors.mutedText,
+      fontSize: 13,
+    },
+    dropdownChipTextSelected: {
+      color: colors.text,
+    },
+    detailsSeparator: {
+      backgroundColor: colors.border,
+      height: 1, width: '100%',
+      marginVertical: 10,
+    },
+    detailsItemsContainer: {
+      backgroundColor:
+      colors.mutedAccent,
+      borderRadius: 16,
+      paddingVertical: 8,
+    },
+    detailsItemsTitle: {
+      color: colors.text,
+      fontSize: 16,
+      fontWeight: 500,
+      paddingHorizontal: 16,
+      paddingVertical: 8,
+    },
+    detailsError: {
+      color: colors.errorRed,
+      fontSize: 13,
+      paddingTop: 12,
+    },
+    detailsButtons: {
+      flexDirection: 'row',
+      gap: 12,
+      marginTop: 20,
+    },
+    detailsSaveButton: {
+      flex: 1,
+      backgroundColor: colors.accent,
+      paddingVertical: 10,
+      borderRadius: 8,
+      alignItems: 'center',
+    },
+    detailsCancelButton: {
+      flex: 1,
+      backgroundColor: colors.surface,
+      paddingVertical: 10,
+      borderRadius: 8,
+      alignItems: 'center',
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    detailsButtonDisabled: {
+      opacity: 0.4,
     },
   });
