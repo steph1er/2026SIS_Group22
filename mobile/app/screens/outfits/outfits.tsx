@@ -1,5 +1,4 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -18,7 +17,6 @@ import type { StyleUColors } from '../../services/styleu-theme';
 export default function OutfitsScreen() {
   const colors = useStyleUColors();
   const styles = useThemedStyles(createStyles);
-  const [notice, setNotice] = useState<string | null>(null);
 
   return (
     <ThemedView style={{ flex: 1 }}>
@@ -36,10 +34,8 @@ export default function OutfitsScreen() {
             </ThemedText>
           </View>
 
-          {/* TODO: open the outfit builder once it exists. */}
           <PrimaryButton label="Create Outfit" onPress={() => router.push('./create-outfit')} />
 
-          {notice ? <ThemedText style={[styles.muted, styles.notice]}>{notice}</ThemedText> : null}
         </ScrollView>
       </SafeAreaView>
     </ThemedView>

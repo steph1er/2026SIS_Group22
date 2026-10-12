@@ -114,9 +114,6 @@ export const createStyles = (colors: StyleUColors) =>
       fontSize: 13,
       textAlign: 'center',
     },
-    notice: {
-      marginTop: -6,
-    },
     errorContainer: {
       alignItems: 'center',
       gap: 8

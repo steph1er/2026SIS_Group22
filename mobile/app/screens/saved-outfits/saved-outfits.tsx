@@ -18,7 +18,6 @@ import SavedOutfitDetails from './saved-outfit-details';
 export default function OutfitsScreen() {
   const styles = useThemedStyles(createStyles);
 
-  const [notice, setNotice] = useState<string | null>(null);
   const { outfits, isLoading, error, refresh } = useSavedOutfits();
 
   const [outfitToView, setOutfitToView] = useState<SavedOutfit | null>(null);
@@ -140,7 +139,6 @@ export default function OutfitsScreen() {
             </TouchableOpacity>
           ))}
 
-          {notice ? <ThemedText style={[styles.muted, styles.notice]}>{notice}</ThemedText> : null}
         </ScrollView>
       </SafeAreaView>
 
