@@ -5,7 +5,6 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
-  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
@@ -15,8 +14,17 @@ import { router } from 'expo-router';
 
 import { ThemedView } from '../../components/themed-view';
 import { ThemedText } from '../../components/themed-text';
+import { ItemSearch } from '../../components/item-search';
+import { useItemSearch } from '../../hooks/use-item-search';
 import { useWardrobe } from '../../hooks/use-wardrobe';
-import { wardrobeItemHref } from '../../services/wardrobe/wardrobe-service';
+import {
+  buildSearchQuery,
+  collectOptions,
+  PRICE_OPTIONS,
+  type SearchFilters,
+  SIZE_OPTIONS,
+} from '../../services/search/search-query';
+import { searchWardrobe, wardrobeItemHref } from '../../services/wardrobe/wardrobe-service';
 import type { WardrobeItem } from '../../services/wardrobe/wardrobe-types';
 import { useStyleUColors, useThemedStyles } from '../../hooks/use-theme';
 import type { StyleUColors } from '../../services/styleu-theme';
@@ -48,30 +56,38 @@ export function WardrobeCollection({ header }: { header: ReactNode }) {
   const styles = useThemedStyles(createStyles);
   const wardrobe = useWardrobe();
   const [query, setQuery] = useState('');
-  const [category, setCategory] = useState<string | null>(null);
+  const [filters, setFilters] = useState<SearchFilters>({});
 
-  const categories = useMemo(() => {
-    const seen = new Map<string, string>();
-    for (const item of wardrobe.items) {
-      const name = item.category?.trim();
-      if (name && !seen.has(name.toLowerCase())) seen.set(name.toLowerCase(), titleCase(name));
-    }
-    return [...seen.entries()].map(([key, label]) => ({ key, label }));
-  }, [wardrobe.items]);
+  // Filters use GET /wardrobes/search, which runs again whenever the wardrobe reloads.
+  // Wardrobe items have no name for the backend to search, so the text box filters the results here.
+  const searchQuery = buildSearchQuery(filters);
+  const search = useItemSearch(searchWardrobe, searchQuery, wardrobe.items);
 
-  // Drop a category filter that no longer matches anything (e.g. after deleting its last item).
-  const activeCategory = category && categories.some((c) => c.key === category) ? category : null;
+  // Options list the values found across the whole wardrobe.
+  const filterOptions = useMemo(
+    () => ({
+      category: collectOptions(wardrobe.items.map((item) => item.category)),
+      colour: collectOptions(wardrobe.items.flatMap((item) => item.colours)),
+      style: collectOptions(wardrobe.items.flatMap((item) => item.styles)),
+      brand: collectOptions(wardrobe.items.map((item) => item.brand), { keepCase: true }),
+      size: SIZE_OPTIONS,
+      material: collectOptions(wardrobe.items.flatMap((item) => item.materials)),
+      tags: collectOptions(wardrobe.items.flatMap((item) => item.tags), { keepCase: true }),
+      price: PRICE_OPTIONS,
+    }),
+    [wardrobe.items],
+  );
 
   const visibleItems = useMemo(() => {
-    const search = query.trim().toLowerCase();
-    return wardrobe.items.filter((item) => {
-      if (activeCategory && item.category?.trim().toLowerCase() !== activeCategory) return false;
-      if (!search) return true;
-      return [item.category, item.brand, item.size, ...item.colours, ...item.styles, ...item.materials, ...item.tags]
+    const items = searchQuery ? (search.results ?? []) : wardrobe.items;
+    const text = query.trim().toLowerCase();
+    if (!text) return items;
+    return items.filter((item) =>
+      [item.category, item.brand, item.size, ...item.colours, ...item.styles, ...item.materials, ...item.tags]
         .filter(Boolean)
-        .some((field) => field!.toLowerCase().includes(search));
-    });
-  }, [wardrobe.items, query, activeCategory]);
+        .some((field) => field!.toLowerCase().includes(text)),
+    );
+  }, [wardrobe.items, searchQuery, search.results, query]);
 
   const leftColumn = visibleItems.filter((_, index) => index % 2 === 0);
   const rightColumn = visibleItems.filter((_, index) => index % 2 === 1);
@@ -83,48 +99,20 @@ export function WardrobeCollection({ header }: { header: ReactNode }) {
         <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
           {header}
 
-          <View style={styles.searchRow}>
-            <View style={[styles.searchBar, { flex: 1 }]}>
-              <Ionicons name="search" size={18} color={colors.subtleText} />
-              <TextInput
-                value={query}
-                onChangeText={setQuery}
-                placeholder={`Search my ${count} item${count === 1 ? '' : 's'}...`}
-                placeholderTextColor={colors.subtleText}
-                style={styles.searchInput}
-                returnKeyType="search"
-                autoCorrect={false}
-              />
-              {query ? (
-                <TouchableOpacity onPress={() => setQuery('')} accessibilityLabel="Clear search">
-                  <Ionicons name="close-circle" size={18} color={colors.subtleText} />
-                </TouchableOpacity>
-              ) : null}
-            </View>
-            <TouchableOpacity style={styles.iconCircle} onPress={wardrobe.refresh} accessibilityLabel="Refresh wardrobe">
-              <Ionicons name="refresh" size={18} color={colors.text} />
-            </TouchableOpacity>
-          </View>
-
-          {categories.length > 0 ? (
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
-              {categories.map(({ key, label }) => {
-                const selected = key === activeCategory;
-                return (
-                  <TouchableOpacity
-                    key={key}
-                    style={[styles.chip, selected && styles.chipSelected]}
-                    onPress={() => setCategory(selected ? null : key)}
-                  >
-                    <ThemedText style={[styles.chipText, selected && styles.chipTextSelected]}>
-                      {selected ? `Category: ${label}` : label}
-                    </ThemedText>
-                    {selected ? <Ionicons name="close-circle-outline" size={16} color={colors.text} /> : null}
-                  </TouchableOpacity>
-                );
-              })}
-            </ScrollView>
-          ) : null}
+          <ItemSearch
+            compact
+            query={query}
+            onQueryChange={setQuery}
+            filters={filters}
+            onFiltersChange={setFilters}
+            options={filterOptions}
+            placeholder={`Search my ${count} item${count === 1 ? '' : 's'}...`}
+            accessory={
+              <TouchableOpacity style={styles.iconCircle} onPress={wardrobe.refresh} accessibilityLabel="Refresh wardrobe">
+                <Ionicons name="refresh" size={18} color={colors.text} />
+              </TouchableOpacity>
+            }
+          />
 
           {wardrobe.error ? (
             <StateMessage
@@ -142,8 +130,27 @@ export function WardrobeCollection({ header }: { header: ReactNode }) {
               title="Your wardrobe is empty"
               message="Items you upload will show up here."
             />
+          ) : searchQuery && search.error ? (
+            <StateMessage
+              icon="cloud-offline-outline"
+              title="Couldn't search your wardrobe"
+              message={search.error}
+              actionLabel="Try again"
+              onAction={search.retry}
+            />
+          ) : searchQuery && search.results === null ? (
+            <ActivityIndicator style={{ paddingVertical: 40 }} />
           ) : visibleItems.length === 0 ? (
-            <StateMessage icon="search-outline" title="No matching items" message="Try a different search or filter." />
+            <StateMessage
+              icon="search-outline"
+              title="No matching items"
+              message="Try a different search or filter."
+              actionLabel="Clear search"
+              onAction={() => {
+                setQuery('');
+                setFilters({});
+              }}
+            />
           ) : (
             <View style={styles.masonry}>
               {[leftColumn, rightColumn].map((column, columnIndex) => (
@@ -230,11 +237,6 @@ const createStyles = (colors: StyleUColors) =>
     gap: 16,
     paddingBottom: 110,
   },
-  searchRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
   iconCircle: {
     width: 40,
     height: 40,
@@ -242,49 +244,6 @@ const createStyles = (colors: StyleUColors) =>
     backgroundColor: colors.input,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  searchBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    backgroundColor: colors.input,
-    borderWidth: 1,
-    borderColor: colors.borderSoft,
-    borderRadius: 26,
-    paddingHorizontal: 16,
-    height: 50,
-  },
-  searchInput: {
-    flex: 1,
-    fontSize: 15,
-    color: colors.text,
-  },
-  chips: {
-    gap: 8,
-    paddingRight: 4,
-  },
-  chip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    borderWidth: 1,
-    borderColor: colors.borderSoft,
-    borderRadius: 18,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    backgroundColor: colors.card,
-  },
-  chipSelected: {
-    borderColor: colors.accentStrong,
-    backgroundColor: colors.accentSoft,
-  },
-  chipText: {
-    fontSize: 13,
-    color: colors.subtleText,
-  },
-  chipTextSelected: {
-    color: colors.text,
-    fontWeight: '600',
   },
   masonry: {
     flexDirection: 'row',
