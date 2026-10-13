@@ -1,5 +1,5 @@
 import Slider from '@react-native-community/slider';
-import { Redirect } from 'expo-router';
+import { Redirect, router } from 'expo-router';
 import { useState } from 'react';
 import { ActivityIndicator, Image, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import RangeSlider from 'react-native-fast-range-slider';
@@ -12,7 +12,11 @@ import type { OnboardingLayout, OnboardingProgress } from '../../../src/onboardi
 import { useOnboardingProgress } from '../../../src/onboarding/use-onboarding-progress';
 import { BackButton } from '../../components/back-button';
 import { useStyleUColors, useThemedStyles } from '../../hooks/use-theme';
+<<<<<<< HEAD:mobile/app/screens/onboarding/onboardingQuiz.tsx
+import { useOnboardingHandler } from '../../services/onboarding/onboardingHandler';
+=======
 import { useOnboardingHandler } from '../../services/onboarding/onboarding-handler';
+>>>>>>> origin/main:mobile/app/screens/onboarding/onboarding-quiz.tsx
 import { createInputStyles } from '../../services/onboarding/style/onboarding-inputs';
 import { createOptionStyles } from '../../services/onboarding/style/onboarding-options';
 import { createLayoutStyles } from '../../services/onboarding/style/onboarding-theme';
@@ -122,6 +126,7 @@ function OnboardingQuizContent({ initial }: { initial: OnboardingProgress }) {
     isSectionAnswered,
     handleContinue,
     handleBack,
+    finishOnboarding,
   } = useOnboardingHandler(initial);
 
   const [priceSliderWidth, setPriceSliderWidth] = useState(defaultPriceSliderWidth);
@@ -597,7 +602,11 @@ function OnboardingQuizContent({ initial }: { initial: OnboardingProgress }) {
 
         {step.type === 'wardrobe' && (
           <View style={styles.wardrobeContent}>
-            <TouchableOpacity style={styles.wardrobeCard}>
+            <TouchableOpacity   
+              onPress={async () => {
+                await finishOnboarding();
+                if (!isSaving) router.push('./home-dashboard');
+              }} style={styles.wardrobeCard}>
               <View style={styles.wardrobeIconBox}>
                 <Text style={styles.wardrobeIcon}>⌕</Text>
               </View>
@@ -613,7 +622,10 @@ function OnboardingQuizContent({ initial }: { initial: OnboardingProgress }) {
               </View>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.wardrobeCard}>
+            <TouchableOpacity onPress={async () => {
+              await finishOnboarding();
+              if (!isSaving) router.push('./upload-item');
+            }} style={styles.wardrobeCard}>
               <View style={styles.wardrobeIconBox}>
                 <Text style={styles.wardrobeIcon}>▣</Text>
               </View>

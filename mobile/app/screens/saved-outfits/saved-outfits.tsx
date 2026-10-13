@@ -1,24 +1,45 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useState } from 'react';
-import { ActivityIndicator, Image, Modal, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Image, Modal, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { router } from 'expo-router';
+import { FilterSheet } from '../../components/item-search';
 import { ThemedText } from '../../components/themed-text';
 import { ThemedView } from '../../components/themed-view';
+import type { FilterOption } from '../../services/search/search-query';
 
 import { useSavedOutfits } from '../../hooks/use-saved-outfits';
-import { useThemedStyles } from '../../hooks/use-theme';
+import { useStyleUColors, useThemedStyles } from '../../hooks/use-theme';
 import { itemDetailHref } from '../../services/catalogue/catalogue-service';
+import { OUTFIT_SEASONS, OUTFIT_STYLES } from '../../services/create-outfit/create-outfit-service';
 import { createStyles } from '../../services/saved-outfits/saved-outfit-theme';
-import { deleteSavedOutfit, type SavedOutfit, type SavedOutfitItem } from '../../services/saved-outfits/saved-outfits-service';
+import { deleteSavedOutfit, filterSavedOutfits, hasActiveFilters, NO_FILTERS, type SavedOutfit, type SavedOutfitFilters, type SavedOutfitItem } from '../../services/saved-outfits/saved-outfits-service';
 import { wardrobeItemHref } from '../../services/wardrobe/wardrobe-service';
+import SavedOutfitDetails from './saved-outfit-details';
+
+const toOptions = (values: string[]): FilterOption[] => values.map((value) => ({ value, label: value }));
+
+const FILTER_CHIPS = [
+  { key: 'season', label: 'Season', options: toOptions(OUTFIT_SEASONS) },
+  { key: 'style', label: 'Style', options: toOptions(OUTFIT_STYLES) },
+] as const;
 
 export default function OutfitsScreen() {
   const styles = useThemedStyles(createStyles);
+  const colors = useStyleUColors();
 
-  const [notice, setNotice] = useState<string | null>(null);
   const { outfits, isLoading, error, refresh } = useSavedOutfits();
+
+  const [outfitToView, setOutfitToView] = useState<SavedOutfit | null>(null);
+  const [detailsVisible, setDetailsVisible] = useState(false);
+  const [detailsKey, setDetailsKey] = useState(0);
+
+  const viewOutfit = (outfit: SavedOutfit) => {
+    setOutfitToView(outfit);
+    setDetailsVisible(true);
+    setDetailsKey((key) => key + 1);
+  };
 
   const [outfitToDelete, setOutfitToDelete] = useState<SavedOutfit | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -49,7 +70,16 @@ export default function OutfitsScreen() {
     router.push(item.source === 'Wardrobe' ? wardrobeItemHref(item.itemId) : itemDetailHref(item.itemId));
   };
 
+  const [filters, setFilters] = useState<SavedOutfitFilters>(NO_FILTERS);
+  const visibleOutfits = filterSavedOutfits(outfits, filters);
+  const [openFilter, setOpenFilter] = useState<'season' | 'style' | null>(null);
+  const setFilter = (key: 'season' | 'style', value: string | null) =>
+    setFilters((previous) => ({ ...previous, [key]: value }));
+  const activeFilter = FILTER_CHIPS.find((chip) => chip.key === openFilter);
+  const selectedValue = openFilter ? filters[openFilter] : null;
+
   const showEmptyState = !isLoading && !error && outfits.length === 0;
+  const showNoMatches = outfits.length > 0 && visibleOutfits.length === 0;
 
   return (
     <ThemedView style={{ flex: 1 }}>
@@ -61,6 +91,55 @@ export default function OutfitsScreen() {
                 <Text style={styles.buttonText}>Create Outfit</Text>
               </TouchableOpacity>
           </View>
+
+          {outfits.length > 0 ? (
+            <View style={styles.filterRow}>
+              {FILTER_CHIPS.map(({ key, label }) => {
+                const chosen = filters[key];
+                return (
+                  <TouchableOpacity
+                    key={key}
+                    style={[styles.filterChip, chosen && styles.filterChipSelected]}
+                    onPress={() => setOpenFilter(key)}
+                    accessibilityLabel={chosen ? `${label}: ${chosen}. Change filter` : `Filter by ${label}`}
+                  >
+                    <Text style={[styles.filterChipText, chosen && styles.filterChipTextSelected]}>
+                      {chosen ? `${label}: ${chosen}` : label}
+                    </Text>
+                    {chosen ? (
+                      <TouchableOpacity onPress={() => setFilter(key, null)} hitSlop={8} accessibilityLabel={`Clear ${label} filter`}>
+                        <Ionicons name="close-circle-outline" size={18} color={colors.text} />
+                      </TouchableOpacity>
+                    ) : (
+                      <Ionicons name="chevron-down" size={14} color={colors.subtleText} />
+                    )}
+                  </TouchableOpacity>
+                );
+              })}
+
+              <View style={styles.filterSearch}>
+                <Ionicons name="search" size={16} color={colors.subtleText} />
+                <TextInput
+                  value={filters.occasion}
+                  onChangeText={(occasion) => setFilters((previous) => ({ ...previous, occasion }))}
+                  placeholder="Occasion"
+                  placeholderTextColor={colors.subtleText}
+                  style={styles.filterSearchInput}
+                  returnKeyType="search"
+                  autoCorrect={false}
+                />
+                {filters.occasion ? (
+                  <TouchableOpacity
+                    onPress={() => setFilters((previous) => ({ ...previous, occasion: '' }))}
+                    hitSlop={8}
+                    accessibilityLabel="Clear occasion search"
+                  >
+                    <Ionicons name="close-circle" size={16} color={colors.subtleText} />
+                  </TouchableOpacity>
+                ) : null}
+              </View>
+            </View>
+          ) : null}
 
           {isLoading && outfits.length === 0 ? <ActivityIndicator color={'#D98E73'} /> : null}
 
@@ -85,8 +164,25 @@ export default function OutfitsScreen() {
             </View>
           ) : null}
 
-          {outfits.map((outfit) => (
-            <View key={outfit.id} style={styles.itemsInOutfitContainer}>
+          {showNoMatches ? (
+            <View style={styles.errorContainer}>
+              <ThemedText style={styles.muted}>No outfits match these filters.</ThemedText>
+              {hasActiveFilters(filters) ? (
+                <TouchableOpacity onPress={() => setFilters(NO_FILTERS)}>
+                  <Text style={styles.clearFiltersText}>Clear filters</Text>
+                </TouchableOpacity>
+              ) : null}
+            </View>
+          ) : null}
+
+          {visibleOutfits.map((outfit) => (
+            <TouchableOpacity
+              key={outfit.id}
+              style={styles.itemsInOutfitContainer}
+              activeOpacity={0.85}
+              onPress={() => viewOutfit(outfit)}
+              accessibilityLabel={`View details for ${outfit.name}`}
+            >
               {/* items in outfit */}
               <View style={styles.titleContainer}>
                 <Text style={styles.outfitName} numberOfLines={1}>{outfit.name}</Text>
@@ -120,12 +216,39 @@ export default function OutfitsScreen() {
                   ))}
                 </View>
               </ScrollView>
-            </View>
+            </TouchableOpacity>
           ))}
 
-          {notice ? <ThemedText style={[styles.muted, styles.notice]}>{notice}</ThemedText> : null}
         </ScrollView>
       </SafeAreaView>
+
+      <FilterSheet
+        title={activeFilter?.label ?? ''}
+        visible={openFilter !== null}
+        multiSelect={false}
+        options={activeFilter?.options ?? []}
+        selected={selectedValue ? [selectedValue] : []}
+        onClose={() => setOpenFilter(null)}
+        onChange={(values) => {
+          if (openFilter) setFilter(openFilter, values[0] ?? null);
+          setOpenFilter(null);
+        }}
+      />
+
+      <SavedOutfitDetails
+        outfit={outfitToView}
+        visible={detailsVisible}
+        onClose={() => setDetailsVisible(false)}
+        onSaved={() => {
+          setDetailsVisible(false);
+          refresh();
+        }}
+        onOpenItem={(item: SavedOutfitItem) => {
+          setDetailsVisible(false);
+          openItem(item);
+        }}
+        key={detailsKey}
+      />
 
       <Modal transparent animationType="fade" visible={outfitToDelete !== null} onRequestClose={closeDeleteModal}>
         <View style={styles.modalOverlay}>
