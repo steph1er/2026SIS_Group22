@@ -1,12 +1,12 @@
+import { Ionicons } from '@expo/vector-icons';
 import { useMemo, useState } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
 
-import { ThemedText } from './themed-text';
-import type { CatalogueItem } from '../services/wishlist/wishlist-types';
 import { useStyleUColors, useThemedStyles } from '../hooks/use-theme';
 import type { StyleUColors } from '../services/styleu-theme';
+import type { CatalogueItem } from '../services/wishlist/wishlist-types';
+import { ThemedText } from './themed-text';
 
 
 export type FilterKey = 'price' | 'category' | 'colour' | 'style' | 'size' | 'brand';
@@ -14,7 +14,7 @@ export type FilterKey = 'price' | 'category' | 'colour' | 'style' | 'size' | 'br
 /** The chosen option per filter (an option `key`); a missing filter means "any". */
 export type CatalogueFilters = Partial<Record<FilterKey, string>>;
 
-type FilterOption = { key: string; label: string };
+export type FilterOption = { key: string; label: string };
 
 const FILTERS: { key: FilterKey; label: string }[] = [
   { key: 'price', label: 'Price' },
@@ -204,7 +204,7 @@ type FilterSheetProps = {
   onSelect: (value: string | null) => void;
 };
 
-function FilterSheet({ title, visible, options, selected, onClose, onSelect }: FilterSheetProps) {
+export function FilterSheet({ title, visible, options, selected, onClose, onSelect }: FilterSheetProps) {
   const colors = useStyleUColors();
   const styles = useThemedStyles(createStyles);
   const insets = useSafeAreaInsets();
@@ -347,8 +347,9 @@ const createStyles = (colors: StyleUColors) =>
   sheetRowText: {
     fontSize: 16,
     color: colors.text,
+    fontWeight: '400',
   },
   sheetRowTextSelected: {
-    fontWeight: '600',
+    fontWeight: '500',
   },
 });

@@ -114,6 +114,57 @@ export const createStyles = (colors: StyleUColors) =>
       fontSize: 13,
       textAlign: 'center',
     },
+    filterRow: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: 8,
+    },
+    filterSearch: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+      flexGrow: 1,
+      flexBasis: 120,
+      borderWidth: 1,
+      borderColor: colors.borderSoft,
+      borderRadius: 18,
+      paddingHorizontal: 12,
+      backgroundColor: colors.input,
+    },
+    filterSearchInput: {
+      flex: 1,
+      fontSize: 14,
+      color: colors.text,
+      padding: 0,
+    },
+    filterChip: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+      borderWidth: 1,
+      borderColor: colors.borderSoft,
+      borderRadius: 18,
+      paddingHorizontal: 14,
+      paddingVertical: 8,
+      backgroundColor: colors.surface,
+    },
+    filterChipSelected: {
+      borderColor: colors.accent,
+      backgroundColor: colors.accentSoft,
+    },
+    filterChipText: {
+      fontSize: 14,
+      color: colors.subtleText,
+    },
+    filterChipTextSelected: {
+      color: colors.text,
+      fontWeight: '600',
+    },
+    clearFiltersText: {
+      color: colors.accentStrong,
+      fontSize: 14,
+      fontWeight: '600',
+    },
     errorContainer: {
       alignItems: 'center',
       gap: 8

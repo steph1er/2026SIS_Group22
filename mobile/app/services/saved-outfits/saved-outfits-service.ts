@@ -70,6 +70,30 @@ function normaliseOutfit(raw: unknown): SavedOutfit | null {
   };
 }
 
+export type SavedOutfitFilters = {
+  season: string | null;
+  style: string | null;
+  occasion: string;
+};
+
+export const NO_FILTERS: SavedOutfitFilters = { season: null, style: null, occasion: '' };
+
+export const hasActiveFilters = (filters: SavedOutfitFilters) =>
+  filters.season !== null || filters.style !== null || filters.occasion.trim() !== '';
+
+export function filterSavedOutfits(outfits: SavedOutfit[], filters: SavedOutfitFilters): SavedOutfit[] {
+  const season = filters.season?.toLowerCase() ?? null;
+  const style = filters.style?.toLowerCase() ?? null;
+  const occasion = filters.occasion.trim().toLowerCase();
+
+  return outfits.filter(
+    (outfit) =>
+      (season === null || outfit.season?.toLowerCase() === season) &&
+      (style === null || outfit.style?.toLowerCase() === style) &&
+      (occasion === '' || (outfit.occasion?.toLowerCase().includes(occasion) ?? false)),
+  );
+}
+
 export async function fetchSavedOutfits(): Promise<SavedOutfit[]> {
   try {
     const rows = toArray(await requestJson('outfits'));
