@@ -20,6 +20,8 @@ import { preparePhotoForUpload } from '../../../src/upload-item/prep-image';
 import { analyseItemPhoto, type AnalyseItemResult } from '../../../src/upload-item/analyse-item-service';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BackButton } from '../back-button';
+// import { router } from '../../../.expo/types/router';
+import { router } from 'expo-router';
 
 
 export default function Camera() {
@@ -99,9 +101,24 @@ export default function Camera() {
     }
 }; 
 
-  const handleConfirm = (item: ConfirmedItem) => {
-    // TODO: save the item to the wardrobe (next step), then open the wardrobe page.
-    console.log('confirmed item', { ...item, embedding: `${item.embedding.length} numbers` });
+  const handleConfirm = async (item: ConfirmedItem) => {
+    try {
+      // await createWardrobeItem(item);
+    } catch (e) {
+      const message = e instanceof Error ? e.message : '';
+      if (/cannot post/i.test(message)) {
+        throw new Error('The backend has no POST /wardrobes/create endpoint yet. Add it, restart the backend and try again.');
+      }
+      throw e; // shown on the form
+    }
+
+    // Reset this screen so it's a fresh camera next time.
+    setPhoto(null);
+    setResult(null);
+    setError(null);
+
+    // Open the wardrobe tab. It reloads when shown, so the new item appears.
+    router.dismissTo('../../saved'); 
   };
 
   const handlePickFromLibrary = async () => {
@@ -345,7 +362,7 @@ permissionText: {
     letterSpacing: 0.5,
     color: colors.accentStrong,
   },
-  tipBanner: {
+    tipBanner: {
     position: 'absolute',
     left: 16,
     right: 16,
