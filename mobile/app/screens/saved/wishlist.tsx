@@ -6,7 +6,6 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
-  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
@@ -17,7 +16,17 @@ import { router } from 'expo-router';
 import { ThemedView } from '../../components/themed-view';
 import { ThemedText } from '../../components/themed-text';
 import { CatalogueItemCard } from '../../components/catalogue-item-card';
+import { ItemSearch } from '../../components/item-search';
+import { useItemSearch } from '../../hooks/use-item-search';
 import { useWishlist } from '../../hooks/use-wishlist';
+import {
+  buildSearchQuery,
+  collectOptions,
+  PRICE_OPTIONS,
+  type SearchFilters,
+  SIZE_OPTIONS,
+} from '../../services/search/search-query';
+import { searchWishlist } from '../../services/wishlist/wishlist-service';
 import { itemDetailHref } from '../../services/catalogue/catalogue-service';
 import type { CatalogueItem, WishlistEntry } from '../../services/wishlist/wishlist-types';
 import { useStyleUColors, useThemedStyles } from '../../hooks/use-theme';
@@ -58,36 +67,37 @@ export function WishlistCollection({ header }: { header: ReactNode }) {
   const styles = useThemedStyles(createStyles);
   const wishlist = useWishlist({ includeRecommendations: true });
   const [query, setQuery] = useState('');
-  const [category, setCategory] = useState<string | null>(null);
+  const [filters, setFilters] = useState<SearchFilters>({});
   const [sortOrder, setSortOrder] = useState<SortOrder>('newest');
   const [menuVisible, setMenuVisible] = useState(false);
 
-  const categories = useMemo(() => {
-    const seen = new Map<string, string>();
-    for (const entry of wishlist.wishlist) {
-      const name = entry.item.category?.trim();
-      if (name && !seen.has(name.toLowerCase())) seen.set(name.toLowerCase(), titleCase(name));
-    }
-    return [...seen.entries()].map(([key, label]) => ({ key, label }));
+  // Searching uses GET /wishlist/search; it runs again whenever the wishlist reloads.
+  const searchQuery = buildSearchQuery(filters, query);
+  const isSearching = searchQuery !== null;
+  const search = useItemSearch(searchWishlist, searchQuery, wishlist.wishlist);
+
+  // Options list the values found across the whole wishlist.
+  const filterOptions = useMemo(() => {
+    const items = wishlist.wishlist.map((entry) => entry.item);
+    return {
+      category: collectOptions(items.map((item) => item.category)),
+      colour: collectOptions(items.flatMap((item) => item.colours)),
+      style: collectOptions(items.flatMap((item) => item.styles)),
+      brand: collectOptions(items.map((item) => item.brand), { keepCase: true }),
+      size: SIZE_OPTIONS,
+      material: collectOptions(items.flatMap((item) => item.materials)),
+      price: PRICE_OPTIONS,
+    };
   }, [wishlist.wishlist]);
 
-  // Drop a category filter that no longer matches anything (e.g. after removing its last item).
-  const activeCategory = category && categories.some((c) => c.key === category) ? category : null;
-
   const visibleEntries = useMemo(() => {
-    const search = query.trim().toLowerCase();
-    const filtered = wishlist.wishlist.filter((entry) => {
-      const { item } = entry;
-      if (activeCategory && item.category?.trim().toLowerCase() !== activeCategory) return false;
-      if (!search) return true;
-      return [item.name, item.brand, item.category, ...item.colours, ...item.styles]
-        .filter(Boolean)
-        .some((field) => field!.toLowerCase().includes(search));
-    });
-    if (sortOrder === 'newest') return filtered;
+    // Drop results removed since the search ran.
+    const savedIds = new Set(wishlist.wishlist.map((entry) => entry.id));
+    const entries = isSearching ? (search.results ?? []).filter((entry) => savedIds.has(entry.id)) : wishlist.wishlist;
+    if (sortOrder === 'newest') return entries;
     const direction = sortOrder === 'price-asc' ? 1 : -1;
-    return [...filtered].sort((a, b) => direction * ((a.item.price ?? Infinity) - (b.item.price ?? Infinity)));
-  }, [wishlist.wishlist, query, activeCategory, sortOrder]);
+    return [...entries].sort((a, b) => direction * ((a.item.price ?? Infinity) - (b.item.price ?? Infinity)));
+  }, [wishlist.wishlist, isSearching, search.results, sortOrder]);
 
   const leftColumn = visibleEntries.filter((_, index) => index % 2 === 0);
   const rightColumn = visibleEntries.filter((_, index) => index % 2 === 1);
@@ -99,52 +109,24 @@ export function WishlistCollection({ header }: { header: ReactNode }) {
         <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
           {header}
 
-          <View style={styles.searchRow}>
-            <View style={[styles.searchBar, { flex: 1 }]}>
-              <Ionicons name="search" size={18} color={colors.subtleText} />
-              <TextInput
-                value={query}
-                onChangeText={setQuery}
-                placeholder={`Search my ${count} item${count === 1 ? '' : 's'}...`}
-                placeholderTextColor={colors.subtleText}
-                style={styles.searchInput}
-                returnKeyType="search"
-                autoCorrect={false}
-              />
-              {query ? (
-                <TouchableOpacity onPress={() => setQuery('')} accessibilityLabel="Clear search">
-                  <Ionicons name="close-circle" size={18} color={colors.subtleText} />
-                </TouchableOpacity>
-              ) : null}
-            </View>
-            <TouchableOpacity
-              style={styles.iconCircle}
-              onPress={() => setMenuVisible(true)}
-              accessibilityLabel="Wishlist options"
-            >
-              <Ionicons name="ellipsis-vertical" size={18} color={colors.text} />
-            </TouchableOpacity>
-          </View>
-
-          {categories.length > 0 ? (
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
-              {categories.map(({ key, label }) => {
-                const selected = key === activeCategory;
-                return (
-                  <TouchableOpacity
-                    key={key}
-                    style={[styles.chip, selected && styles.chipSelected]}
-                    onPress={() => setCategory(selected ? null : key)}
-                  >
-                    <ThemedText style={[styles.chipText, selected && styles.chipTextSelected]}>
-                      {selected ? `Category: ${label}` : label}
-                    </ThemedText>
-                    {selected ? <Ionicons name="close-circle-outline" size={16} color={colors.text} /> : null}
-                  </TouchableOpacity>
-                );
-              })}
-            </ScrollView>
-          ) : null}
+          <ItemSearch
+            compact
+            query={query}
+            onQueryChange={setQuery}
+            filters={filters}
+            onFiltersChange={setFilters}
+            options={filterOptions}
+            placeholder={`Search my ${count} item${count === 1 ? '' : 's'} by name...`}
+            accessory={
+              <TouchableOpacity
+                style={styles.iconCircle}
+                onPress={() => setMenuVisible(true)}
+                accessibilityLabel="Wishlist options"
+              >
+                <Ionicons name="ellipsis-vertical" size={18} color={colors.text} />
+              </TouchableOpacity>
+            }
+          />
 
           {wishlist.actionError ? (
             <View style={styles.errorBanner}>
@@ -172,8 +154,27 @@ export function WishlistCollection({ header }: { header: ReactNode }) {
               title="Your wishlist is empty"
               message="Tap the heart on a recommended item below to save it here."
             />
+          ) : isSearching && search.error ? (
+            <StateMessage
+              icon="cloud-offline-outline"
+              title="Couldn't search your wishlist"
+              message={search.error}
+              actionLabel="Try again"
+              onAction={search.retry}
+            />
+          ) : isSearching && search.results === null ? (
+            <ActivityIndicator style={{ paddingVertical: 40 }} />
           ) : visibleEntries.length === 0 ? (
-            <StateMessage icon="search-outline" title="No matching items" message="Try a different search or filter." />
+            <StateMessage
+              icon="search-outline"
+              title="No matching items"
+              message="Try a different search or filter."
+              actionLabel="Clear search"
+              onAction={() => {
+                setQuery('');
+                setFilters({});
+              }}
+            />
           ) : (
             <View style={styles.masonry}>
               {[leftColumn, rightColumn].map((column, columnIndex) => (
@@ -390,11 +391,6 @@ const createStyles = (colors: StyleUColors) =>
     gap: 16,
     paddingBottom: 110,
   },
-  searchRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
   iconCircle: {
     width: 40,
     height: 40,
@@ -402,49 +398,6 @@ const createStyles = (colors: StyleUColors) =>
     backgroundColor: colors.input,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  searchBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    backgroundColor: colors.input,
-    borderWidth: 1,
-    borderColor: colors.borderSoft,
-    borderRadius: 26,
-    paddingHorizontal: 16,
-    height: 50,
-  },
-  searchInput: {
-    flex: 1,
-    fontSize: 15,
-    color: colors.text,
-  },
-  chips: {
-    gap: 8,
-    paddingRight: 4,
-  },
-  chip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    borderWidth: 1,
-    borderColor: colors.borderSoft,
-    borderRadius: 18,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    backgroundColor: colors.card,
-  },
-  chipSelected: {
-    borderColor: colors.accentStrong,
-    backgroundColor: colors.accentSoft,
-  },
-  chipText: {
-    fontSize: 13,
-    color: colors.subtleText,
-  },
-  chipTextSelected: {
-    color: colors.text,
-    fontWeight: '600',
   },
   masonry: {
     flexDirection: 'row',

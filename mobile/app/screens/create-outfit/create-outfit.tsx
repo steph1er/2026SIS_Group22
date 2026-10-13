@@ -1,15 +1,19 @@
-import { useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, Image, ScrollView, Text, TouchableOpacity, useWindowDimensions, View } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import { ActivityIndicator, Image, Modal, ScrollView, Text, TouchableOpacity, useWindowDimensions, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { captureRef } from 'react-native-view-shot';
 
-import { addOutfitToWishlist, fetchBuilderItems, fetchGeneralRecommendations, getItemLabel, saveOutfit, type BuilderItem } from '../../services/create-outfit/create-outfit-service';
+import { Ionicons } from '@expo/vector-icons';
+import * as MediaLibrary from 'expo-media-library';
 
-import { OutfitItem, OutfitSaveDetails, RecommendedItem, WardrobeItem } from '../../services/create-outfit/createOutfitTypes';
-import CreateOutfitItem from './createOutfitItem';
-import CreateOutfitSave from './createOutfitSave';
-import CreateOutfitVisualiserItem from './createOutfitVisualiserItem';
+import { addOutfitToWishlist, fetchBuilderItems, fetchGeneralRecommendations, getItemLabel, matchesUiCategory, saveOutfit, type BuilderItem } from '../../services/create-outfit/create-outfit-service';
+
+import { OutfitItem, OutfitSaveDetails, RecommendedItem, WardrobeItem } from '../../services/create-outfit/create-outfit-types';
+import CreateOutfitItem from './create-outfit-item';
+import CreateOutfitSave from './create-outfit-save';
+import CreateOutfitVisualiserItem from './create-outfit-visualiser';
 
 import { createSaveStyles } from '@/services/create-outfit/style/create-outfit-save';
 import { createCatalogueStyles } from '../../services/create-outfit/style/create-outfit-catalogue';
@@ -19,6 +23,7 @@ import { createVisualiserStyles } from '../../services/create-outfit/style/creat
 
 import { BackButton, goBackOr } from '../../components/back-button';
 import { useStyleUColors, useThemedStyles } from '../../hooks/use-theme';
+import { createStyles as createSavedOutfitStyles } from '../../services/saved-outfits/saved-outfit-theme';
 import type { StyleUColors } from '../../services/styleu-theme';
 
 export const createStyles = (colors: StyleUColors) => ({
@@ -31,7 +36,10 @@ export const createStyles = (colors: StyleUColors) => ({
 
 export default function CreateOutfits() {
   const styles = useThemedStyles(createStyles);
+  // the discard modal reuses the saved-outfits delete modal styles (modalOverlay, modalCard, ...)
+  const modalStyles = useThemedStyles(createSavedOutfitStyles);
   const colors = useStyleUColors();
+  const insets = useSafeAreaInsets();
 
   const { height: screenHeight, width: screenWidth } = useWindowDimensions();
 
@@ -66,6 +74,10 @@ export default function CreateOutfits() {
   const [selectedItem, setSelectedItem] = useState<WardrobeItem | RecommendedItem | null>(null);
   const [itemsCategory, setItemsCategory] = useState<'Wardrobe' | 'Wishlist'>('Wardrobe'); // wardrobe or wishlist
   const togglePosition = useSharedValue(0);
+  const toggleActiveStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: togglePosition.value * toggleMove }],
+  }));
+  const topZ = useSharedValue(0); // highest zIndex given to a visualiser item, so a touched item can go on top
 
   const [outfitItems, setOutfitItems] = useState<OutfitItem[]>([]);
   const hasOutfitItems = outfitItems.length > 0;
@@ -76,14 +88,17 @@ export default function CreateOutfits() {
       goBackOr('/outfits');
       return;
     }
-    Alert.alert('Discard this outfit?', "The items you've added won't be saved.", [
-      { text: 'Keep editing', style: 'cancel' },
-      { text: 'Discard', style: 'destructive', onPress: () => goBackOr('/outfits') },
-    ]);
+    setShowDiscard(true);
+  };
+
+  const handleConfirmDiscard = () => {
+    setShowDiscard(false);
+    goBackOr('/outfits');
   };
 
   const [selectedCategory, setSelectedCategory] = useState('Tops');
   const [showSave, setShowSave] = useState(false);
+  const [showDiscard, setShowDiscard] = useState(false);
   const [addingToWishlist, setAddingToWishlist] = useState(false);
   const [reloadCount, setReloadCount] = useState(0); // bump to refetch wardrobe/wishlist items
 
@@ -102,32 +117,36 @@ export default function CreateOutfits() {
   }, []);
 
   // wardrobe/wishlist items: reload on toggle or category change
-  const [suggested, setSuggested] = useState<BuilderItem[]>([]);
-  const [gridItems, setGridItems] = useState<BuilderItem[]>([]);
+  const builderKey = `${itemsCategory}:${selectedCategory}:${reloadCount}`;
+  const [builder, setBuilder] = useState<{
+    key: string;
+    suggested: BuilderItem[];
+    items: BuilderItem[];
+    error: string | null;
+  } | null>(null);
 
-  const [loading, setLoading] = useState(false);
-  const [loadError, setLoadError] = useState<string | null>(null);
+  const loading = builder?.key !== builderKey;
+  const loadError = builder?.key === builderKey ? builder.error : null;
+  const suggested = builder?.suggested ?? [];
+  const gridItems = builder?.items ?? [];
 
   useEffect(() => {
     let cancelled = false;
-    setLoading(true);
-    setLoadError(null);
 
     fetchBuilderItems(itemsCategory, selectedCategory)
       .then(({ recommendations, items }) => {
-        if (cancelled) return;
-          setSuggested(recommendations);
-          setGridItems(items);
+        if (!cancelled) setBuilder({ key: builderKey, suggested: recommendations, items, error: null });
       })
-      .catch((e) => { if (!cancelled) setLoadError(e.message ?? 'Could not load items.'); })
-      .finally(() => { if (!cancelled) setLoading(false); });
+      .catch((e) => {
+        if (!cancelled) setBuilder({ key: builderKey, suggested: [], items: [], error: e.message ?? 'Could not load items.' });
+      });
 
     return () => { cancelled = true; };
-  }, [itemsCategory, selectedCategory, reloadCount]);
+  }, [itemsCategory, selectedCategory, reloadCount, builderKey]);
 
   // don't repeat anything already shown in "Suggested for you" or the grid
   const shownIds = new Set([...suggested, ...gridItems].map((i) => i.id));
-  const youMightLike = generalRecs.filter((i) => !shownIds.has(i.id));
+  const youMightLike = generalRecs.filter((i) => !shownIds.has(i.id) && matchesUiCategory(i, selectedCategory));
 
   const renderCard = (item: BuilderItem, width?: number) => (
     <TouchableOpacity
@@ -146,7 +165,6 @@ export default function CreateOutfits() {
       {
         instanceId: `${item.id}-${Date.now()}`, item,
         // stagger so they dont land  on top of each other
-        // TODO: set top bottoms etc template?
         x: 20 + (prev.length % 4) * 24,
         y: 20 + (prev.length % 4) * 24,
       },
@@ -156,6 +174,46 @@ export default function CreateOutfits() {
 
   const handleRemoveFromOutfit = (instanceId: string) => {
     setOutfitItems((prev) => prev.filter((outfitItem) => outfitItem.instanceId !== instanceId));
+  };
+
+  // saves a picture of the visualiser to the phone's photos, without the delete/resize badges
+  const visualiserRef = useRef<View>(null);
+  const [hideControls, setHideControls] = useState(false);
+  const [downloading, setDownloading] = useState(false);
+  const [notice, setNotice] = useState<{ title: string; message: string } | null>(null);
+
+  const handleDownloadVisualiser = async () => {
+    if (!hasOutfitItems || downloading) return;
+    setDownloading(true);
+    try {
+      const permission = await MediaLibrary.requestPermissionsAsync(true, ['photo']);
+      if (!permission.granted) {
+        setNotice({ title: 'Permission needed', message: 'Allow access to your photos in settings to save your outfit.' });
+        return;
+      }
+
+      setHideControls(true);
+      await new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
+
+      const uri = await captureRef(visualiserRef, { format: 'png', quality: 1, result: 'tmpfile' });
+      await MediaLibrary.Asset.create(uri);
+      setNotice({ title: 'Saved', message: 'Your outfit image was saved to your photos.' });
+    } catch (e) {
+      console.warn('Could not save outfit image', e);
+      setNotice({ title: 'Could not save', message: 'Something went wrong saving the image. Please try again.' });
+    } finally {
+      setHideControls(false);
+      setDownloading(false);
+    }
+  };
+
+  const handleSelectItemsCategory = (category: 'Wardrobe' | 'Wishlist') => {
+    setItemsCategory(category);
+    togglePosition.value = withTiming(category === 'Wardrobe' ? 0 : 1);
+  };
+
+  const handleClearVisualiser = () => {
+    setOutfitItems([]);
   };
 
   const handleItemSelect = (item: WardrobeItem | RecommendedItem) => {
@@ -205,16 +263,42 @@ export default function CreateOutfits() {
             Outfit Builder
           </Text>
         </View>
+        
+        <View style={styles.headerActions}>
+          <TouchableOpacity
+            onPress={handleDownloadVisualiser}
+            disabled={!hasOutfitItems || downloading}
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel="Save outfit image to photos"
+            style={[styles.headerClearButton, (!hasOutfitItems || downloading) && styles.headerClearButtonDisabled]}
+          >
+            {downloading ? <ActivityIndicator /> : <Ionicons name="download-outline" size={22} color={colors.accent} />}
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={handleClearVisualiser}
+            disabled={!hasOutfitItems}
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel="Clear outfit"
+            style={[styles.headerClearButton, !hasOutfitItems && styles.headerClearButtonDisabled]}
+          >
+            <Text style={styles.headerClearText}>Clear</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       <View style={styles.contentContainer}>
         {/* outfit */}
-        <View style={styles.visualiserContainer}>
+        <View ref={visualiserRef} collapsable={false} style={styles.visualiserContainer}>
           {hasOutfitItems ? (
             outfitItems.map((outfitItem) => (
               <CreateOutfitVisualiserItem
                 key={outfitItem.instanceId}
                 outfitItem={outfitItem}
+                topZ={topZ}
+                hideControls={hideControls}
                 onRemove={handleRemoveFromOutfit}
               />
             ))
@@ -247,8 +331,6 @@ export default function CreateOutfits() {
               </View>
             </ScrollView>
 
-            {/* TODO: add search bar */}
-
             {/* recommended items */}
             <View style={styles.suggestedContainer}>
               <Text style={styles.suggestionText}>Items you might like...</Text>
@@ -268,17 +350,10 @@ export default function CreateOutfits() {
 
             {/* wishlist or wardrobe toggle */}
             <View style={styles.catalogueToggleContainer}>
-              <Animated.View style={[styles.catalogueToggleActive,
-                useAnimatedStyle(() => ({
-                  transform: [{translateX: togglePosition.value * toggleMove}]
-                }))
-              ]}/>
+              <Animated.View style={[styles.catalogueToggleActive, toggleActiveStyle]}/>
 
               <TouchableOpacity
-                onPress={() => {
-                  setItemsCategory('Wardrobe');
-                  togglePosition.value = withTiming(0);
-                }}
+                onPress={() => handleSelectItemsCategory('Wardrobe')}
                 style={styles.catalogueToggleButton}
               >
                 <Text style={[styles.catalogueToggleText, itemsCategory === 'Wardrobe' && styles.catalogueToggleTextActive]}>
@@ -286,10 +361,7 @@ export default function CreateOutfits() {
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
-                onPress={() => {
-                  setItemsCategory('Wishlist');
-                  togglePosition.value = withTiming(1);
-                }}
+                onPress={() => handleSelectItemsCategory('Wishlist')}
                 style={styles.catalogueToggleButton}
               >
                 <Text style={[styles.catalogueToggleText, itemsCategory === 'Wishlist' && styles.catalogueToggleTextActive]}>
@@ -326,7 +398,7 @@ export default function CreateOutfits() {
         </Animated.View>
 
         {/* bottom bar */}
-        <View style={styles.buttonContainer}>
+        <View style={[styles.buttonContainer, { bottom: -insets.bottom }]}>
           <TouchableOpacity
             onPress={handleAddToWishlist}
             disabled={!hasOutfitItems || addingToWishlist}
@@ -367,6 +439,48 @@ export default function CreateOutfits() {
         )}
       </View>
 
+      <Modal transparent animationType="fade" visible={showDiscard} onRequestClose={() => setShowDiscard(false)}>
+        <View style={modalStyles.modalOverlay}>
+          <View style={modalStyles.modalCard}>
+            <Text style={modalStyles.modalTitle}>Discard this outfit?</Text>
+            <Text style={modalStyles.modalMessage}>
+              The items you added won&apos;t be saved.
+            </Text>
+
+            <View style={modalStyles.modalButtons}>
+              <TouchableOpacity
+                style={[modalStyles.modalButton, modalStyles.modalCloseButton]}
+                onPress={() => setShowDiscard(false)}
+              >
+                <Text style={modalStyles.modalCloseText}>Keep editing</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[modalStyles.modalButton, modalStyles.modalDeleteButton]}
+                onPress={handleConfirmDiscard}
+              >
+                <Text style={modalStyles.modalDeleteText}>Discard</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      <Modal transparent animationType="fade" visible={notice !== null} onRequestClose={() => setNotice(null)}>
+        <View style={modalStyles.modalOverlay}>
+          <View style={modalStyles.modalCard}>
+            <Text style={modalStyles.modalTitle}>{notice?.title}</Text>
+            <Text style={modalStyles.modalMessage}>{notice?.message}</Text>
+            <View style={modalStyles.modalButtons}>
+              <TouchableOpacity
+                style={[modalStyles.modalButton, modalStyles.modalCloseButton]}
+                onPress={() => setNotice(null)}
+              >
+                <Text style={modalStyles.modalCloseText}>OK</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   )
 }

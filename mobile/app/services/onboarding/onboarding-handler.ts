@@ -10,8 +10,8 @@ import {
   type OnboardingProgress,
   saveOnboardingProgress,
 } from '../../../src/onboarding/onboarding-service';
-import { onboardingSteps } from './onboardingData';
-import { OnboardingAnswers, QuestionSection } from './onboardingTypes';
+import { onboardingSteps } from './onboarding-data';
+import { OnboardingAnswers, QuestionSection } from './onboarding-types';
 
 export function useOnboardingHandler(initial: OnboardingProgress) {
   const { user } = useAuth();
