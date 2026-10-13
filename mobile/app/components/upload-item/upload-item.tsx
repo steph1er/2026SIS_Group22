@@ -158,7 +158,6 @@ export default function Camera() {
     );
   }
 
-  // UNCHANGED from here: the preview and the camera.
   if (photo) 
     {return (
       <PhotoPreviewSection photo={photo} 
@@ -168,15 +167,25 @@ export default function Camera() {
     );
 } 
 
-  return (
+    return (
     <View style={styles.container}>
-      
-      <View style={styles.camera}>
+      {/* One area for the camera; everything inside floats on top of it */}
+      <View style={styles.cameraArea}>
+        <CameraView
+          style={StyleSheet.absoluteFill}
+          facing={facing}
+          ref={cameraRef}
+          onCameraReady={() => setCameraReady(true)}
+        />
+
+        {closeButton}
+
+        {/* Rendered after the close button so it sits in front of it */}
         {showTip && (
-          <View style={styles.tipBanner}>
+          <View style={[styles.tipBanner, { top: insets.top + 8 }]}>
             <Feather name="alert-circle" size={18} color="#8B5E3C" />
             <Text style={styles.tipText}>
-              Please ensure the item being uploaded is clearly visable with no obstructions. 
+              Please ensure the item being uploaded is clearly visible with no obstructions.
             </Text>
             <TouchableOpacity
               onPress={() => setShowTip(false)}
@@ -189,8 +198,6 @@ export default function Camera() {
         )}
       </View>
 
-      <CameraView style={styles.camera} facing={facing} ref={cameraRef} />
-      {closeButton}
       <View style={styles.sheet}>
         <View style={styles.controlsRow}>
           <TouchableOpacity style={styles.wardrobeThumb} onPress={handlePickFromLibrary}>
@@ -202,15 +209,14 @@ export default function Camera() {
             disabled={!cameraReady}
           >
             <View style={styles.shutterInner} />
-          </Pressable> 
+          </Pressable>
 
-            <TouchableOpacity
-              style={[styles.iconButton, styles.iconButtonActive]}
-              onPress={toggleCameraFacing}
-            >
-              <Feather name="camera" size={18} color={colors.accentStrong} />
-            </TouchableOpacity>
-
+          <TouchableOpacity
+            style={[styles.iconButton, styles.iconButtonActive]}
+            onPress={toggleCameraFacing}
+          >
+            <Feather name="camera" size={18} color={colors.accentStrong} />
+          </TouchableOpacity>
         </View>
       </View>
     </View>
@@ -225,6 +231,11 @@ const createStyles = (colors: StyleUColors) =>
     justifyContent: 'center',
     paddingHorizontal: 32,
     gap: 12,
+  },
+    cameraArea: {
+    flex: 1,
+    overflow: 'hidden',
+    backgroundColor: '#000',
   },
   statusTitle: {
     fontSize: 20,
@@ -335,22 +346,22 @@ permissionText: {
     color: colors.accentStrong,
   },
   tipBanner: {
-  position: 'absolute',
-  top: 50,
-  left: 16,
-  right: 16,
-  flexDirection: 'row',
-  alignItems: 'center',
-  gap: 10,
-  backgroundColor: '#FAF6F2',
-  borderRadius: 14,
-  paddingVertical: 12,
-  paddingHorizontal: 14,
-  shadowColor: '#000',
-  shadowOffset: { width: 0, height: 2 },
-  shadowOpacity: 0.15,
-  shadowRadius: 6,
-  elevation: 3,
+    position: 'absolute',
+    left: 16,
+    right: 16,
+    zIndex: 10,
+    elevation: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    backgroundColor: '#FAF6F2',
+    borderRadius: 14,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
   },
   tipText: {
     flex: 1,
