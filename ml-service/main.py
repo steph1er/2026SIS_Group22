@@ -225,6 +225,41 @@ async def analyze_item(file: UploadFile = File(...)):
         "image_png_base64": encode_png(foreground),
     }
 
+@app.post("/embed-image")
+async def embed_image(file: UploadFile = File(...)):
+    """Embed a product/catalogue photo for similarity search.
+
+    Unlike /analyze-item, this skips category/style classification (catalogue metadata
+    already comes from the site's own fields, not the image) but still strips the
+    background, since catalogue photos are scraped from product pages and may contain
+    models, accessories or backgrounds that would otherwise dilute the embedding.
+    """
+    image_bytes = await file.read()
+    image, _ = strip_background(image_bytes)
+    return {"embedding": get_embedding(image)}
+
+
+@app.post("/embed-text")
+async def embed_text(payload: dict):
+    """Embed one or more preference phrases into the same space as item embeddings.
+
+    CLIP's image and text encoders share an embedding space, so a user's onboarding
+    preferences (style keywords, aesthetic, colour preferences, ...) can be compared
+    against catalogue item image embeddings with plain cosine similarity. Multiple
+    phrases are embedded separately and averaged, then re-normalised to a unit vector.
+    """
+    texts = [t.strip() for t in payload.get("texts", []) if isinstance(t, str) and t.strip()]
+    if not texts:
+        raise HTTPException(status_code=400, detail="texts must be a non-empty list of strings")
+
+    text_inputs = tokenizer(texts)
+    with torch.no_grad():
+        features = model.encode_text(text_inputs, normalize=True)
+    averaged = features.mean(dim=0)
+    normalised = averaged / averaged.norm()
+    return {"embedding": normalised.tolist()}
+
+
 @app.post("/analyze-colours")
 async def analyze_colours(file: UploadFile = File(...)):
     """Return a face-landmark guided, estimated seasonal colour palette."""
