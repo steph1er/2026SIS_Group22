@@ -263,7 +263,7 @@ export class CatalogueService {
                             .select('*, brands!inner (*)');
 
         if(item_name && item_name?.length !== 0){
-            query = query.ilike('item_name', item_name);
+            query = query.ilike('item_name', `%${item_name}%`);
         }
 
         if(clothingcategory && clothingcategory?.length !== 0){

@@ -75,7 +75,7 @@ const dark: StyleUColors = {
   badgeBg: '#2A2827',
   badgeText: '#B0ACA8',
   errorRed: '#FF7A66',
-  buttonText: '#2B2320',
+  buttonText: '#ffffff',
 
   mutedBackground: '#1C1918f1',
   mutedAccentContent: '#4a3f3b52',

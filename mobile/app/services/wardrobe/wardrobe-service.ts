@@ -6,6 +6,7 @@ import type { WardrobeItem, WardrobeItemChanges } from './wardrobe-types';
  * Client for the backend wardrobe endpoints (backend/src/wardrobe/wardrobe.controller.ts):
  *
  *   GET    /wardrobes              -> all of the user's wardrobe_items rows (404 when empty)
+ *   GET    /wardrobes/search       -> the matching rows (404 when nothing matches)
  *   GET    /wardrobes/:id          -> one row, as a one-element array (404 if not the user's)
  *   POST   /wardrobes/update       -> body UpdateWardrobeItemDto, returns the updated row(s)
  *   DELETE /wardrobes/delete/:id   -> removes one row
@@ -91,6 +92,20 @@ export async function fetchWardrobe(): Promise<WardrobeItem[]> {
     if (error instanceof WishlistApiError && error.status === 404 && /wardrobe/i.test(error.message)) {
       return [];
     }
+    throw error;
+  }
+}
+
+/** Wardrobe items matching a query from buildSearchQuery, newest first. Nothing matching returns []. */
+export async function searchWardrobe(query: string): Promise<WardrobeItem[]> {
+  try {
+    const rows = toArray(await requestJson(`wardrobes/search?${query}`));
+    return rows
+      .map(normaliseWardrobeItem)
+      .filter((item) => item.id)
+      .sort((a, b) => (b.createdAt ?? '').localeCompare(a.createdAt ?? ''));
+  } catch (error) {
+    if (error instanceof WishlistApiError && error.status === 404) return [];
     throw error;
   }
 }

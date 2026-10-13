@@ -141,7 +141,7 @@ export class WishlistService {
                             .eq('user_id', user_id);
         
         if(item_name && item_name?.length !== 0){
-            query = query.ilike('catalogue_items.item_name', item_name);
+            query = query.ilike('catalogue_items.item_name', `%${item_name}%`);
         }
         
         if(clothingcategory && clothingcategory?.length !== 0){
