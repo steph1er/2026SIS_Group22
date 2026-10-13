@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { ActivityIndicator, Image, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, { runOnJS, useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useStyleUColors, useThemedStyles } from '../../hooks/use-theme';
 import { OUTFIT_SEASONS, OUTFIT_STYLES } from '../../services/create-outfit/create-outfit-service';
 import { OutfitItem, OutfitSaveDetails } from '../../services/create-outfit/create-outfit-types';
@@ -29,6 +30,7 @@ type DropdownProps = {
 function DetailDropdown({ label, options, value, open, onToggle, onSelect }: DropdownProps) {
   const styles = useThemedStyles(createStyles);
   const colors = useStyleUColors();
+  
   return (
     <View>
       <TouchableOpacity style={styles.outfitDetailsField} onPress={onToggle}>
@@ -69,6 +71,8 @@ function DetailDropdown({ label, options, value, open, onToggle, onSelect }: Dro
 export default function CreateOutfitSave({ onClose, onConfirmSave, outfitItems }: Props) {
   const styles = useThemedStyles(createStyles);
   const colors = useStyleUColors();
+  const insets = useSafeAreaInsets();
+
   const [outfitName, setOutfitName] = useState('');
   const [style, setStyle] = useState<string | undefined>();
   const [season, setSeason] = useState<string | undefined>();
@@ -211,7 +215,7 @@ export default function CreateOutfitSave({ onClose, onConfirmSave, outfitItems }
         
         <View style={{ height: 100 }} />
 
-        <View style={styles.buttonContainer}>
+        <View style={[styles.buttonContainer, { bottom: -insets.bottom }]}>
           <TouchableOpacity
             style={[styles.saveButton, { bottom: 0 }, saving && styles.saveButtonDisabled]}
             onPress={handleConfirm}
