@@ -12,11 +12,7 @@ import type { OnboardingLayout, OnboardingProgress } from '../../../src/onboardi
 import { useOnboardingProgress } from '../../../src/onboarding/use-onboarding-progress';
 import { BackButton } from '../../components/back-button';
 import { useStyleUColors, useThemedStyles } from '../../hooks/use-theme';
-<<<<<<< HEAD:mobile/app/screens/onboarding/onboardingQuiz.tsx
-import { useOnboardingHandler } from '../../services/onboarding/onboardingHandler';
-=======
 import { useOnboardingHandler } from '../../services/onboarding/onboarding-handler';
->>>>>>> origin/main:mobile/app/screens/onboarding/onboarding-quiz.tsx
 import { createInputStyles } from '../../services/onboarding/style/onboarding-inputs';
 import { createOptionStyles } from '../../services/onboarding/style/onboarding-options';
 import { createLayoutStyles } from '../../services/onboarding/style/onboarding-theme';

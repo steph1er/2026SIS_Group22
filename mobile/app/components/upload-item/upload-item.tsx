@@ -16,8 +16,8 @@ import { useStyleUColors, useThemedStyles } from '../../hooks/use-theme';
 import type { StyleUColors } from '../../services/styleu-theme';
 import * as ImagePicker from 'expo-image-picker'; 
 import ItemTagsForm, { type ConfirmedItem } from './edit-item-tags';
-import { preparePhotoForUpload } from '../../services/upload-item/prep-image';
-import { analyseItemPhoto, type AnalyseItemResult } from '../../services/upload-item/analyse-item-service';
+import { preparePhotoForUpload } from '../../../src/upload-item/prep-image';
+import { analyseItemPhoto, type AnalyseItemResult } from '../../../src/upload-item/analyse-item-service';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BackButton } from '../back-button';
 
@@ -172,8 +172,6 @@ export default function Camera() {
     <View style={styles.container}>
       
       <View style={styles.camera}>
-        <CameraView style={StyleSheet.absoluteFill} facing={facing} ref={cameraRef} />
-
         {showTip && (
           <View style={styles.tipBanner}>
             <Feather name="alert-circle" size={18} color="#8B5E3C" />
@@ -198,7 +196,11 @@ export default function Camera() {
           <TouchableOpacity style={styles.wardrobeThumb} onPress={handlePickFromLibrary}>
             <Feather name="image" size={20} color={colors.onAccent} />
           </TouchableOpacity>
-          <Pressable style={styles.shutterOuter} onPress={handleTakePhoto}>
+          <Pressable
+            style={[styles.shutterOuter, !cameraReady && { opacity: 0.4 }]}
+            onPress={handleTakePhoto}
+            disabled={!cameraReady}
+          >
             <View style={styles.shutterInner} />
           </Pressable> 
 

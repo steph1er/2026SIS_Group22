@@ -20,7 +20,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import type { AnalyseItemResult } from '../../services/upload-item/analyse-item-service.js';
+import type { AnalyseItemResult } from '../../../src/upload-item/analyse-item-service.js';
 
 // The ML result after the user has checked it (tags in lower case).
 export type ConfirmedItem = {
