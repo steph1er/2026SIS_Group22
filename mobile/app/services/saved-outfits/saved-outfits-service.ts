@@ -70,6 +70,30 @@ function normaliseOutfit(raw: unknown): SavedOutfit | null {
   };
 }
 
+export type SavedOutfitFilters = {
+  season: string | null;
+  style: string | null;
+  occasion: string;
+};
+
+export const NO_FILTERS: SavedOutfitFilters = { season: null, style: null, occasion: '' };
+
+export const hasActiveFilters = (filters: SavedOutfitFilters) =>
+  filters.season !== null || filters.style !== null || filters.occasion.trim() !== '';
+
+export function filterSavedOutfits(outfits: SavedOutfit[], filters: SavedOutfitFilters): SavedOutfit[] {
+  const season = filters.season?.toLowerCase() ?? null;
+  const style = filters.style?.toLowerCase() ?? null;
+  const occasion = filters.occasion.trim().toLowerCase();
+
+  return outfits.filter(
+    (outfit) =>
+      (season === null || outfit.season?.toLowerCase() === season) &&
+      (style === null || outfit.style?.toLowerCase() === style) &&
+      (occasion === '' || (outfit.occasion?.toLowerCase().includes(occasion) ?? false)),
+  );
+}
+
 export async function fetchSavedOutfits(): Promise<SavedOutfit[]> {
   try {
     const rows = toArray(await requestJson('outfits'));
@@ -83,6 +107,25 @@ export async function fetchSavedOutfits(): Promise<SavedOutfit[]> {
     }
     throw error;
   }
+}
+
+export type SavedOutfitEdits = {
+  name: string;
+  season: string | null;
+  style: string | null;
+  occasion: string;
+};
+
+export async function updateSavedOutfit(outfitId: string, edits: SavedOutfitEdits): Promise<void> {
+  await requestJson(`outfits/${encodeURIComponent(outfitId)}`, {
+    method: 'PATCH',
+    body: JSON.stringify({
+      name: edits.name.trim() || null,
+      season: edits.season,
+      style: edits.style,
+      occasion: edits.occasion.trim() || null,
+    }),
+  });
 }
 
 export async function deleteSavedOutfit(outfitId: string): Promise<void> {

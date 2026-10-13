@@ -1,18 +1,18 @@
+import { Ionicons } from '@expo/vector-icons';
 import { useState, type ReactNode } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
 
-import { ThemedText } from './themed-text';
+import { useStyleUColors, useThemedStyles } from '../hooks/use-theme';
 import {
   FILTER_LABELS,
+  isMultiSelect,
   type FilterKey,
   type FilterOption,
-  isMultiSelect,
   type SearchFilters,
 } from '../services/search/search-query';
-import { useStyleUColors, useThemedStyles } from '../hooks/use-theme';
 import type { StyleUColors } from '../services/styleu-theme';
+import { ThemedText } from './themed-text';
 
 type ItemSearchProps = {
   query: string;
@@ -148,7 +148,7 @@ type FilterSheetProps = {
   onChange: (values: string[]) => void;
 };
 
-function FilterSheet({ title, visible, multiSelect, options, selected, onClose, onChange }: FilterSheetProps) {
+export function FilterSheet({ title, visible, multiSelect, options, selected, onClose, onChange }: FilterSheetProps) {
   const colors = useStyleUColors();
   const styles = useThemedStyles(createStyles);
   const insets = useSafeAreaInsets();
@@ -346,8 +346,9 @@ const createStyles = (colors: StyleUColors) =>
   sheetRowText: {
     fontSize: 16,
     color: colors.text,
+    fontWeight: '400',
   },
   sheetRowTextSelected: {
-    fontWeight: '600',
+    fontWeight: '500',
   },
 });
