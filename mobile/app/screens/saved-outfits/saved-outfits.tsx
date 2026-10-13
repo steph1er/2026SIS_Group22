@@ -4,9 +4,10 @@ import { ActivityIndicator, Image, Modal, ScrollView, Text, TextInput, Touchable
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { router } from 'expo-router';
-import { FilterSheet, type FilterOption } from '../../components/catalogue-search';
+import { FilterSheet } from '../../components/item-search';
 import { ThemedText } from '../../components/themed-text';
 import { ThemedView } from '../../components/themed-view';
+import type { FilterOption } from '../../services/search/search-query';
 
 import { useSavedOutfits } from '../../hooks/use-saved-outfits';
 import { useStyleUColors, useThemedStyles } from '../../hooks/use-theme';
@@ -17,7 +18,7 @@ import { deleteSavedOutfit, filterSavedOutfits, hasActiveFilters, NO_FILTERS, ty
 import { wardrobeItemHref } from '../../services/wardrobe/wardrobe-service';
 import SavedOutfitDetails from './saved-outfit-details';
 
-const toOptions = (values: string[]): FilterOption[] => values.map((value) => ({ key: value, label: value }));
+const toOptions = (values: string[]): FilterOption[] => values.map((value) => ({ value, label: value }));
 
 const FILTER_CHIPS = [
   { key: 'season', label: 'Season', options: toOptions(OUTFIT_SEASONS) },
@@ -75,6 +76,7 @@ export default function OutfitsScreen() {
   const setFilter = (key: 'season' | 'style', value: string | null) =>
     setFilters((previous) => ({ ...previous, [key]: value }));
   const activeFilter = FILTER_CHIPS.find((chip) => chip.key === openFilter);
+  const selectedValue = openFilter ? filters[openFilter] : null;
 
   const showEmptyState = !isLoading && !error && outfits.length === 0;
   const showNoMatches = outfits.length > 0 && visibleOutfits.length === 0;
@@ -223,11 +225,12 @@ export default function OutfitsScreen() {
       <FilterSheet
         title={activeFilter?.label ?? ''}
         visible={openFilter !== null}
+        multiSelect={false}
         options={activeFilter?.options ?? []}
-        selected={openFilter ? filters[openFilter] : null}
+        selected={selectedValue ? [selectedValue] : []}
         onClose={() => setOpenFilter(null)}
-        onSelect={(value) => {
-          if (openFilter) setFilter(openFilter, value);
+        onChange={(values) => {
+          if (openFilter) setFilter(openFilter, values[0] ?? null);
           setOpenFilter(null);
         }}
       />
