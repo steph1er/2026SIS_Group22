@@ -18,7 +18,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import type { AnalyseItemResult } from '../../../src/upload-item/analyse-item-service';
+import type { WardrobeItem } from '../../services/wardrobe/wardrobe-types';
 
 // Everything sent to the backend when the user confirms (tags in lower case).
 export type ConfirmedItem = {
@@ -30,13 +30,12 @@ export type ConfirmedItem = {
   brand: string;
   size: string;
   price: number | null;
-  embedding: number[];
-  imagePngBase64: string;
+
 };
 
 type Props = {
   photoUri: string;
-  result: AnalyseItemResult;
+  result: WardrobeItem;
   /** Saves the item. Throw an Error to show its message on this screen. */
   onConfirm: (item: ConfirmedItem) => Promise<void>;
   onRetake: () => void;
@@ -52,9 +51,9 @@ function toList(value: string) {
 
 export default function ItemTagsForm({ photoUri, result, onConfirm, onRetake }: Props) {
   // Tags from the ML service, which the user can type over.
-  const [category, setCategory] = useState(result.category);
-  const [style, setStyle] = useState(result.style);
-  const [colour, setColour] = useState(result.colour);
+  const [category, setCategory] = useState(result?.category ?? '');
+  const [style, setStyle] = useState((result?.styles ?? []).join(', '));
+  const [colour, setColour] = useState((result?.colours ?? []).join(', '));
   // Extra details the ML can't detect; all optional.
   const [material, setMaterial] = useState('');
   const [tags, setTags] = useState('');
@@ -68,7 +67,7 @@ export default function ItemTagsForm({ photoUri, result, onConfirm, onRetake }: 
   const allFilled = category.trim() !== '' && style.trim() !== '' && colour.trim() !== '';
 
   // Show the background-removed image from the ML service, or the original photo if it's missing.
-  const imageUri = result.image_png_base64 ? `data:image/png;base64,${result.image_png_base64}` : photoUri;
+  const imageUri = result?.imageUrl ?? photoUri;
 
   const confirm = async () => {
     let parsedPrice: number | null = null;
@@ -92,8 +91,6 @@ export default function ItemTagsForm({ photoUri, result, onConfirm, onRetake }: 
         brand: brand.trim().toLowerCase(),
         size: size.trim().toLowerCase(),
         price: parsedPrice,
-        embedding: result.embedding,
-        imagePngBase64: result.image_png_base64,
       });
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Could not save the item. Please try again.');
@@ -115,14 +112,12 @@ export default function ItemTagsForm({ photoUri, result, onConfirm, onRetake }: 
             label="Category"
             value={category}
             onChangeText={setCategory}
-            confidence={result.category_confidence}
           />
           <TagField
             label="Style"
             hint="separate with commas"
             value={style}
             onChangeText={setStyle}
-            confidence={result.style_confidence}
           />
           <TagField label="Colour" hint="separate with commas" value={colour} onChangeText={setColour} />
 

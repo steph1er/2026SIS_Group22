@@ -174,4 +174,4 @@ export async function addWardrobeItem(photo: { uri: string }): Promise<WardrobeI
   const item = normaliseWardrobeItem(row);
   if (!item.id) throw new WishlistApiError('The item was not added.', 500);
   return item;
-}
+} 
