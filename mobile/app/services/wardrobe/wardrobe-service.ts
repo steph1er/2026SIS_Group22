@@ -1,7 +1,8 @@
 import { supabase } from '../../../src/auth/supabase-client';
 import { requestJson, toArray, WishlistApiError } from '../wishlist/wishlist-service';
 import type { WardrobeItem, WardrobeItemChanges } from './wardrobe-types';
-
+import { Platform } from 'react-native';
+import { File } from 'expo-file-system';
 /**
  * Client for the backend wardrobe endpoints (backend/src/wardrobe/wardrobe.controller.ts):
  *
@@ -12,6 +13,8 @@ import type { WardrobeItem, WardrobeItemChanges } from './wardrobe-types';
  *   DELETE /wardrobes/delete/:id   -> removes one row
  *
  * Every call sends the signed-in user's Supabase access token via authenticatedApiRequest.
+ * 
+ * UPDATE: resize image before sending to backend, and send the image as a base64 string in the request body.
  */
 
 // ---------------------------------------------------------------------------
@@ -154,4 +157,21 @@ export async function deleteWardrobeItem(id: string): Promise<void> {
   if (supabaseError) {
     throw new WishlistApiError(asString(supabaseError.message) ?? 'Could not delete the item.', 500);
   }
+}
+
+/** Sends a (resized) photo to POST /wardrobes/add. The backend runs the ML and saves it. */
+export async function addWardrobeItem(photo: { uri: string }): Promise<WardrobeItem> {
+  const form = new FormData();
+  if (Platform.OS === 'web') {
+    const blob = await (await fetch(photo.uri)).blob();
+    form.append('image', blob, 'item.jpg');
+  } else {
+    // Expo's fetch needs a real file object, not { uri, name, type }
+    form.append('image', new File(photo.uri));
+  }
+
+  const row = await requestJson('wardrobes/add', { method: 'POST', body: form });
+  const item = normaliseWardrobeItem(row);
+  if (!item.id) throw new WishlistApiError('The item was not added.', 500);
+  return item;
 }

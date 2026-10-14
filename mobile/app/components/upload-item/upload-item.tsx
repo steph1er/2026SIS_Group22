@@ -17,7 +17,8 @@ import type { StyleUColors } from '../../services/styleu-theme';
 import * as ImagePicker from 'expo-image-picker'; 
 import ItemTagsForm, { type ConfirmedItem } from './edit-item-tags';
 import { preparePhotoForUpload } from '../../../src/upload-item/prep-image';
-import { analyseItemPhoto, type AnalyseItemResult } from '../../../src/upload-item/analyse-item-service';
+import { addWardrobeItem, deleteWardrobeItem, updateWardrobeItem } from '../../services/wardrobe/wardrobe-service';
+import type { WardrobeItem } from '../../services/wardrobe/wardrobe-types';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BackButton } from '../back-button';
 // import { router } from '../../../.expo/types/router';
@@ -33,8 +34,7 @@ export default function Camera() {
   const cameraRef = useRef<CameraView | null>(null);
   const [showTip, setShowTip] = useState(true);
   const [analysing, setAnalysing] = useState(false);
-  const [result, setResult] = useState<AnalyseItemResult | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [result, setResult] = useState<WardrobeItem | null>(null);  const [error, setError] = useState<string | null>(null);
   const [cameraReady, setCameraReady] = useState(false);
   
   const insets = useSafeAreaInsets();
@@ -81,6 +81,8 @@ export default function Camera() {
   
 
   const handleRetakePhoto = () => {
+    // The backend already saved the item, so retaking throws it away.
+    if (result) void deleteWardrobeItem(result.id).catch(() => {});
     setCameraReady(false);
     setPhoto(null);
     setAnalysing(false);
@@ -93,7 +95,7 @@ export default function Camera() {
     setError(null);
     try {
       const resized = await preparePhotoForUpload(photo);
-      setResult(await analyseItemPhoto(resized));
+      setResult(await addWardrobeItem(resized));   
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Something went wrong. Please try again.');
     } finally {
@@ -102,23 +104,27 @@ export default function Camera() {
 }; 
 
   const handleConfirm = async (item: ConfirmedItem) => {
-    try {
-      // await createWardrobeItem(item);
-    } catch (e) {
-      const message = e instanceof Error ? e.message : '';
-      if (/cannot post/i.test(message)) {
-        throw new Error('The backend has no POST /wardrobes/create endpoint yet. Add it, restart the backend and try again.');
-      }
-      throw e; // shown on the form
-    }
+    if (!result) return;
 
-    // Reset this screen so it's a fresh camera next time.
+    // Save the user's edits to the item the backend just created.
+    await updateWardrobeItem(result.id, {
+      category: item.category,
+      styles: item.style,
+      colours: item.colour,
+      materials: item.material,
+      tags: item.tags,
+      brand: item.brand,
+      size: item.size,
+      price: item.price,
+    });
+
     setPhoto(null);
     setResult(null);
     setError(null);
 
-    // Open the wardrobe tab. It reloads when shown, so the new item appears.
-    router.dismissTo('../../saved'); 
+    // Open the Wardrobe tab. It reloads when shown, so the new item appears.
+    router.replace('/saved?tab=wardrobe');
+    
   };
 
   const handlePickFromLibrary = async () => {
