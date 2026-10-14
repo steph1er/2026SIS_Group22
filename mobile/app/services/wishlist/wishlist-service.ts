@@ -1,5 +1,6 @@
 import { authenticatedApiRequest } from '../../../src/api/authenticated-api-client';
 import type { CatalogueItem, WishlistEntry } from './wishlist-types';
+import type { FilterCategory } from '../create-outfit/create-outfit-service';
 
 /**
  * Client for the backend wishlist endpoints (backend/src/wishlist/wishlist.controller.ts):
@@ -206,11 +207,25 @@ export async function removeFromWishlist(wishlistId: string): Promise<void> {
   }
 }
 
+type FetchRecommendationsOptions = {
+  limit?: number;
+  offset?: number;
+  // restrict to one canonical category (tops/bottoms/outerwear/dresses/shoes/other),
+  // for a wardrobe/wishlist tab that shows recommendations per category
+  category?: FilterCategory;
+};
+
 // Items the ML recommender suggests adding to the wishlist, excluding ones already saved.
 // Pass `offset` to load the next page. No (more) recommendations (404) returns [].
-export async function fetchRecommendations({ limit = 20, offset = 0 } = {}): Promise<CatalogueItem[]> {
+export async function fetchRecommendations({
+  limit = 20,
+  offset = 0,
+  category,
+}: FetchRecommendationsOptions = {}): Promise<CatalogueItem[]> {
   try {
-    const query = new URLSearchParams({ limit: String(limit), offset: String(offset) });
+    const params: Record<string, string> = { limit: String(limit), offset: String(offset) };
+    if (category) params.category = category;
+    const query = new URLSearchParams(params);
     const rows = toArray(await requestJson(`catalogue/reccomendations?${query.toString()}`));
     return rows.map(normaliseCatalogueItem).filter((item) => item.id);
   } catch (error) {
