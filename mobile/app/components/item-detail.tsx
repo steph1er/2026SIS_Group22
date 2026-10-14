@@ -20,10 +20,10 @@ import { ThemedText } from './themed-text';
 import { useWishlist } from '../hooks/use-wishlist';
 import { fetchCatalogueItem, fetchSimilarItems, itemDetailHref } from '../services/catalogue/catalogue-service';
 import type { CatalogueItem } from '../services/wishlist/wishlist-types';
+import { useStyleUColors, useThemedStyles } from '../hooks/use-theme';
+import type { StyleUColors } from '../services/styleu-theme';
+import { BackButton } from './back-button';
 
-const ACCENT = '#D98E73';
-const TEXT = '#22201F';
-const MUTED = '#8A8683';
 const PLACEHOLDER_IMAGE = 'https://placehold.co/600x800/F2EFEC/ABABAB/png?text=No+image';
 
 function formatPrice(price: number | null) {
@@ -35,11 +35,6 @@ function titleCase(value: string) {
   return value.replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
 
-function goBack() {
-  if (router.canGoBack()) router.back();
-  else router.replace('/home-dashboard' as never);
-}
-
 type Loaded<T> = { id: string; data: T | null; error: string | null };
 
 /**
@@ -47,6 +42,8 @@ type Loaded<T> = { id: string; data: T | null; error: string | null };
  * from any screen (wishlist, recommendations, home dashboard...).
  */
 export default function ItemDetailScreen() {
+  const colors = useStyleUColors();
+  const styles = useThemedStyles(createStyles);
   const { id } = useLocalSearchParams<{ id: string }>();
   const insets = useSafeAreaInsets();
   const { width: screenWidth } = useWindowDimensions();
@@ -89,12 +86,10 @@ export default function ItemDetailScreen() {
   if (!shown) {
     return (
       <ThemedView style={[styles.centered, { paddingTop: insets.top }]}>
-        <TouchableOpacity style={[styles.circleButton, styles.floatingBack, { top: insets.top + 8 }]} onPress={goBack} accessibilityLabel="Back">
-          <Ionicons name="chevron-back" size={22} color={TEXT} />
-        </TouchableOpacity>
+        <BackButton variant="floating" fallback="/home-dashboard" style={[styles.floatingBack, { top: insets.top + 8 }]} />
         {current?.error ? (
           <View style={styles.stateMessage}>
-            <Ionicons name="cloud-offline-outline" size={28} color={ACCENT} />
+            <Ionicons name="cloud-offline-outline" size={28} color={colors.accentStrong} />
             <ThemedText style={styles.stateTitle}>Couldn't load this item</ThemedText>
             <ThemedText style={styles.stateBody}>{current.error}</ThemedText>
             <TouchableOpacity onPress={() => setReloadCount((count) => count + 1)}>
@@ -144,11 +139,9 @@ export default function ItemDetailScreen() {
             <Image source={{ uri: shown.imageUrl ?? PLACEHOLDER_IMAGE }} style={[styles.hero, { height: screenWidth * 0.95 }]} resizeMode="cover" />
           </Pressable>
           <View style={[styles.heroButtons, { top: insets.top + 8 }]}>
-            <TouchableOpacity style={styles.circleButton} onPress={goBack} accessibilityLabel="Back">
-              <Ionicons name="chevron-back" size={22} color={TEXT} />
-            </TouchableOpacity>
+            <BackButton variant="floating" fallback="/home-dashboard" />
             <TouchableOpacity style={styles.circleButton} onPress={share} accessibilityLabel={`Share ${shown.name}`}>
-              <Ionicons name="share-outline" size={20} color={TEXT} />
+              <Ionicons name="share-outline" size={20} color={colors.text} />
             </TouchableOpacity>
           </View>
         </View>
@@ -177,7 +170,7 @@ export default function ItemDetailScreen() {
 
           {wishlist.actionError || notice ? (
             <View style={styles.errorBanner}>
-              <Ionicons name="alert-circle-outline" size={18} color="#8A2D1B" />
+              <Ionicons name="alert-circle-outline" size={18} color={colors.errorText} />
               <ThemedText style={styles.errorBannerText}>{wishlist.actionError ?? notice}</ThemedText>
               <TouchableOpacity
                 onPress={() => {
@@ -186,7 +179,7 @@ export default function ItemDetailScreen() {
                 }}
                 accessibilityLabel="Dismiss"
               >
-                <Ionicons name="close" size={18} color="#8A2D1B" />
+                <Ionicons name="close" size={18} color={colors.errorText} />
               </TouchableOpacity>
             </View>
           ) : null}
@@ -218,9 +211,9 @@ export default function ItemDetailScreen() {
           accessibilityLabel={isSaved ? `Remove ${shown.name} from wishlist` : `Add ${shown.name} to wishlist`}
         >
           {isPending ? (
-            <ActivityIndicator size="small" color={ACCENT} />
+            <ActivityIndicator size="small" color={colors.accentStrong} />
           ) : (
-            <Ionicons name={isSaved ? 'heart' : 'heart-outline'} size={22} color={isSaved ? ACCENT : TEXT} />
+            <Ionicons name={isSaved ? 'heart' : 'heart-outline'} size={22} color={isSaved ? colors.accentStrong : colors.text} />
           )}
           <ThemedText style={styles.wishlistButtonText}>{isSaved ? 'Added to Wishlist' : 'Add to Wishlist'}</ThemedText>
         </TouchableOpacity>
@@ -230,6 +223,7 @@ export default function ItemDetailScreen() {
 }
 
 function SimilarItemCard({ item, onPress }: { item: CatalogueItem; onPress: () => void }) {
+  const styles = useThemedStyles(createStyles);
   const price = formatPrice(item.price);
   return (
     <Pressable style={styles.similarCard} onPress={onPress} accessibilityLabel={item.name}>
@@ -242,7 +236,8 @@ function SimilarItemCard({ item, onPress }: { item: CatalogueItem; onPress: () =
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: StyleUColors) =>
+  StyleSheet.create({
   centered: {
     flex: 1,
     alignItems: 'center',
@@ -255,7 +250,7 @@ const styles = StyleSheet.create({
   },
   hero: {
     width: '100%',
-    backgroundColor: '#F2EFEC',
+    backgroundColor: colors.imageBackdrop,
   },
   heroButtons: {
     position: 'absolute',
@@ -268,7 +263,7 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: '#fff',
+    backgroundColor: colors.card,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -286,7 +281,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 14,
     letterSpacing: 0.5,
-    color: MUTED,
+    color: colors.subtleText,
   },
   price: {
     fontSize: 20,
@@ -300,7 +295,7 @@ const styles = StyleSheet.create({
   description: {
     fontSize: 15,
     lineHeight: 22,
-    color: MUTED,
+    color: colors.subtleText,
   },
   chips: {
     flexDirection: 'row',
@@ -309,22 +304,22 @@ const styles = StyleSheet.create({
   },
   chip: {
     borderWidth: 1,
-    borderColor: '#E6E2DE',
+    borderColor: colors.borderSoft,
     borderRadius: 18,
     paddingHorizontal: 14,
     paddingVertical: 6,
-    backgroundColor: '#FAF9F7',
+    backgroundColor: colors.surface,
   },
   chipHighlighted: {
-    borderColor: '#E8C3B5',
-    backgroundColor: '#FBEEE9',
+    borderColor: colors.accent,
+    backgroundColor: colors.accentSoft,
   },
   chipText: {
     fontSize: 13,
-    color: MUTED,
+    color: colors.subtleText,
   },
   chipTextHighlighted: {
-    color: TEXT,
+    color: colors.text,
     fontWeight: '600',
   },
   section: {
@@ -348,7 +343,7 @@ const styles = StyleSheet.create({
     width: 140,
     height: 160,
     borderRadius: 14,
-    backgroundColor: '#F2EFEC',
+    backgroundColor: colors.imageBackdrop,
   },
   similarName: {
     fontSize: 14,
@@ -357,7 +352,7 @@ const styles = StyleSheet.create({
   },
   similarPrice: {
     fontSize: 13,
-    color: MUTED,
+    color: colors.subtleText,
   },
   actionBar: {
     position: 'absolute',
@@ -368,22 +363,22 @@ const styles = StyleSheet.create({
     gap: 14,
     paddingHorizontal: 20,
     paddingTop: 12,
-    backgroundColor: '#fff',
+    backgroundColor: colors.card,
   },
   wishlistButton: {
     flex: 1,
     height: 58,
     borderRadius: 18,
     borderWidth: 1,
-    borderColor: '#ECE8E4',
-    backgroundColor: '#FAF9F7',
+    borderColor: colors.borderSoft,
+    backgroundColor: colors.surface,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 10,
   },
   wishlistButtonText: {
-    color: TEXT,
+    color: colors.text,
     fontSize: 16,
     fontWeight: '600',
   },
@@ -391,14 +386,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    backgroundColor: '#FBE3DD',
+    backgroundColor: colors.errorSurface,
     borderRadius: 12,
     padding: 12,
   },
   errorBannerText: {
     flex: 1,
     fontSize: 13,
-    color: '#8A2D1B',
+    color: colors.errorText,
   },
   stateMessage: {
     alignItems: 'center',
@@ -412,11 +407,11 @@ const styles = StyleSheet.create({
   stateBody: {
     fontSize: 13,
     lineHeight: 18,
-    color: MUTED,
+    color: colors.subtleText,
     textAlign: 'center',
   },
   stateAction: {
-    color: ACCENT,
+    color: colors.accentStrong,
     fontWeight: '600',
     marginTop: 4,
   },

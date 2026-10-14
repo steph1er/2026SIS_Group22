@@ -1,275 +1,396 @@
-import { BadRequestException, HttpException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  HttpException,
+  HttpStatus,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { SupabaseService } from '../supabase/supabase.service';
 import { UpdateWardrobeItemDto } from './dto/update-wardrobe-item.dto';
+import { readFile } from 'fs/promises';
+import { basename, resolve } from 'path';
+import { randomUUID } from 'crypto';
+
+const WARDROBE_IMAGE_BUCKET = 'wardrobe-images';
+const ML_SERVICE_URL = process.env.ML_SERVICE_URL ?? 'http://localhost:8000';
+
+interface AnalyseItemResponse {
+    category: string;
+    category_confidence: number;
+    style: string;
+    style_confidence: number;
+    colour: string;
+    embedding: number[];
+    image_png_base64: string;
+}
 
 @Injectable()
 export class WardrobeService {
-    constructor(private readonly supabaseService: SupabaseService) {}
+  constructor(private readonly supabaseService: SupabaseService) {}
 
-    async getWardrobe(id: string): Promise<any[]>{
-        const supabase = this.supabaseService.client;
+  async getWardrobe(id: string): Promise<any[]> {
+    const supabase = this.supabaseService.client;
 
-        const user_id = await this.get_profile_id(id);
+    const user_id = await this.get_profile_id(id);
 
-        // get all items for logged in user
+    // get all items for logged in user
+    const { data, error } = await supabase
+      .from('wardrobe_items')
+      .select('*')
+      .eq('user_id', user_id);
+
+    // if error return error message
+    if (error) {
+      throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    // if no items throw not found exception
+    if (data.length === 0) {
+      throw new NotFoundException('No wardrobe items found for current user');
+    }
+
+    // otherwise return all matching wardrobe items
+    return data;
+  }
+
+  async addItem(auth_id: string, file: Express.Multer.File) {
+    const supabase = this.supabaseService.client;
+
+    // get logged in user
+    const user_id = await this.get_profile_id(auth_id);
+
+        // take image and put through machine learning to analyse categories
+        if (!file?.buffer?.length) {
+          throw new BadRequestException('Image is required');
+        }
+
+        const analysis = await this.analyseItem(file.buffer, file.originalname);
+
+        // store the background-removed image and get its public url
+        const storage_path = `${user_id}/${randomUUID()}.png`;
+        const image_url = await this.uploadImage(storage_path, analysis.image_png_base64);
+
+        // send item to the user's wardrobe db (lowercased like updateItemDetails)
         const { data, error } = await supabase.from('wardrobe_items')
-                                              .select('*')
-                                              .eq('user_id', user_id);
+                                              .insert({
+                                                  user_id: user_id,
+                                                  image_url: image_url,
+                                                  clothing_category: analysis.category.toLowerCase(),
+                                                  style: [analysis.style.toLowerCase()],
+                                                  colour: [analysis.colour.toLowerCase()],
+                                                  embedding: analysis.embedding
+                                              })
+                                              .select()
+                                              .single();
 
-        // if error return error message
         if(error){
+            // don't leave an orphaned image behind
+            await supabase.storage.from(WARDROBE_IMAGE_BUCKET).remove([storage_path]);
             throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
-        // if no items throw not found exception
-        if(data.length === 0){
-            throw new NotFoundException('No wardrobe items found for current user');
-        }
-
-        // otherwise return all matching wardrobe items
+        // return created item so the user can verify it and add brand, size etc. via update
         return data;
     }
 
-    async getWardrobeItem(id: string, auth_id: string): Promise<any[]>{
-        const supabase = this.supabaseService.client;
+  private async uploadImage(storage_path: string, image_base64: string): Promise<string> {
+    const storage = this.supabaseService.client.storage.from(WARDROBE_IMAGE_BUCKET);
 
-        const user_id = await this.get_profile_id(auth_id);
-        
-        // get item by id and check it belongs to logged in user
-        const { data, error } = await supabase.from('wardrobe_items')
-                                              .select('*')
-                                              .eq('id', id)
-                                              .eq('user_id', user_id);
+    const { error } = await storage.upload(storage_path, Buffer.from(image_base64, 'base64'), {
+      contentType: 'image/png',
+    });
 
-        // if error return error message
-        if(error){
-            throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-
-        // if no item throw not found exception
-        if(data.length === 0){
-            throw new NotFoundException('No item found for user with provided item id');
-        }
-
-        // otherwise item
-        return data;
+    if (error) {
+      throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
-    addItem(): string{
-        // get logged in user 
+    return storage.getPublicUrl(storage_path).data.publicUrl;
+  }
 
-        // take uploaded image and put through machine learning to analyse categories
+  private async analyseItem(
+    image: Buffer,
+    filename: string,
+  ): Promise<AnalyseItemResponse> {
+    const form = new FormData();
+    form.append('file', new Blob([new Uint8Array(image)]), filename);
 
-        // format response and return for your to verify output (update item which will include brand etc.)
-
-        return 'This will add an uploaded item to users wardrobe';
+    let res: Response;
+    try {
+      res = await fetch(`${ML_SERVICE_URL}/analyze-item`, {
+        method: 'POST',
+        body: form,
+      });
+    } catch {
+      throw new HttpException('ML service unavailable', HttpStatus.BAD_GATEWAY);
     }
 
-    async updateItemDetails(updateWardrobeItemDto: UpdateWardrobeItemDto, auth_id: string){
-        const supabase = this.supabaseService.client;
-
-        const user_id = await this.get_profile_id(auth_id);
-
-        let {id, image_url, clothing_category, style, brand, size, colour, material, tags, modified_at, price} = updateWardrobeItemDto
-
-        clothing_category = clothing_category.toLowerCase();
-        style = style.map((item) => item.toLowerCase());
-        brand = brand.toLowerCase();
-        size = size.toLowerCase();
-        colour = colour.map((item) => item.toLowerCase());
-        material = material.map((item) => item.toLowerCase());
-        tags = tags.map((item) => item.toLowerCase());
-
-        // check requested item exists
-        await this.check_item_belongs_to_user(user_id, id);
-
-        // update details
-        const { data: updateddata, error: updateerror } = await supabase.from('wardrobe_items')
-                                                                        .update({  
-                                                                            image_url: image_url,
-                                                                            clothing_category: clothing_category,
-                                                                            style: style,
-                                                                            brand: brand,
-                                                                            size: size,
-                                                                            colour: colour,
-                                                                            material: material,
-                                                                            tags: tags,
-                                                                            modified_at: modified_at,
-                                                                            price: price
-                                                                        })
-                                                                        .eq('id', id)
-                                                                        .select()
-
-        if(updateerror){
-            throw new HttpException(updateerror.message, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-
-        // return success response
-        return updateddata;
+    if (!res.ok) {
+      throw new HttpException(
+        'ML service failed to analyse item',
+        HttpStatus.BAD_GATEWAY,
+      );
     }
 
-    async searchForItems(
-        id: string,
-        clothing_category? : string[],
-        style? : string[],
-        brand? : string[],
-        size? : string[],
-        colour? : string[],
-        material? : string[],
-        tags? : string[],
-        min_price? : number,
-        max_price? : number
-    ){
-        const supabase = this.supabaseService.client;
+    return (await res.json()) as AnalyseItemResponse;
+  }
 
-        const user_id = await this.get_profile_id(id);
+  async getWardrobeItem(id: string, auth_id: string): Promise<any[]> {
+    const supabase = this.supabaseService.client;
 
-        let query = supabase.from('wardrobe_items')
-                            .select('*')
-                            .eq('user_id', user_id);
-        
-        if(clothing_category && clothing_category?.length !== 0){
-            const clothing_category_query = clothing_category.map(category => `clothing_category.ilike.${category}`).join(',');
-            query = query.or(clothing_category_query);
-        }
+    const user_id = await this.get_profile_id(auth_id);
 
-        if(style && style?.length !== 0){
-            style = style.map((item) => item.toLowerCase());
-            query= query.overlaps('style', style);
-        }
+    // get item by id and check it belongs to logged in user
+    const { data, error } = await supabase
+      .from('wardrobe_items')
+      .select('*')
+      .eq('id', id)
+      .eq('user_id', user_id);
 
-        if(brand && brand?.length !== 0){
-            const brand_query = brand.map(item => `brand.ilike.${item}`).join(',');
-            query = query.or(brand_query);
-        }
-
-        if(size && size?.length !== 0){
-            const sizes = this.mapSizeOptions(size.at(0) ?? "error");
-            const size_query = sizes.map(item => `size.ilike.${item}`).join(',');
-            query = query.or(size_query);
-        }
-
-        if(colour && colour?.length !== 0){
-            colour = colour.map((item) => item.toLowerCase());
-            query= query.overlaps('colour', colour);
-        }
-
-        if(material && material?.length !== 0){
-            material = material.map((item) => item.toLowerCase());
-            query= query.overlaps('material', material);
-        }
-
-        if(tags && tags?.length !== 0){
-            query= query.overlaps('tags', tags);
-        }
-
-        if(max_price && max_price > 0){
-            if(min_price){
-                // finds rows where value is less than or equal to max price
-                query = query.lte('price', max_price);
-
-                // finds rows where value is greater than or equal to min price
-                query = query.gte('price', min_price);
-            }
-            else {
-                // if no min price assume min price as 0 therefore no need to set greater than
-                query = query.lte('price', max_price);
-            }
-        }
-
-        // find any items in their wardrobe that match
-        const { data, error } = await query;
-
-        if(error){
-            throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-
-        // if no item throw not found exception
-        if(data.length === 0){
-            throw new NotFoundException('No item found matching criteria');
-        }
-
-        // if yes return all matching items
-        return data;
+    // if error return error message
+    if (error) {
+      throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
-    async deleteItem(id: string, auth_id: string){
-        const supabase = this.supabaseService.client;
-
-        const user_id = await this.get_profile_id(auth_id);
-        
-        // check requested item exists
-        await this.check_item_belongs_to_user(user_id, id);
-
-        // remove item from db
-        const response = await supabase.from('wardrobe_items')
-                                       .delete()
-                                       .eq('id', id);
-
-        return response;
+    // if no item throw not found exception
+    if (data.length === 0) {
+      throw new NotFoundException(
+        'No item found for user with provided item id',
+      );
     }
 
-    private async check_item_belongs_to_user(user_id: string, item_id: string) {
-        const supabase = this.supabaseService.client;
+    // otherwise item
+    return data;
+  }
 
-        const { data, error } = await supabase.from('wardrobe_items')
-                                              .select('*')
-                                              .eq('id', item_id)
-                                              .eq('user_id', user_id);
-        
-        if(error){
-            throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+  async updateItemDetails(
+    updateWardrobeItemDto: UpdateWardrobeItemDto,
+    auth_id: string,
+  ) {
+    const supabase = this.supabaseService.client;
 
-        // if no item throw not found exception
-        if(data.length === 0){
-            throw new NotFoundException('No item found for user with provided item id');
-        }
+    const user_id = await this.get_profile_id(auth_id);
+
+    let {
+      id,
+      clothing_category,
+      style,
+      brand,
+      size,
+      colour,
+      material,
+      tags,
+      modified_at,
+      price,
+    } = updateWardrobeItemDto;
+
+    clothing_category = clothing_category.toLowerCase();
+    style = style?.map((item) => item.toLowerCase());
+    brand = brand?.toLowerCase();
+    size = size?.toLowerCase();
+    colour = colour?.map((item) => item.toLowerCase());
+    material = material?.map((item) => item.toLowerCase());
+    tags = tags?.map((item) => item.toLowerCase());
+
+    // check requested item exists
+    await this.check_item_belongs_to_user(user_id, id);
+
+    // update details
+    const { data: updateddata, error: updateerror } = await supabase
+      .from('wardrobe_items')
+      .update({
+        clothing_category: clothing_category,
+        style: style,
+        brand: brand,
+        size: size,
+        colour: colour,
+        material: material,
+        tags: tags,
+        modified_at: modified_at,
+        price: price,
+      })
+      .eq('id', id)
+      .select();
+
+    if (updateerror) {
+      throw new HttpException(
+        updateerror.message,
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
     }
 
-    private async get_profile_id(user_id: string){
-        const supabase = this.supabaseService.client;
+    // return success response
+    return updateddata;
+  }
 
-        const { data, error } = await supabase.from('profiles')
-                                              .select('id')
-                                              .eq('user_id', user_id);
+  async searchForItems(
+    id: string,
+    clothing_category?: string[],
+    style?: string[],
+    brand?: string[],
+    size?: string[],
+    colour?: string[],
+    material?: string[],
+    tags?: string[],
+    min_price?: number,
+    max_price?: number,
+  ) {
+    const supabase = this.supabaseService.client;
 
-        if(error){
-            throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+    const user_id = await this.get_profile_id(id);
 
-        // if no user throw not found exception
-        if(data.length === 0){
-            throw new NotFoundException('No user found');
-        }
+    let query = supabase
+      .from('wardrobe_items')
+      .select('*')
+      .eq('user_id', user_id);
 
-        return data[0].id;
+    if (clothing_category && clothing_category?.length !== 0) {
+      const clothing_category_query = clothing_category
+        .map((category) => `clothing_category.ilike.${category}`)
+        .join(',');
+      query = query.or(clothing_category_query);
     }
 
-    private mapSizeOptions(size: string){
-        // go through possible size searchs (3XS, 2XS, XS, S, M, L, XL, 2XL, 3XL)
-
-        switch (size) {
-            case '3XS':
-                return ['3XS', '4', 'One Size', 'XXXS', '22'];
-            case '2XS':
-                return ['2XS', '6', 'One Size', 'XXS', '24'];
-            case 'XS':
-                return ['XS', '8', 'One Size', 'Extra Small', '26', 'XS/S'];
-            case 'S':
-                return ['S', '10', 'One Size', 'Small', '28', 'XS/S'];
-            case 'M':
-                return ['M', '12', 'One Size', 'Medium', '30', 'M/L'];
-            case 'L':
-                return ['L', '14', 'One Size', 'Large', '32', 'M/L'];
-            case 'XL':
-                return ['XL', '16', 'One Size', 'Extra Large', '34'];
-            case '2XL':
-                return ['2XL', '18', 'One Size', 'XXL', '36'];
-            case '3XL':
-                return ['3XL', '20', 'One Size', 'XXXL', '38'];
-            default:
-                throw new BadRequestException("Invalid size request");
-        }
+    if (style && style?.length !== 0) {
+      style = style.map((item) => item.toLowerCase());
+      query = query.overlaps('style', style);
     }
+
+    if (brand && brand?.length !== 0) {
+      const brand_query = brand.map((item) => `brand.ilike.${item}`).join(',');
+      query = query.or(brand_query);
+    }
+
+    if (size && size?.length !== 0) {
+      const sizes = this.mapSizeOptions(size.at(0) ?? 'error');
+      const size_query = sizes.map((item) => `size.ilike.${item}`).join(',');
+      query = query.or(size_query);
+    }
+
+    if (colour && colour?.length !== 0) {
+      colour = colour.map((item) => item.toLowerCase());
+      query = query.overlaps('colour', colour);
+    }
+
+    if (material && material?.length !== 0) {
+      material = material.map((item) => item.toLowerCase());
+      query = query.overlaps('material', material);
+    }
+
+    if (tags && tags?.length !== 0) {
+      query = query.overlaps('tags', tags);
+    }
+
+    if (max_price && max_price > 0) {
+      if (min_price) {
+        // finds rows where value is less than or equal to max price
+        query = query.lte('price', max_price);
+
+        // finds rows where value is greater than or equal to min price
+        query = query.gte('price', min_price);
+      } else {
+        // if no min price assume min price as 0 therefore no need to set greater than
+        query = query.lte('price', max_price);
+      }
+    }
+
+    // find any items in their wardrobe that match
+    const { data, error } = await query;
+
+    if (error) {
+      throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    // if no item throw not found exception
+    if (data.length === 0) {
+      throw new NotFoundException('No item found matching criteria');
+    }
+
+    // if yes return all matching items
+    return data;
+  }
+
+  async deleteItem(id: string, auth_id: string) {
+    const supabase = this.supabaseService.client;
+
+    const user_id = await this.get_profile_id(auth_id);
+
+    // check requested item exists
+    await this.check_item_belongs_to_user(user_id, id);
+
+    // remove item from db
+    const response = await supabase
+      .from('wardrobe_items')
+      .delete()
+      .eq('id', id);
+
+    return response;
+  }
+
+  private async check_item_belongs_to_user(user_id: string, item_id: string) {
+    const supabase = this.supabaseService.client;
+
+    const { data, error } = await supabase
+      .from('wardrobe_items')
+      .select('*')
+      .eq('id', item_id)
+      .eq('user_id', user_id);
+
+    if (error) {
+      throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    // if no item throw not found exception
+    if (data.length === 0) {
+      throw new NotFoundException(
+        'No item found for user with provided item id',
+      );
+    }
+  }
+
+  private async get_profile_id(user_id: string) {
+    const supabase = this.supabaseService.client;
+
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('user_id', user_id);
+
+    if (error) {
+      throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    // if no user throw not found exception
+    if (data.length === 0) {
+      throw new NotFoundException('No user found');
+    }
+
+    return data[0].id;
+  }
+
+  private mapSizeOptions(size: string) {
+    // go through possible size searchs (3XS, 2XS, XS, S, M, L, XL, 2XL, 3XL)
+
+    switch (size) {
+      case '3XS':
+        return ['3XS', '4', 'One Size', 'XXXS', '22'];
+      case '2XS':
+        return ['2XS', '6', 'One Size', 'XXS', '24'];
+      case 'XS':
+        return ['XS', '8', 'One Size', 'Extra Small', '26', 'XS/S'];
+      case 'S':
+        return ['S', '10', 'One Size', 'Small', '28', 'XS/S'];
+      case 'M':
+        return ['M', '12', 'One Size', 'Medium', '30', 'M/L'];
+      case 'L':
+        return ['L', '14', 'One Size', 'Large', '32', 'M/L'];
+      case 'XL':
+        return ['XL', '16', 'One Size', 'Extra Large', '34'];
+      case '2XL':
+        return ['2XL', '18', 'One Size', 'XXL', '36'];
+      case '3XL':
+        return ['3XL', '20', 'One Size', 'XXXL', '38'];
+      default:
+        throw new BadRequestException('Invalid size request');
+    }
+  }
 }

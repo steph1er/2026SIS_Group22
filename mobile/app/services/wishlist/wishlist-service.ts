@@ -1,10 +1,12 @@
 import { authenticatedApiRequest } from '../../../src/api/authenticated-api-client';
 import type { CatalogueItem, WishlistEntry } from './wishlist-types';
+import type { FilterCategory } from '../create-outfit/create-outfit-service';
 
 /**
  * Client for the backend wishlist endpoints (backend/src/wishlist/wishlist.controller.ts):
  *
  *   GET    /wishlist              -> the user's wishlist rows joined with catalogue_items (404 when empty)
+ *   GET    /wishlist/search       -> the matching wishlist rows, joined the same way (404 when nothing matches)
  *   POST   /wishlist/add          -> body { item_id, created_at }            (409 if already added)
  *   DELETE /wishlist/delete/:id   -> removes one wishlist row (id = wishlist.id, not the catalogue id)
  *
@@ -172,6 +174,18 @@ export async function fetchWishlist(): Promise<WishlistEntry[]> {
   }
 }
 
+/** Wishlist entries matching a query from buildSearchQuery, newest first. Nothing matching returns []. */
+export async function searchWishlist(query: string): Promise<WishlistEntry[]> {
+  try {
+    const rows = toArray(await requestJson(`wishlist/search?${query}`));
+    return rows
+      .map(normaliseWishlistEntry)
+      .sort((a, b) => (b.createdAt ?? '').localeCompare(a.createdAt ?? ''));
+  } catch (error) {
+    if (error instanceof WishlistApiError && error.status === 404) return [];
+    throw error;
+  }
+}
 
 // Add a catalogue item to the wishlist. `catalogueItemId` is catalogue_items.id.
 export async function addToWishlist(catalogueItemId: string): Promise<void> {
@@ -193,11 +207,25 @@ export async function removeFromWishlist(wishlistId: string): Promise<void> {
   }
 }
 
+type FetchRecommendationsOptions = {
+  limit?: number;
+  offset?: number;
+  // restrict to one canonical category (tops/bottoms/outerwear/dresses/shoes/other),
+  // for a wardrobe/wishlist tab that shows recommendations per category
+  category?: FilterCategory;
+};
+
 // Items the ML recommender suggests adding to the wishlist, excluding ones already saved.
 // Pass `offset` to load the next page. No (more) recommendations (404) returns [].
-export async function fetchRecommendations({ limit = 20, offset = 0 } = {}): Promise<CatalogueItem[]> {
+export async function fetchRecommendations({
+  limit = 20,
+  offset = 0,
+  category,
+}: FetchRecommendationsOptions = {}): Promise<CatalogueItem[]> {
   try {
-    const query = new URLSearchParams({ limit: String(limit), offset: String(offset) });
+    const params: Record<string, string> = { limit: String(limit), offset: String(offset) };
+    if (category) params.category = category;
+    const query = new URLSearchParams(params);
     const rows = toArray(await requestJson(`catalogue/reccomendations?${query.toString()}`));
     return rows.map(normaliseCatalogueItem).filter((item) => item.id);
   } catch (error) {

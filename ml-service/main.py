@@ -9,17 +9,42 @@ Given a clothing photo, this service:
 
 """
 
+import base64
 import io
+import os
 
 import cv2
 import numpy as np
 import open_clip
 import torch
-from fastapi import FastAPI, File, UploadFile
+from fastapi import FastAPI, File, HTTPException, UploadFile
+from fastapi.middleware.cors import CORSMiddleware
+from matplotlib.colors import XKCD_COLORS, to_rgb
 from PIL import Image
 from rembg import remove
 
+from colour_analysis import AnalysisError, analyze_colour_image
+
 app = FastAPI(title="Wardrobe ML Service")
+
+cors_origins = [
+    origin.strip()
+    for origin in os.getenv(
+        "CORS_ORIGINS",
+        "http://localhost:8081,http://127.0.0.1:8081,http://localhost:19006",
+    ).split(",")
+    if origin.strip()
+]
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=cors_origins,
+    allow_credentials=True,
+    allow_methods=["GET", "POST"],
+    allow_headers=["*"],
+)
+
+MAX_COLOUR_PHOTO_BYTES = 12 * 1024 * 1024
+ALLOWED_IMAGE_TYPES = {"image/jpeg", "image/png", "image/webp"}
 
 MODEL_NAME = "hf-hub:Marqo/marqo-fashionCLIP"
 model, _, preprocess = open_clip.create_model_and_transforms(MODEL_NAME)
@@ -38,29 +63,10 @@ STYLE_LABELS = [
     "formal", "athleisure", "preppy", "minimalist",
 ]
 
-# Matched by nearest Lab distance, so keep entries perceptually distinct.
+# ~950 crowd-sourced names (XKCD colour survey, shipped with matplotlib), matched by nearest Lab distance.
 NAMED_COLOURS = {
-    # neutrals
-    "black": (0, 0, 0), "white": (255, 255, 255), "grey": (128, 128, 128),
-    "cream": (255, 253, 208), "beige": (222, 202, 176), "tan": (210, 180, 140),
-    "khaki": (189, 183, 107), "brown": (139, 69, 19), "chocolate": (92, 51, 23),
-    # reds / pinks
-    "red": (237, 28, 36), "burgundy": (128, 0, 32), "maroon": (100, 20, 30),
-    "rust": (183, 65, 14), "coral": (255, 127, 80), "salmon": (250, 160, 140),
-    "peach": (255, 218, 185), "pink": (255, 192, 203), "hot pink": (255, 20, 147),
-    "magenta": (200, 30, 140),
-    # oranges / yellows
-    "orange": (255, 127, 39), "mustard": (204, 160, 30), "yellow": (255, 242, 0),
-    # greens
-    "green": (34, 139, 34), "dark green": (0, 80, 40), "olive": (107, 112, 35),
-    "sage": (156, 175, 136), "mint": (170, 230, 200), "lime": (150, 220, 40),
-    # blues / teals
-    "teal": (0, 128, 128), "turquoise": (64, 224, 208), "light blue": (173, 216, 230),
-    "denim blue": (80, 110, 150), "blue": (0, 90, 190), "royal blue": (30, 60, 200),
-    "navy": (0, 0, 128),
-    # purples
-    "lavender": (200, 180, 230), "purple": (128, 0, 128),
-    "plum": (110, 40, 90),
+    name.removeprefix("xkcd:"): tuple(round(c * 255) for c in to_rgb(hex_code))
+    for name, hex_code in XKCD_COLORS.items()
 }
 
 
@@ -90,8 +96,38 @@ def rgb_to_lab(rgb) -> np.ndarray:
     return cv2.cvtColor(pixel, cv2.COLOR_RGB2LAB).reshape(3)
 
 
-NEUTRAL_NAMES = {"black", "white", "grey"}
-NAMED_COLOURS_LAB = {name: rgb_to_lab(rgb) for name, rgb in NAMED_COLOURS.items()}
+def _saturation(rgb) -> float:
+    hi, lo = max(rgb), min(rgb)
+    return 0.0 if hi == 0 else (hi - lo) / hi
+
+
+# Wardrobe-friendly names. Each XKCD name is reduced to its final word ("faded red" -> "red"),
+# with a light/dark prefix added from the pixel's lightness; names that don't end in one of these words are dropped.
+COLOUR_FAMILIES = {
+    "red", "orange", "yellow", "green", "blue", "purple", "pink", "brown", "teal",
+    "lime", "rose", "violet", "tan", "turquoise", "lavender", "magenta", "lilac",
+    "olive", "beige", "gold", "peach", "salmon", "mauve", "khaki", "mint", "sage",
+    "mustard", "plum", "navy", "maroon", "cream", "coral", "burgundy", "chocolate",
+}
+SHADEABLE = {"red", "orange", "yellow", "green", "blue", "purple", "pink", "brown", "teal"}
+LIGHT_L, DARK_L = 72.0, 30.0  # Lab lightness cut-offs for adding a light/dark prefix
+
+
+def simplify_colour_name(name: str) -> str | None:
+    words = name.split()
+    if words[-2:] == ["navy", "blue"]:
+        return "navy"
+    return words[-1] if words[-1] in COLOUR_FAMILIES else None
+
+
+# Neutral-looking names are reserved for the brightness rules below.
+_candidates = [
+    (simple, rgb)
+    for name, rgb in NAMED_COLOURS.items()
+    if (simple := simplify_colour_name(name)) and _saturation(rgb) >= 0.12
+]
+CHROMATIC_NAMES = [name for name, _ in _candidates]
+CHROMATIC_LAB = np.stack([rgb_to_lab(rgb) for _, rgb in _candidates])
 
 # Neutral thresholds; photographed black fabric is usually ~RGB 40-70, not pure black.
 NEUTRAL_SATURATION = 0.12
@@ -117,25 +153,40 @@ def nearest_colour_name(rgb: np.ndarray) -> str:
 
     # Tinted, so only match chromatic names (e.g. dark wine-red -> maroon, not black).
     lab = rgb_to_lab(rgb)
-    return min(
-        (name for name in NAMED_COLOURS_LAB if name not in NEUTRAL_NAMES),
-        key=lambda name: float(np.sum((lab - NAMED_COLOURS_LAB[name]) ** 2)),
-    )
+    family = CHROMATIC_NAMES[int(np.argmin(np.sum((CHROMATIC_LAB - lab) ** 2, axis=1)))]
+    if family in SHADEABLE:
+        if lab[0] > LIGHT_L:
+            return f"light {family}"
+        if lab[0] < DARK_L:
+            return f"dark {family}"
+    return family
 
-def extract_dominant_colour(foreground: Image.Image, k: int = 3) -> str:
-    """Return the dominant colour name of the garment, ignoring transparent pixels."""
-    rgba = np.array(foreground.convert("RGBA")).reshape(-1, 4)
-    opaque_pixels = rgba[rgba[:, 3] > 128, :3].astype(np.float32)
-    if len(opaque_pixels) == 0:
+
+MAX_COLOUR_PIXELS = 100_000
+
+
+def extract_dominant_colour(foreground: Image.Image, k: int = 4) -> str:
+    """Return the dominant colour name of the garment, ignoring transparent and edge pixels."""
+    rgba = np.array(foreground.convert("RGBA"))
+    # Erode the mask so semi-blended cut-out edges don't bias the result.
+    mask = cv2.erode((rgba[..., 3] > 128).astype(np.uint8), np.ones((5, 5), np.uint8))
+    pixels = rgba[mask.astype(bool), :3]
+    if len(pixels) == 0:
+        pixels = rgba[rgba[..., 3] > 128, :3]
+    if len(pixels) == 0:
         return "unknown"
-    k = min(k, len(opaque_pixels))
-    criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 20, 0.5)
-    _, labels, centers = cv2.kmeans(
-        opaque_pixels, k, None, criteria, 10, cv2.KMEANS_RANDOM_CENTERS
-    )
-    counts = np.bincount(labels.flatten())
-    dominant = centers[np.argmax(counts)]
-    return nearest_colour_name(dominant)
+    if len(pixels) > MAX_COLOUR_PIXELS:
+        rng = np.random.default_rng(0)
+        pixels = pixels[rng.choice(len(pixels), MAX_COLOUR_PIXELS, replace=False)]
+    # Cluster in Lab so clusters follow perceived colour differences.
+    lab = cv2.cvtColor(pixels.reshape(-1, 1, 3).astype(np.float32) / 255.0, cv2.COLOR_RGB2LAB)
+    lab = lab.reshape(-1, 3)
+    k = min(k, len(lab))
+    criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 50, 0.1)
+    _, labels, centers = cv2.kmeans(lab, k, None, criteria, 10, cv2.KMEANS_PP_CENTERS)
+    dominant = centers[np.argmax(np.bincount(labels.flatten()))]
+    rgb = cv2.cvtColor(dominant.reshape(1, 1, 3).astype(np.float32), cv2.COLOR_LAB2RGB)
+    return nearest_colour_name(rgb.reshape(3) * 255.0)
 
 
 def strip_background(image_bytes: bytes) -> tuple[Image.Image, Image.Image]:
@@ -145,6 +196,13 @@ def strip_background(image_bytes: bytes) -> tuple[Image.Image, Image.Image]:
     white_bg = Image.new("RGBA", foreground.size, (255, 255, 255, 255))
     flattened = Image.alpha_composite(white_bg, foreground).convert("RGB")
     return flattened, foreground
+
+
+def encode_png(image: Image.Image) -> str:
+    """Encode the background-removed (transparent) image as base64 PNG."""
+    buffer = io.BytesIO()
+    image.save(buffer, format="PNG")
+    return base64.b64encode(buffer.getvalue()).decode("ascii")
 
 
 @app.post("/analyze-item")
@@ -164,7 +222,60 @@ async def analyze_item(file: UploadFile = File(...)):
         "style_confidence": round(style_confidence, 3),
         "colour": colour,
         "embedding": embedding,
+        "image_png_base64": encode_png(foreground),
     }
+
+@app.post("/embed-image")
+async def embed_image(file: UploadFile = File(...)):
+    """Embed a product/catalogue photo for similarity search.
+
+    Unlike /analyze-item, this skips category/style classification (catalogue metadata
+    already comes from the site's own fields, not the image) but still strips the
+    background, since catalogue photos are scraped from product pages and may contain
+    models, accessories or backgrounds that would otherwise dilute the embedding.
+    """
+    image_bytes = await file.read()
+    image, _ = strip_background(image_bytes)
+    return {"embedding": get_embedding(image)}
+
+
+@app.post("/embed-text")
+async def embed_text(payload: dict):
+    """Embed one or more preference phrases into the same space as item embeddings.
+
+    CLIP's image and text encoders share an embedding space, so a user's onboarding
+    preferences (style keywords, aesthetic, colour preferences, ...) can be compared
+    against catalogue item image embeddings with plain cosine similarity. Multiple
+    phrases are embedded separately and averaged, then re-normalised to a unit vector.
+    """
+    texts = [t.strip() for t in payload.get("texts", []) if isinstance(t, str) and t.strip()]
+    if not texts:
+        raise HTTPException(status_code=400, detail="texts must be a non-empty list of strings")
+
+    text_inputs = tokenizer(texts)
+    with torch.no_grad():
+        features = model.encode_text(text_inputs, normalize=True)
+    averaged = features.mean(dim=0)
+    normalised = averaged / averaged.norm()
+    return {"embedding": normalised.tolist()}
+
+
+@app.post("/analyze-colours")
+async def analyze_colours(file: UploadFile = File(...)):
+    """Return a face-landmark guided, estimated seasonal colour palette."""
+    if file.content_type and file.content_type.lower() not in ALLOWED_IMAGE_TYPES:
+        raise HTTPException(status_code=415, detail="Please choose a JPEG, PNG or WebP photo.")
+
+    image_bytes = await file.read(MAX_COLOUR_PHOTO_BYTES + 1)
+    if len(image_bytes) > MAX_COLOUR_PHOTO_BYTES:
+        raise HTTPException(status_code=413, detail="This photo is too large. Please choose an image under 12 MB.")
+    if not image_bytes:
+        raise HTTPException(status_code=400, detail="The selected photo is empty.")
+
+    try:
+        return analyze_colour_image(image_bytes)
+    except AnalysisError as error:
+        raise HTTPException(status_code=422, detail=str(error)) from error
 
 
 @app.get("/health")

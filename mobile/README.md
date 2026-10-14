@@ -48,6 +48,72 @@ The welcome screen now supports email/password signup, login, confirmation
 messaging, and sign-out. See [authentication testing](../docs/auth-testing.md)
 for Postman token instructions, profile ownership, and the integration checklist.
 
+## Colour Analysis setup
+
+Colour Analysis uses the existing Expo camera, image picker and file-system
+packages. No additional mobile package install is needed beyond the normal:
+
+```bash
+cd mobile
+npm install
+```
+
+Copy `.env.example` to the Git-ignored `.env.local` and configure:
+
+```dotenv
+EXPO_PUBLIC_SUPABASE_URL=https://your-project-ref.supabase.co
+EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_your_key_here
+EXPO_PUBLIC_API_URL=http://localhost:3000
+EXPO_PUBLIC_ML_SERVICE_URL=http://localhost:8000
+```
+
+The Supabase publishable key is intended for the mobile client; never put a
+service-role or secret key in an `EXPO_PUBLIC_` variable.
+
+For Expo Go on a physical phone, `localhost` means the phone itself. Use the
+development computer's LAN IP for `EXPO_PUBLIC_ML_SERVICE_URL`. On macOS:
+
+```bash
+ipconfig getifaddr en0
+```
+
+Then use the returned address without committing it, for example:
+
+```dotenv
+EXPO_PUBLIC_ML_SERVICE_URL=http://192.168.x.x:8000
+```
+
+Start the ML service in a separate terminal:
+
+```bash
+cd ml-service
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+uvicorn main:app --reload --host 0.0.0.0 --port 8000
+```
+
+Then start the mobile app:
+
+```bash
+cd mobile
+npx expo start
+```
+
+The Face Landmarker model is committed at
+`ml-service/models/face_landmarker.task`; no model download is required.
+Authenticated result saving requires
+`supabase/migrations/20261007040000_create_colour_analysis.sql`. It is already
+applied to the team's hosted Supabase project. A fresh or local project should
+apply all repository migrations with the normal Supabase workflow:
+
+```bash
+npx supabase db push
+```
+
+The table keeps one current result per authenticated user and uses RLS to
+prevent users reading or changing another account's result.
+
 In the output, you'll find options to open the app in a
 
 - [development build](https://docs.expo.dev/develop/development-builds/introduction/)

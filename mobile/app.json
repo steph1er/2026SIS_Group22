@@ -16,6 +16,13 @@
     "plugins": [
       "expo-router",
       [
+        "expo-media-library",
+        {
+          "savePhotosPermission": "Allow $(PRODUCT_NAME) to save your outfit images to your photos.",
+          "granularPermissions": ["photo"]
+        }
+      ],
+      [
         "expo-splash-screen",
         {
           "backgroundColor": "#208AEF"
@@ -25,6 +32,12 @@
       "expo-sqlite",
       "expo-web-browser",
       "expo-asset",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow $(PRODUCT_NAME) to choose a face photo for colour analysis."
+        }
+      ],
        [
         "expo-camera",
         {

@@ -1,10 +1,12 @@
-import { Body, Controller, Delete, Get, Param, Post, Query, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Query, UseGuards, UseInterceptors, UploadedFile } from '@nestjs/common';
 import { SupabaseAuthGuard } from '../auth/supabase-auth.guard';
 import { WardrobeService } from './wardrobe.service';
 import { UpdateWardrobeItemDto } from './dto/update-wardrobe-item.dto';
 import { SearchWardrobeItemDto } from './dto/search-wardrobe-item.dto';
 import { AuthenticatedUser } from '../auth/authenticated-user.decorator';
 import type { User } from '@supabase/supabase-js';
+import { basename, resolve } from 'path';
+import { FileInterceptor } from '@nestjs/platform-express';
 
 @Controller('wardrobes')
 @UseGuards(SupabaseAuthGuard)
@@ -17,10 +19,10 @@ export class WardrobeController {
         return this.wardrobeService.getWardrobe(user.id);
     }
 
-    // change to post
-    @Get('add')
-    addItem(): string {
-        return this.wardrobeService.addItem();
+    @Post('add')
+    @UseInterceptors(FileInterceptor('image'))
+    addItem(@AuthenticatedUser() user: User, @UploadedFile() file: Express.Multer.File) {
+        return this.wardrobeService.addItem(user.id, file);
     }
 
     @Post('update')

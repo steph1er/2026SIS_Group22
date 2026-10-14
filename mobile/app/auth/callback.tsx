@@ -5,9 +5,12 @@ import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { completeAuthCallback } from '../../src/auth/auth-service';
-import { StyleUTokens } from '../services/styleu-theme';
+import { useStyleUColors, useThemedStyles } from '../hooks/use-theme';
+import type { StyleUColors } from '../services/styleu-theme';
 
 export default function AuthCallbackScreen() {
+  const colors = useStyleUColors();
+  const styles = useThemedStyles(createStyles);
   const url = Linking.useLinkingURL();
   const [errorMessage, setErrorMessage] = useState('');
 
@@ -34,7 +37,7 @@ export default function AuthCallbackScreen() {
           </>
         ) : (
           <>
-            <ActivityIndicator color={StyleUTokens.colors.accent} size="large" />
+            <ActivityIndicator color={colors.accent} size="large" />
             <Text accessibilityRole="header" style={styles.title}>Confirming your email…</Text>
           </>
         )}
@@ -43,9 +46,10 @@ export default function AuthCallbackScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  safeArea: { backgroundColor: StyleUTokens.colors.background, flex: 1 },
+const createStyles = (colors: StyleUColors) =>
+  StyleSheet.create({
+  safeArea: { backgroundColor: colors.background, flex: 1 },
   content: { alignItems: 'center', flex: 1, gap: 20, justifyContent: 'center', paddingHorizontal: 28 },
-  title: { color: StyleUTokens.colors.text, fontSize: 26, fontWeight: '700', textAlign: 'center' },
-  message: { color: StyleUTokens.colors.mutedText, fontSize: 16, lineHeight: 24, textAlign: 'center' },
+  title: { color: colors.text, fontSize: 26, fontWeight: '700', textAlign: 'center' },
+  message: { color: colors.mutedText, fontSize: 16, lineHeight: 24, textAlign: 'center' },
 });

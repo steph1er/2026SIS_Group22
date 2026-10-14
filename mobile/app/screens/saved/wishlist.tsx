@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 import {
   ActivityIndicator,
   Image,
@@ -6,7 +6,6 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
-  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
@@ -16,13 +15,23 @@ import { router } from 'expo-router';
 
 import { ThemedView } from '../../components/themed-view';
 import { ThemedText } from '../../components/themed-text';
+import { CatalogueItemCard } from '../../components/catalogue-item-card';
+import { ItemSearch } from '../../components/item-search';
+import { useItemSearch } from '../../hooks/use-item-search';
 import { useWishlist } from '../../hooks/use-wishlist';
+import {
+  buildSearchQuery,
+  collectOptions,
+  PRICE_OPTIONS,
+  type SearchFilters,
+  SIZE_OPTIONS,
+} from '../../services/search/search-query';
+import { searchWishlist } from '../../services/wishlist/wishlist-service';
 import { itemDetailHref } from '../../services/catalogue/catalogue-service';
 import type { CatalogueItem, WishlistEntry } from '../../services/wishlist/wishlist-types';
+import { useStyleUColors, useThemedStyles } from '../../hooks/use-theme';
+import type { StyleUColors } from '../../services/styleu-theme';
 
-const ACCENT = '#D98E73';
-const TEXT = '#22201F';
-const MUTED = '#8A8683';
 const PLACEHOLDER_IMAGE = 'https://placehold.co/300x360/F2EFEC/ABABAB/png?text=No+image';
 
 /** Image heights that repeat down each column, giving the staggered look from the design. */
@@ -49,44 +58,46 @@ function subtitleFor(item: CatalogueItem) {
   return [item.category ? titleCase(item.category) : null, item.brand].filter(Boolean).join(' • ');
 }
 
-function goBack() {
-  if (router.canGoBack()) router.back();
-  else router.replace('/saved' as never);
-}
-
-export default function WishlistScreen() {
+/**
+ * The wishlist shown under the Wishlist tab on Saved. `header` is rendered at the top of the
+ * scrolling content, so the page title and tab toggle scroll with the items.
+ */
+export function WishlistCollection({ header }: { header: ReactNode }) {
+  const colors = useStyleUColors();
+  const styles = useThemedStyles(createStyles);
   const wishlist = useWishlist({ includeRecommendations: true });
   const [query, setQuery] = useState('');
-  const [category, setCategory] = useState<string | null>(null);
+  const [filters, setFilters] = useState<SearchFilters>({});
   const [sortOrder, setSortOrder] = useState<SortOrder>('newest');
   const [menuVisible, setMenuVisible] = useState(false);
 
-  const categories = useMemo(() => {
-    const seen = new Map<string, string>();
-    for (const entry of wishlist.wishlist) {
-      const name = entry.item.category?.trim();
-      if (name && !seen.has(name.toLowerCase())) seen.set(name.toLowerCase(), titleCase(name));
-    }
-    return [...seen.entries()].map(([key, label]) => ({ key, label }));
+  // Searching uses GET /wishlist/search; it runs again whenever the wishlist reloads.
+  const searchQuery = buildSearchQuery(filters, query);
+  const isSearching = searchQuery !== null;
+  const search = useItemSearch(searchWishlist, searchQuery, wishlist.wishlist);
+
+  // Options list the values found across the whole wishlist.
+  const filterOptions = useMemo(() => {
+    const items = wishlist.wishlist.map((entry) => entry.item);
+    return {
+      category: collectOptions(items.map((item) => item.category)),
+      colour: collectOptions(items.flatMap((item) => item.colours)),
+      style: collectOptions(items.flatMap((item) => item.styles)),
+      brand: collectOptions(items.map((item) => item.brand), { keepCase: true }),
+      size: SIZE_OPTIONS,
+      material: collectOptions(items.flatMap((item) => item.materials)),
+      price: PRICE_OPTIONS,
+    };
   }, [wishlist.wishlist]);
 
-  // Drop a category filter that no longer matches anything (e.g. after removing its last item).
-  const activeCategory = category && categories.some((c) => c.key === category) ? category : null;
-
   const visibleEntries = useMemo(() => {
-    const search = query.trim().toLowerCase();
-    const filtered = wishlist.wishlist.filter((entry) => {
-      const { item } = entry;
-      if (activeCategory && item.category?.trim().toLowerCase() !== activeCategory) return false;
-      if (!search) return true;
-      return [item.name, item.brand, item.category, ...item.colours, ...item.styles]
-        .filter(Boolean)
-        .some((field) => field!.toLowerCase().includes(search));
-    });
-    if (sortOrder === 'newest') return filtered;
+    // Drop results removed since the search ran.
+    const savedIds = new Set(wishlist.wishlist.map((entry) => entry.id));
+    const entries = isSearching ? (search.results ?? []).filter((entry) => savedIds.has(entry.id)) : wishlist.wishlist;
+    if (sortOrder === 'newest') return entries;
     const direction = sortOrder === 'price-asc' ? 1 : -1;
-    return [...filtered].sort((a, b) => direction * ((a.item.price ?? Infinity) - (b.item.price ?? Infinity)));
-  }, [wishlist.wishlist, query, activeCategory, sortOrder]);
+    return [...entries].sort((a, b) => direction * ((a.item.price ?? Infinity) - (b.item.price ?? Infinity)));
+  }, [wishlist.wishlist, isSearching, search.results, sortOrder]);
 
   const leftColumn = visibleEntries.filter((_, index) => index % 2 === 0);
   const rightColumn = visibleEntries.filter((_, index) => index % 2 === 1);
@@ -96,67 +107,33 @@ export default function WishlistScreen() {
     <ThemedView style={{ flex: 1 }}>
       <SafeAreaView style={{ flex: 1 }} edges={['top']}>
         <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-          <View style={styles.header}>
-            <View style={{ flex: 1 }}>
-              <TouchableOpacity onPress={goBack} style={styles.breadcrumb} hitSlop={8} accessibilityLabel="Back to My Collections">
-                <Ionicons name="chevron-back" size={14} color={MUTED} />
-                <ThemedText style={styles.breadcrumbText}>My Collections</ThemedText>
-              </TouchableOpacity>
-              <ThemedText style={styles.title}>Wishlist</ThemedText>
-            </View>
-            <TouchableOpacity
-              style={styles.iconCircle}
-              onPress={() => setMenuVisible(true)}
-              accessibilityLabel="Wishlist options"
-            >
-              <Ionicons name="ellipsis-vertical" size={18} color={TEXT} />
-            </TouchableOpacity>
-          </View>
+          {header}
 
-          <View style={styles.searchBar}>
-            <Ionicons name="search" size={18} color={MUTED} />
-            <TextInput
-              value={query}
-              onChangeText={setQuery}
-              placeholder={`Search my ${count} item${count === 1 ? '' : 's'}...`}
-              placeholderTextColor={MUTED}
-              style={styles.searchInput}
-              returnKeyType="search"
-              autoCorrect={false}
-            />
-            {query ? (
-              <TouchableOpacity onPress={() => setQuery('')} accessibilityLabel="Clear search">
-                <Ionicons name="close-circle" size={18} color={MUTED} />
+          <ItemSearch
+            compact
+            query={query}
+            onQueryChange={setQuery}
+            filters={filters}
+            onFiltersChange={setFilters}
+            options={filterOptions}
+            placeholder={`Search my ${count} item${count === 1 ? '' : 's'} by name...`}
+            accessory={
+              <TouchableOpacity
+                style={styles.iconCircle}
+                onPress={() => setMenuVisible(true)}
+                accessibilityLabel="Wishlist options"
+              >
+                <Ionicons name="ellipsis-vertical" size={18} color={colors.text} />
               </TouchableOpacity>
-            ) : null}
-          </View>
-
-          {categories.length > 0 ? (
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
-              {categories.map(({ key, label }) => {
-                const selected = key === activeCategory;
-                return (
-                  <TouchableOpacity
-                    key={key}
-                    style={[styles.chip, selected && styles.chipSelected]}
-                    onPress={() => setCategory(selected ? null : key)}
-                  >
-                    <ThemedText style={[styles.chipText, selected && styles.chipTextSelected]}>
-                      {selected ? `Category: ${label}` : label}
-                    </ThemedText>
-                    {selected ? <Ionicons name="close-circle-outline" size={16} color={TEXT} /> : null}
-                  </TouchableOpacity>
-                );
-              })}
-            </ScrollView>
-          ) : null}
+            }
+          />
 
           {wishlist.actionError ? (
             <View style={styles.errorBanner}>
-              <Ionicons name="alert-circle-outline" size={18} color="#8A2D1B" />
+              <Ionicons name="alert-circle-outline" size={18} color={colors.errorText} />
               <ThemedText style={styles.errorBannerText}>{wishlist.actionError}</ThemedText>
               <TouchableOpacity onPress={wishlist.dismissActionError} accessibilityLabel="Dismiss">
-                <Ionicons name="close" size={18} color="#8A2D1B" />
+                <Ionicons name="close" size={18} color={colors.errorText} />
               </TouchableOpacity>
             </View>
           ) : null}
@@ -177,8 +154,27 @@ export default function WishlistScreen() {
               title="Your wishlist is empty"
               message="Tap the heart on a recommended item below to save it here."
             />
+          ) : isSearching && search.error ? (
+            <StateMessage
+              icon="cloud-offline-outline"
+              title="Couldn't search your wishlist"
+              message={search.error}
+              actionLabel="Try again"
+              onAction={search.retry}
+            />
+          ) : isSearching && search.results === null ? (
+            <ActivityIndicator style={{ paddingVertical: 40 }} />
           ) : visibleEntries.length === 0 ? (
-            <StateMessage icon="search-outline" title="No matching items" message="Try a different search or filter." />
+            <StateMessage
+              icon="search-outline"
+              title="No matching items"
+              message="Try a different search or filter."
+              actionLabel="Clear search"
+              onAction={() => {
+                setQuery('');
+                setFilters({});
+              }}
+            />
           ) : (
             <View style={styles.masonry}>
               {[leftColumn, rightColumn].map((column, columnIndex) => (
@@ -263,6 +259,8 @@ type WishlistTileProps = {
 };
 
 function WishlistTile({ entry, imageHeight, isPending, onPress, onRemove }: WishlistTileProps) {
+  const colors = useStyleUColors();
+  const styles = useThemedStyles(createStyles);
   const { item } = entry;
   const subtitle = subtitleFor(item);
 
@@ -277,7 +275,7 @@ function WishlistTile({ entry, imageHeight, isPending, onPress, onRemove }: Wish
           hitSlop={6}
           accessibilityLabel={`Remove ${item.name} from wishlist`}
         >
-          {isPending ? <ActivityIndicator size="small" color={TEXT} /> : <Ionicons name="close" size={16} color={TEXT} />}
+          {isPending ? <ActivityIndicator size="small" color={colors.text} /> : <Ionicons name="close" size={16} color={colors.text} />}
         </TouchableOpacity>
       </View>
       <ThemedText style={styles.tileName} numberOfLines={2}>
@@ -301,30 +299,31 @@ type RecommendationCardProps = {
 };
 
 function RecommendationCard({ item, isSaved, isPending, onToggleSaved, onPress }: RecommendationCardProps) {
+  const colors = useStyleUColors();
+  const styles = useThemedStyles(createStyles);
   const price = formatPrice(item.price);
 
   return (
-    <Pressable style={styles.recCard} onPress={onPress}>
-      <Image source={{ uri: item.imageUrl ?? PLACEHOLDER_IMAGE }} style={styles.recImage} />
-      <TouchableOpacity
-        style={styles.heartButton}
-        onPress={onToggleSaved}
-        disabled={isPending}
-        accessibilityLabel={isSaved ? `Remove ${item.name} from wishlist` : `Add ${item.name} to wishlist`}
-      >
-        {isPending ? (
-          <ActivityIndicator size="small" color={ACCENT} />
-        ) : (
-          <Ionicons name={isSaved ? 'heart' : 'heart-outline'} size={18} color={ACCENT} />
-        )}
-      </TouchableOpacity>
-      <ThemedText style={styles.tileName} numberOfLines={1}>
-        {item.name}
-      </ThemedText>
-      <ThemedText style={styles.tileSubtitle} numberOfLines={1}>
-        {[item.brand, price].filter(Boolean).join(' • ')}
-      </ThemedText>
-    </Pressable>
+    <CatalogueItemCard
+      item={item}
+      details={[[item.brand, price].filter(Boolean).join(' • ')].filter(Boolean)}
+      onPress={onPress}
+      nameLines={1}
+      action={(
+        <TouchableOpacity
+          style={styles.heartButton}
+          onPress={onToggleSaved}
+          disabled={isPending}
+          accessibilityLabel={isSaved ? `Remove ${item.name} from wishlist` : `Add ${item.name} to wishlist`}
+        >
+          {isPending ? (
+            <ActivityIndicator size="small" color={colors.accentStrong} />
+          ) : (
+            <Ionicons name={isSaved ? 'heart' : 'heart-outline'} size={18} color={colors.accentStrong} />
+          )}
+        </TouchableOpacity>
+      )}
+    />
   );
 }
 
@@ -337,18 +336,20 @@ type OptionsMenuProps = {
 };
 
 function OptionsMenu({ visible, sortOrder, onClose, onRefresh, onSort }: OptionsMenuProps) {
+  const colors = useStyleUColors();
+  const styles = useThemedStyles(createStyles);
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <Pressable style={styles.menuOverlay} onPress={onClose}>
         <Pressable style={styles.menu} onPress={(event) => event.stopPropagation()}>
           <TouchableOpacity style={styles.menuRow} onPress={onRefresh}>
-            <Ionicons name="refresh" size={18} color={TEXT} />
+            <Ionicons name="refresh" size={18} color={colors.text} />
             <ThemedText style={styles.menuText}>Refresh</ThemedText>
           </TouchableOpacity>
           <View style={styles.menuDivider} />
           {(Object.keys(SORT_LABELS) as SortOrder[]).map((order) => (
             <TouchableOpacity key={order} style={styles.menuRow} onPress={() => onSort(order)}>
-              <Ionicons name={order === sortOrder ? 'checkmark' : 'swap-vertical'} size={18} color={order === sortOrder ? ACCENT : TEXT} />
+              <Ionicons name={order === sortOrder ? 'checkmark' : 'swap-vertical'} size={18} color={order === sortOrder ? colors.accentStrong : colors.text} />
               <ThemedText style={styles.menuText}>{SORT_LABELS[order]}</ThemedText>
             </TouchableOpacity>
           ))}
@@ -367,9 +368,11 @@ type StateMessageProps = {
 };
 
 function StateMessage({ icon, title, message, actionLabel, onAction }: StateMessageProps) {
+  const colors = useStyleUColors();
+  const styles = useThemedStyles(createStyles);
   return (
     <View style={styles.stateMessage}>
-      <Ionicons name={icon} size={28} color={ACCENT} />
+      <Ionicons name={icon} size={28} color={colors.accentStrong} />
       <ThemedText style={styles.stateTitle}>{title}</ThemedText>
       <ThemedText style={styles.stateBody}>{message}</ThemedText>
       {actionLabel && onAction ? (
@@ -381,82 +384,20 @@ function StateMessage({ icon, title, message, actionLabel, onAction }: StateMess
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: StyleUColors) =>
+  StyleSheet.create({
   content: {
     padding: 20,
     gap: 16,
     paddingBottom: 110,
   },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  breadcrumb: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 2,
-    alignSelf: 'flex-start',
-  },
-  breadcrumbText: {
-    fontSize: 14,
-    color: MUTED,
-  },
-  title: {
-    fontSize: 26,
-    lineHeight: 32,
-    fontWeight: '600',
-  },
   iconCircle: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#F4F2F0',
+    backgroundColor: colors.input,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  searchBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    backgroundColor: '#F6F4F2',
-    borderWidth: 1,
-    borderColor: '#ECE8E4',
-    borderRadius: 26,
-    paddingHorizontal: 16,
-    height: 50,
-  },
-  searchInput: {
-    flex: 1,
-    fontSize: 15,
-    color: TEXT,
-  },
-  chips: {
-    gap: 8,
-    paddingRight: 4,
-  },
-  chip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    borderWidth: 1,
-    borderColor: '#E6E2DE',
-    borderRadius: 18,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    backgroundColor: '#fff',
-  },
-  chipSelected: {
-    borderColor: ACCENT,
-    backgroundColor: '#FBEEE9',
-  },
-  chipText: {
-    fontSize: 13,
-    color: MUTED,
-  },
-  chipTextSelected: {
-    color: TEXT,
-    fontWeight: '600',
   },
   masonry: {
     flexDirection: 'row',
@@ -473,7 +414,7 @@ const styles = StyleSheet.create({
   tileImage: {
     width: '100%',
     borderRadius: 16,
-    backgroundColor: '#F2EFEC',
+    backgroundColor: colors.imageBackdrop,
   },
   removeCircle: {
     position: 'absolute',
@@ -482,7 +423,7 @@ const styles = StyleSheet.create({
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: 'rgba(255,255,255,0.95)',
+    backgroundColor: colors.frosted,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -493,7 +434,7 @@ const styles = StyleSheet.create({
   },
   tileSubtitle: {
     fontSize: 13,
-    color: MUTED,
+    color: colors.subtleText,
   },
   section: {
     gap: 12,
@@ -522,16 +463,13 @@ const styles = StyleSheet.create({
     width: '100%',
     height: 180,
     borderRadius: 16,
-    backgroundColor: '#F2EFEC',
+    backgroundColor: colors.imageBackdrop,
   },
   heartButton: {
-    position: 'absolute',
-    top: 8,
-    right: 8,
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: '#fff',
+    backgroundColor: colors.card,
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#000',
@@ -546,7 +484,7 @@ const styles = StyleSheet.create({
     paddingVertical: 24,
     paddingHorizontal: 16,
     borderRadius: 16,
-    backgroundColor: '#F8F6F4',
+    backgroundColor: colors.surface,
   },
   stateTitle: {
     fontWeight: '600',
@@ -555,11 +493,11 @@ const styles = StyleSheet.create({
   stateBody: {
     fontSize: 13,
     lineHeight: 18,
-    color: MUTED,
+    color: colors.subtleText,
     textAlign: 'center',
   },
   stateAction: {
-    color: ACCENT,
+    color: colors.accentStrong,
     fontWeight: '600',
     marginTop: 4,
   },
@@ -567,24 +505,25 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    backgroundColor: '#FBE3DD',
+    backgroundColor: colors.errorSurface,
     borderRadius: 12,
     padding: 12,
   },
   errorBannerText: {
     flex: 1,
     fontSize: 13,
-    color: '#8A2D1B',
+    color: colors.errorText,
   },
   menuOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.25)',
+    backgroundColor: colors.overlay,
     alignItems: 'flex-end',
-    paddingTop: 110,
+    // Opens just below the ⋮ button beside the search bar, under the Saved header and tab toggle.
+    paddingTop: 240,
     paddingHorizontal: 20,
   },
   menu: {
-    backgroundColor: '#fff',
+    backgroundColor: colors.card,
     borderRadius: 14,
     paddingVertical: 6,
     minWidth: 220,
@@ -603,11 +542,11 @@ const styles = StyleSheet.create({
   },
   menuText: {
     fontSize: 15,
-    color: TEXT,
+    color: colors.text,
   },
   menuDivider: {
     height: 1,
-    backgroundColor: '#EFEDEB',
+    backgroundColor: colors.divider,
     marginVertical: 4,
   },
 });
