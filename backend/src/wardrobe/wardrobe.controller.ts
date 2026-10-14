@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Post, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Query, UseGuards, UseInterceptors, UploadedFile } from '@nestjs/common';
 import { SupabaseAuthGuard } from '../auth/supabase-auth.guard';
 import { WardrobeService } from './wardrobe.service';
 import { UpdateWardrobeItemDto } from './dto/update-wardrobe-item.dto';
@@ -6,6 +6,7 @@ import { SearchWardrobeItemDto } from './dto/search-wardrobe-item.dto';
 import { AuthenticatedUser } from '../auth/authenticated-user.decorator';
 import type { User } from '@supabase/supabase-js';
 import { basename, resolve } from 'path';
+import { FileInterceptor } from '@nestjs/platform-express';
 
 @Controller('wardrobes')
 @UseGuards(SupabaseAuthGuard)
@@ -18,14 +19,10 @@ export class WardrobeController {
         return this.wardrobeService.getWardrobe(user.id);
     }
 
-    // dev only: ?image=<file in ml-service/images-temp>; falls back to the default test image.
-    // will take an uploaded image later
     @Post('add')
-    addItem(@AuthenticatedUser() user: User, @Query('image') image?: string) {
-        const image_path = image
-            ? resolve(process.cwd(), '../ml-service/images-temp', basename(image))
-            : undefined;
-        return this.wardrobeService.addItem(user.id, image_path);
+    @UseInterceptors(FileInterceptor('image'))
+    addItem(@AuthenticatedUser() user: User, @UploadedFile() file: Express.Multer.File) {
+        return this.wardrobeService.addItem(user.id, file);
     }
 
     @Post('update')
