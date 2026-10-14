@@ -124,7 +124,7 @@ export default function Camera() {
 
     // Open the Wardrobe tab. It reloads when shown, so the new item appears.
     router.replace('/saved?tab=wardrobe');
-    
+
   };
 
   const handlePickFromLibrary = async () => {
@@ -159,7 +159,7 @@ export default function Camera() {
       <View style={styles.statusContainer}>
         <ActivityIndicator size="large" color="#D98E73" />
         <Text style={styles.statusTitle}>Analysing…</Text>
-        <Text style={styles.statusText}>This can take up to 20 seconds.</Text>
+        <Text style={styles.statusText}>Hold tight...</Text>
       </View>
     );
   }
