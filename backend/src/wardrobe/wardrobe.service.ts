@@ -14,9 +14,6 @@ import { randomUUID } from 'crypto';
 const WARDROBE_IMAGE_BUCKET = 'wardrobe-images';
 const ML_SERVICE_URL = process.env.ML_SERVICE_URL ?? 'http://localhost:8000';
 
-// backend is run from backend/, so the test images sit one level up
-const DEFAULT_TEST_IMAGE = resolve(process.cwd(), '../ml-service/images-temp/uniqlo_jeans.png');
-
 interface AnalyseItemResponse {
     category: string;
     category_confidence: number;
@@ -56,18 +53,18 @@ export class WardrobeService {
     return data;
   }
 
-  // image_path defaults to a test image until image upload is wired up
-  async addItem(auth_id: string, image_path: string = DEFAULT_TEST_IMAGE) {
+  async addItem(auth_id: string, file: Express.Multer.File) {
     const supabase = this.supabaseService.client;
 
     // get logged in user
     const user_id = await this.get_profile_id(auth_id);
 
         // take image and put through machine learning to analyse categories
-        const image_buffer = await readFile(image_path).catch(() => {
-            throw new BadRequestException('Could not read image');
-        });
-        const analysis = await this.analyseItem(image_buffer, basename(image_path));
+        if (!file?.buffer?.length) {
+          throw new BadRequestException('Image is required');
+        }
+
+        const analysis = await this.analyseItem(file.buffer, file.originalname);
 
         // store the background-removed image and get its public url
         const storage_path = `${user_id}/${randomUUID()}.png`;
