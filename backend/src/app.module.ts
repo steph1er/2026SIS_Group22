@@ -7,6 +7,7 @@ import { SupabaseModule } from './supabase/supabase.module';
 import { WishlistModule } from './wishlist/wishlist.module';
 import { CatalogueModule } from './catalogue/catalogue.module';
 import { OutfitsModule } from './outfits/outfits.module';
+import { BrandsModule } from './brands/brands.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { OutfitsModule } from './outfits/outfits.module';
     WishlistModule,
     CatalogueModule,
     OutfitsModule,
+    BrandsModule
   ],
   controllers: [AppController],
   providers: [AppService],
