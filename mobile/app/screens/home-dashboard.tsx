@@ -274,7 +274,7 @@ export default function HomeDashboardScreen() {
                 message="Try a different search or filter."
                 actionLabel="Clear search"
                 onAction={() => {
-                  setQuery('');
+                  setQuery(''); 
                   setFilters({});
                 }}
               />
