@@ -87,9 +87,12 @@ export default function OutfitsScreen() {
         <ScrollView contentContainerStyle={styles.content}>
           <View style={styles.titleContainer}>
             <ThemedText style={styles.title}>My Outfits</ThemedText>
+
+            {!showEmptyState ? (
               <TouchableOpacity onPress={() => router.push('./create-outfit')} style={styles.button}>
                 <Text style={styles.buttonText}>Create Outfit</Text>
               </TouchableOpacity>
+            ) : null}
           </View>
 
           {outfits.length > 0 ? (
@@ -161,6 +164,9 @@ export default function OutfitsScreen() {
               <ThemedText style={styles.muted}>
                 Put together pieces from your wardrobe and wishlist to build your first outfit.
               </ThemedText>
+              <TouchableOpacity onPress={() => router.push('./create-outfit')} style={[styles.button, { marginTop: 16 }]}>
+                <Text style={[styles.buttonText, { padding: 4}]}>Create your first outfit!</Text>
+              </TouchableOpacity>
             </View>
           ) : null}
 
