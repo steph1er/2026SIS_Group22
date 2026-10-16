@@ -1,1 +1,1 @@
-export { default } from './components/upload-item';
+export { default } from './components/upload-item/upload-item';
