@@ -74,6 +74,14 @@ export const CATEGORY_TO_FILTER_GROUP: Record<string, FilterCategory> = {
   scarves: 'other',
 };
 
+// reverse of CATEGORY_TO_FILTER_GROUP: every raw category string that belongs to a filter group,
+// so callers can filter catalogue_items.category (ilike any(...)) by the canonical group a tab shows
+export function categoriesForFilterGroup(group: FilterCategory): string[] {
+  return Object.entries(CATEGORY_TO_FILTER_GROUP)
+    .filter(([, filterGroup]) => filterGroup === group)
+    .map(([rawCategory]) => rawCategory);
+}
+
 export function resolveFilterGroup(
   rawCategory: string | null | undefined,
 ): FilterCategory {
