@@ -147,7 +147,11 @@ export class CatalogueService {
             throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
-        const embeddings = (data as { embedding: number[] }[]).map((row) => row.embedding).filter(Boolean);
+        // pgvector columns come back from PostgREST as strings like "[0.1,0.2,...]", not arrays,
+        // so parse them before doing maths on them (otherwise every component becomes NaN)
+        const embeddings = (data as { embedding: number[] | string }[])
+            .map((row) => (typeof row.embedding === 'string' ? (JSON.parse(row.embedding) as number[]) : row.embedding))
+            .filter(Boolean);
         if (embeddings.length === 0) {
             return null;
         }
