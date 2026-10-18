@@ -22,7 +22,7 @@ import { useAuth } from '../../src/auth/auth-provider';
 import { useProfile } from '../../src/profile/use-profile';
 import { useWishlist } from '../hooks/use-wishlist';
 import { useItemSearch } from '../hooks/use-item-search';
-import { CATALOGUE_SEARCH_LIMIT, itemDetailHref, searchCatalogue } from '../services/catalogue/catalogue-service';
+import { CATALOGUE_SEARCH_LIMIT, fetchAllBrands, itemDetailHref, searchCatalogue } from '../services/catalogue/catalogue-service';
 import {
   buildSearchQuery,
   collectOptions,
@@ -98,6 +98,7 @@ export default function HomeDashboardScreen() {
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [query, setQuery] = useState('');
   const [filters, setFilters] = useState<SearchFilters>({});
+    const [brands, setBrands] = useState<string[]>([]);
   const isLoadingMoreRef = useRef(false);
 
   const loadFeed = useCallback(async (forUser: string) => {
@@ -147,6 +148,17 @@ export default function HomeDashboardScreen() {
     if (userId) void loadFeed(userId);
   }, [userId, loadFeed]);
 
+  // Every brand in the catalogue, for the Brand filter. If this fails, the filter falls back to brands on loaded items.
+  useEffect(() => {
+    if (!userId) return;
+    fetchAllBrands()
+      .then(setBrands)
+      .catch((error) => {
+        console.warn('Could not load brands', error);
+        setBrands([]);
+      });
+  }, [userId]);
+
   // If the first load failed (e.g. the backend was restarting), try again when the user comes back to Home.
   const failedWithNothingShown = Boolean(feed?.userId === userId && feed?.error && feed.items.length === 0);
   useFocusEffect(
@@ -183,10 +195,10 @@ export default function HomeDashboardScreen() {
       colour: collectOptions(known.flatMap((item) => item.colours)),
       style: collectOptions(known.flatMap((item) => item.styles)),
       size: SIZE_OPTIONS,
-      brand: collectOptions(known.map((item) => item.brand), { keepCase: true }),
+      brand: collectOptions(brands.length > 0 ? brands : known.map((item) => item.brand), { keepCase: true },),
       material: collectOptions(known.flatMap((item) => item.materials)),
     };
-  }, [items, searchResults]);
+  }, [items, searchResults, brands]);
 
   // A feed too short to scroll never triggers onScroll, so top it up directly.
   const hasMore = current?.hasMore ?? false;
