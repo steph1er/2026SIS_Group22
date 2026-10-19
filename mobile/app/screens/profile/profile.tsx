@@ -125,18 +125,20 @@ export default function ProfileScreen() {
             )}
           </View>
 
-          <TouchableOpacity style={styles.rowCard}>
-            <View style={styles.rowCardIcon}>
-              <Ionicons name="sparkles-outline" size={20} color={colors.text} />
-            </View>
-            <View style={{ flex: 1 }}>
-              <ThemedText type="cardTitle">Outfit Builder Canvas</ThemedText>
-              <ThemedText style={styles.muted}>
-                Experiment with visual layouts & styling
-              </ThemedText>
-            </View>
-            <Ionicons name="chevron-forward" size={20} color={colors.text} />
-          </TouchableOpacity>
+          <Link href={'/create-outfit' as never} asChild>
+            <TouchableOpacity style={styles.rowCard}>
+              <View style={styles.rowCardIcon}>
+                <Ionicons name="sparkles-outline" size={20} color={colors.text} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <ThemedText type="cardTitle">Outfit Builder Canvas</ThemedText>
+                <ThemedText style={styles.muted}>
+                  Experiment with visual layouts & styling
+                </ThemedText>
+              </View>
+              <Ionicons name="chevron-forward" size={20} color={colors.text} />
+            </TouchableOpacity>
+          </Link>
 
         </ScrollView>
       </SafeAreaView>
