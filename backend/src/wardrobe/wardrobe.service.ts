@@ -317,11 +317,31 @@ export class WardrobeService {
     // check requested item exists
     await this.check_item_belongs_to_user(user_id, id);
 
+    //get image url
+    const { data: item } = await supabase
+      .from('wardrobe_items')
+      .select('image_url')
+      .eq('id', id)
+      .single();
+
     // remove item from db
     const response = await supabase
       .from('wardrobe_items')
       .delete()
       .eq('id', id);
+    
+    //remove image from storage and if storage_path is undefined, this is skipped
+    const storage_path = item?.image_url?.split(`/${WARDROBE_IMAGE_BUCKET}/`)[1];
+
+    if (storage_path) {
+      const { error } = await supabase.storage
+        .from(WARDROBE_IMAGE_BUCKET)
+        .remove([storage_path]);
+      
+      if (error) {
+        throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR);
+      }
+    }
 
     return response;
   }

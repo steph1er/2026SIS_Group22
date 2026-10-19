@@ -46,3 +46,16 @@ export async function searchCatalogue(query: string): Promise<CatalogueItem[]> {
     throw error;
   }
 }
+
+/** Every brand name in the brands table. No brands returns []. */
+export async function fetchAllBrands(): Promise<string[]> {
+  try {
+    const rows = toArray(await requestJson('brands'));
+        return rows
+      .map((row) => (row as { brand_name?: unknown }).brand_name)
+      .filter((name): name is string => typeof name === 'string' && name.trim() !== '');
+  } catch (error) {
+    if (error instanceof WishlistApiError && error.status === 404) return [];
+    throw error;
+  }
+}
