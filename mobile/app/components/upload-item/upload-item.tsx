@@ -1,6 +1,6 @@
 import { AntDesign, Feather } from '@expo/vector-icons';
 import { CameraType, CameraView, useCameraPermissions } from 'expo-camera';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Button,
@@ -15,15 +15,17 @@ import PhotoPreviewSection from './photo-preview';
 import { useStyleUColors, useThemedStyles } from '../../hooks/use-theme';
 import type { StyleUColors } from '../../services/styleu-theme';
 import * as ImagePicker from 'expo-image-picker'; 
-import ItemTagsForm, { type ConfirmedItem } from './edit-item-tags';
 import { preparePhotoForUpload } from '../../../src/upload-item/prep-image';
-import { addWardrobeItem, deleteWardrobeItem, updateWardrobeItem } from '../../services/wardrobe/wardrobe-service';
-import type { WardrobeItem } from '../../services/wardrobe/wardrobe-types';
+import { addWardrobeItem, wardrobeItemHref } from '../../services/wardrobe/wardrobe-service';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BackButton } from '../back-button';
 // import { router } from '../../../.expo/types/router';
 import { router } from 'expo-router';
 
+// Shown one after another while the photo is analysed. The backend doesn't report progress,
+// so these move on a timer and the last one stays until the analysis finishes.
+const ANALYSING_STEPS = ['Scanning image...', 'Categorising...', 'Finalising details...'];
+const ANALYSING_STEP_MS = 2000;
 
 export default function Camera() {
   const colors = useStyleUColors();
@@ -34,8 +36,19 @@ export default function Camera() {
   const cameraRef = useRef<CameraView | null>(null);
   const [showTip, setShowTip] = useState(true);
   const [analysing, setAnalysing] = useState(false);
-  const [result, setResult] = useState<WardrobeItem | null>(null);  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [cameraReady, setCameraReady] = useState(false);
+  const [analysingStep, setAnalysingStep] = useState(0);
+
+  // Move through the analysing messages while the ML service works.
+  useEffect(() => {
+    if (!analysing) return;
+    const timer = setInterval(
+      () => setAnalysingStep((step) => Math.min(step + 1, ANALYSING_STEPS.length - 1)),
+      ANALYSING_STEP_MS,
+    );
+    return () => clearInterval(timer);
+  }, [analysing]);
   
   const insets = useSafeAreaInsets();
 
@@ -81,51 +94,28 @@ export default function Camera() {
   
 
   const handleRetakePhoto = () => {
-    // The backend already saved the item, so retaking throws it away.
-    if (result) void deleteWardrobeItem(result.id).catch(() => {});
     setCameraReady(false);
     setPhoto(null);
     setAnalysing(false);
-    setResult(null);
     setError(null);
   };
 
   const handleSavePhoto = async () => {
+    setAnalysingStep(0);
     setAnalysing(true);
     setError(null);
     try {
       const resized = await preparePhotoForUpload(photo);
-      setResult(await addWardrobeItem(resized));   
+      const saved = await addWardrobeItem(resized);
+      // The backend has saved the item with the ML's guesses; let the user check them
+      // on the wardrobe item screen, which opens in edit mode for new items.
+      router.replace(wardrobeItemHref(saved.id, true));
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Something went wrong. Please try again.');
     } finally {
       setAnalysing(false);
     }
 }; 
-
-  const handleConfirm = async (item: ConfirmedItem) => {
-    if (!result) return;
-
-    // Save the user's edits to the item the backend just created.
-    await updateWardrobeItem(result.id, {
-      category: item.category,
-      styles: item.style,
-      colours: item.colour,
-      materials: item.material,
-      tags: item.tags,
-      brand: item.brand,
-      size: item.size,
-      price: item.price,
-    });
-
-    setPhoto(null);
-    setResult(null);
-    setError(null);
-
-    // Open the Wardrobe tab. It reloads when shown, so the new item appears.
-    router.replace('/saved?tab=wardrobe');
-
-  };
 
   const handlePickFromLibrary = async () => {
   const result = await ImagePicker.launchImageLibraryAsync({
@@ -138,20 +128,8 @@ export default function Camera() {
   }
 };
 
- //  the next three "if" blocks pick which screen to show. They are checked
+ //  the next two "if" blocks pick which screen to show. They are checked
   // before the existing preview check, so once save is pressed they take over.
-
-  // Results came back: show them, editable.
-  if (photo && result) {
-    return (
-      <ItemTagsForm
-        photoUri={photo.uri}
-        result={result}
-        onConfirm={handleConfirm}
-        onRetake={handleRetakePhoto}
-      />
-    );
-  }
 
   // Loading screen while the ML service works.
   if (photo && analysing) {
@@ -159,7 +137,7 @@ export default function Camera() {
       <View style={styles.statusContainer}>
         <ActivityIndicator size="large" color="#D98E73" />
         <Text style={styles.statusTitle}>Analysing…</Text>
-        <Text style={styles.statusText}>Hold tight...</Text>
+        <Text style={styles.statusText}>{ANALYSING_STEPS[analysingStep]}</Text>
       </View>
     );
   }
