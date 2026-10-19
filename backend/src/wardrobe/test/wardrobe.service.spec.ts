@@ -713,6 +713,15 @@ describe('WardrobeService', () => {
                 })
             } as any);
 
+            // mock getting image_url before delete
+            jest.spyOn(supabaseClient.client, 'from').mockReturnValueOnce({
+                select: jest.fn().mockReturnValueOnce({
+                    eq: jest.fn().mockReturnValueOnce({
+                        single: jest.fn().mockResolvedValueOnce({ data: { image_url: "image" }, error: null })
+                    })
+                })
+            } as any);
+
             // mock delete the item
             jest.spyOn(supabaseClient.client, 'from').mockReturnValueOnce({
                 delete: jest.fn().mockReturnValueOnce({

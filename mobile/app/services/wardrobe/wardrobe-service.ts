@@ -78,8 +78,10 @@ export function normaliseWardrobeItem(raw: unknown): WardrobeItem {
 // ---------------------------------------------------------------------------
 
 // Where the wardrobe item screen lives (view, edit and delete one item).
-export function wardrobeItemHref(wardrobeItemId: string) {
-  return { pathname: '/wardrobe-item/[id]', params: { id: wardrobeItemId } } as never;
+// `isNew` opens it straight into edit mode to check a just-uploaded item.
+export function wardrobeItemHref(wardrobeItemId: string, isNew = false) {
+  const params = isNew ? { id: wardrobeItemId, isNew: '1' } : { id: wardrobeItemId };
+  return { pathname: '/wardrobe-item/[id]', params } as never;
 }
 
 /** The signed-in user's wardrobe, newest first. An empty wardrobe returns []. */
