@@ -46,4 +46,4 @@ Mobile app ──► Backend API (NestJS, :3000) ──► Supabase (database + 
 - Colour analysis is called from the app straight to the ML service, and the result is saved to Supabase.
 
 ## Team
-2026 SIS Group 22: Julia, Natalie, Priya, Raizelle, Stephanie, Tamara and Charlene
+2026 SIS Group 22: Julia, Natalia, Priya, Raizelle, Stephanie, Tamara and Charlene
