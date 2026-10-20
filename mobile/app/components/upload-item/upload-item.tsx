@@ -269,7 +269,7 @@ const createStyles = (colors: StyleUColors) =>
   },
   container: {
     flex: 1,
-    backgroundColor: '#000',
+    backgroundColor: colors.surface,
   }, 
   permissionContainer: {
   flex: 1,
