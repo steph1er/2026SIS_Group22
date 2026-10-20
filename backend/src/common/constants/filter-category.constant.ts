@@ -35,6 +35,7 @@ export const CATEGORY_TO_FILTER_GROUP: Record<string, FilterCategory> = {
   shorts: 'bottoms',
   sweatpants: 'bottoms',
   leggings: 'bottoms',
+  trousers: 'bottoms',
   //outerwear
   jacket: 'outerwear',
   jackets: 'outerwear',
