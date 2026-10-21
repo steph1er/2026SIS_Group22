@@ -78,7 +78,6 @@ export const createItemStyles = (colors: StyleUColors) =>
 
   descriptionTagsContainer: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
     gap: 8,
   },
 
