@@ -19,10 +19,10 @@ export const CATEGORY_MAP: Record<string, FilterCategory> = {
 // mirrors backend/src/common/constants/filter-category.constant.ts
 const CATEGORY_TO_FILTER_GROUP: Record<string, FilterCategory> = {
   top: 'tops', tops: 'tops', shirt: 'tops', shirts: 'tops', 't-shirt': 'tops', 't-shirts': 'tops',
-  tshirt: 'tops', tshirts: 'tops', blouse: 'tops', hoodie: 'tops', hoodies: 'tops',
-  jumper: 'tops', jumpers: 'tops', sweater: 'tops', sweaters: 'tops',
+  tshirt: 'tops', tshirts: 'tops', blouse: 'tops', hoodie: 'tops', hoodies: 'tops', bodysuit: 'tops',
+  jumper: 'tops', jumpers: 'tops', sweater: 'tops', sweaters: 'tops', 'long sleeve top': 'tops', 'long sleeve tops': 'tops',
   pants: 'bottoms', jeans: 'bottoms', skirt: 'bottoms', skirts: 'bottoms', shorts: 'bottoms',
-  sweatpants: 'bottoms', leggings: 'bottoms',
+  sweatpants: 'bottoms', leggings: 'bottoms', sweatshorts: 'bottoms', trousers: 'bottoms',
   jacket: 'outerwear', jackets: 'outerwear', coat: 'outerwear', coats: 'outerwear',
   cardigan: 'outerwear', blazer: 'outerwear',
   dress: 'dresses', dresses: 'dresses',
