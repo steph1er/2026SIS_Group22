@@ -15,7 +15,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { useLocalSearchParams } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 
 import { ThemedView } from '../../components/themed-view';
 import { ThemedText } from '../../components/themed-text';
@@ -104,11 +104,16 @@ type Loaded = { id: string; data: WardrobeItem | null; error: string | null };
 /**
  * One item from the user's wardrobe, opened with router.push(wardrobeItemHref(id)) from My Wardrobe.
  * Shows the item's details and lets the user edit or delete it.
+ *
+ * Also opened with wardrobeItemHref(id, true) straight after a photo is uploaded: the backend has
+ * already saved the item with the ML's guesses, so it starts in edit mode for the user to check them.
  */
 export default function WardrobeItemScreen() {
   const colors = useStyleUColors();
   const styles = useThemedStyles(createStyles);
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const params = useLocalSearchParams<{ id: string; isNew?: string }>();
+  const { id } = params;
+  const isNew = params.isNew === '1';
   const insets = useSafeAreaInsets();
   const { width: screenWidth } = useWindowDimensions();
 
@@ -126,7 +131,9 @@ export default function WardrobeItemScreen() {
 
     fetchWardrobeItem(id)
       .then((data) => {
-        if (!cancelled) setItem({ id, data, error: null });
+        if (cancelled) return;
+        setItem({ id, data, error: null });
+        if (isNew) setForm((previous) => previous ?? toFormValues(data));
       })
       .catch((error: unknown) => {
         if (cancelled) return;
@@ -137,7 +144,7 @@ export default function WardrobeItemScreen() {
     return () => {
       cancelled = true;
     };
-  }, [id, reloadCount]);
+  }, [id, isNew, reloadCount]);
 
   // Leave edit mode when moving to a different item.
   useEffect(() => {
@@ -195,6 +202,11 @@ export default function WardrobeItemScreen() {
     setIsSaving(true);
     try {
       const updated = await updateWardrobeItem(shown.id, parsed.changes);
+      if (isNew) {
+        // Open the Wardrobe tab. It reloads when shown, so the new item appears.
+        router.replace('/saved?tab=wardrobe');
+        return;
+      }
       setItem({ id: shown.id, data: updated, error: null });
       setForm(null);
     } catch (error) {
@@ -217,6 +229,12 @@ export default function WardrobeItemScreen() {
     }
   };
 
+  // A new upload is already saved by the backend, so retaking throws it away.
+  const retake = () => {
+    void deleteWardrobeItem(shown.id).catch(() => {});
+    router.replace('/upload-item');
+  };
+
   const setField = (field: keyof FormValues) => (value: string) =>
     setForm((previous) => (previous ? { ...previous, [field]: value } : previous));
 
@@ -234,7 +252,14 @@ export default function WardrobeItemScreen() {
           <View style={styles.body}>
             {isEditing ? (
               <>
-                <ThemedText style={styles.name}>Edit item</ThemedText>
+                {isNew ? (
+                  <>
+                    <ThemedText style={styles.name}>Check your new item</ThemedText>
+                    <ThemedText style={styles.subtitle}>We analysed your item. Make changes here.</ThemedText>
+                  </>
+                ) : (
+                  <ThemedText style={styles.name}>Edit item</ThemedText>
+                )}
                 <FormField label="Category" required value={form.category} onChangeText={setField('category')} placeholder="e.g. pants" />
                 <FormField label="Brand" value={form.brand} onChangeText={setField('brand')} />
                 <View style={styles.fieldRow}>
@@ -299,16 +324,24 @@ export default function WardrobeItemScreen() {
             <>
               <TouchableOpacity
                 style={styles.secondaryButton}
-                onPress={() => {
-                  setForm(null);
-                  setNotice(null);
-                }}
+                onPress={
+                  isNew
+                    ? retake
+                    : () => {
+                        setForm(null);
+                        setNotice(null);
+                      }
+                }
                 disabled={isBusy}
               >
-                <ThemedText style={styles.secondaryButtonText}>Cancel</ThemedText>
+                <ThemedText style={styles.secondaryButtonText}>{isNew ? 'Retake' : 'Cancel'}</ThemedText>
               </TouchableOpacity>
               <TouchableOpacity style={[styles.primaryButton, isBusy && { opacity: 0.6 }]} onPress={() => void save()} disabled={isBusy}>
-                {isSaving ? <ActivityIndicator color={colors.onAccent} /> : <ThemedText style={styles.primaryButtonText}>Save changes</ThemedText>}
+                {isSaving ? (
+                  <ActivityIndicator color={colors.onAccent} />
+                ) : (
+                  <ThemedText style={styles.primaryButtonText}>{isNew ? 'Save' : 'Save changes'}</ThemedText>
+                )}
               </TouchableOpacity>
             </>
           ) : (
@@ -447,6 +480,12 @@ const createStyles = (colors: StyleUColors) =>
     fontSize: 24,
     lineHeight: 30,
     fontWeight: '600',
+  },
+  subtitle: {
+    fontSize: 13,
+    lineHeight: 18,
+    color: colors.subtleText,
+    marginTop: -4,
   },
   detailRow: {
     gap: 6,

@@ -11,9 +11,9 @@ export class WishlistService {
 
         const user_id = await this.get_profile_id(id);
 
-        // get all items in wishlist for logged in user
+        // get all items in wishlist for logged in user, with each item's brand
         const { data, error } = await supabase.from('wishlist')
-                                              .select('*, catalogue_items!inner (*)')
+                                              .select('*, catalogue_items!inner (*, brands (*))')
                                               .eq('user_id', user_id);
 
         // if error return error message
@@ -86,7 +86,7 @@ export class WishlistService {
 
         // get item by id and check it belongs to logged in user
         const { data, error } = await supabase.from('wishlist')
-                                              .select('*, catalogue_items!inner (*)')
+                                              .select('*, catalogue_items!inner (*, brands (*))')
                                               .eq('id', item_id)
                                               .eq('user_id', user_id);
 

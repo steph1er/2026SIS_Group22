@@ -85,7 +85,7 @@ export default function CreateOutfitVisualiserItem({ outfitItem, onRemove, topZ,
     <Animated.View style={[styles.visualiserItem, animatedStyle]}>
       <GestureDetector gesture={panGesture}>
         <Animated.View style={styles.visualiserItemBody}>
-          <Image source={{ uri: outfitItem.item.image_url }} style={styles.visualiserItemImage} />
+          <Image source={{ uri: outfitItem.item.image_url }} style={styles.visualiserItemImage} resizeMode="contain" />
         </Animated.View>
       </GestureDetector>
 
