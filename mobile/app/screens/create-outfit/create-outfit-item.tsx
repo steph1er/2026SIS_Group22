@@ -1,5 +1,5 @@
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
-import { Image, Text, TouchableOpacity, View } from 'react-native';
+import { Image, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, { runOnJS, useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -111,13 +111,13 @@ export default function CreateOutfitItem({ item, onClose, onAddToOutfit, already
             </View>
           </View>
 
-          <View style={styles.descriptionTagsContainer}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.descriptionTagsContainer}>
             {details.tags.map((tag) => (
               <View key={tag} style={styles.descriptionTags}>
                 <Text style={styles.descriptionTagsText}>{tag}</Text>
               </View>
             ))}
-          </View>
+          </ScrollView>
 
         </View>
 
