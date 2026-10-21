@@ -273,7 +273,7 @@ export class OutfitsService {
   private async recommendationsAndItems<T extends { id: string }>(
     items: T[],
   ): Promise<OutfitBuilderTab<T>> {
-    const recommendations = items.slice(0, 10);
+    const recommendations = items.slice(0, 5);
     const recommendedIds = new Set(recommendations.map((item) => item.id));
     const remaining = items.filter((item) => !recommendedIds.has(item.id));
 
