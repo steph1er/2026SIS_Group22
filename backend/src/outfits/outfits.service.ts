@@ -157,7 +157,6 @@ export class OutfitsService {
         ? null
         : await this.buildProfileVector(auth_id, profile_id, WARDROBE_WEIGHTS);
 
-    // return this.recommendationsAndItems(filtered);
     return this.recommendationsAndItems(filtered, profileVector);
   }
 
@@ -193,7 +192,6 @@ export class OutfitsService {
         ? null
         : await this.buildProfileVector(auth_id, profile_id);
 
-    // return this.recommendationsAndItems(filtered);
     return this.recommendationsAndItems(filtered, profileVector);
   }
 
