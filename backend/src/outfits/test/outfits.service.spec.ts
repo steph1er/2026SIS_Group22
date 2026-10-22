@@ -30,6 +30,22 @@ jest.mock('../../common/constants/filter-category.constant', () => ({
   resolveFilterGroup: jest.fn(),
 }));
 
+const PROFILE_VECTOR = [1, 0];
+
+const withEmbedding = <T extends object>(
+  item: T,
+  embedding: number[] = [1, 0],
+) => ({
+  ...item,
+  embedding,
+});
+
+// recommendationsAndItems strips embeddings from what it returns
+const withoutEmbedding = <T extends { embedding?: unknown }>({
+  embedding,
+  ...rest
+}: T) => rest;
+
 describe('OutfitsService', () => {
   let outfitsService: OutfitsService;
   let supabaseClient: SupabaseService;
@@ -157,10 +173,22 @@ describe('OutfitsService', () => {
         wardrobeItem(`top ${i + 1}`, 'T-Shirt'),
       );
 
+    const makeRankedTops = (count: number) =>
+      makeTops(count).map((top, i) => {
+        const angle = (i * (Math.PI / 6)) / count;
+        return withEmbedding(top, [Math.cos(angle), Math.sin(angle)]);
+      });
+
     beforeEach(() => {
       (resolveFilterGroup as jest.Mock).mockImplementation(
         (category: string) => categoryGroups[category],
       );
+    });
+
+    beforeEach(() => {
+      jest
+        .spyOn(outfitsService as any, 'buildProfileVector')
+        .mockResolvedValue(PROFILE_VECTOR);
     });
 
     it('looks up the profile, then queries wardrobe items by profile id', async () => {
@@ -185,7 +213,9 @@ describe('OutfitsService', () => {
       const top2 = wardrobeItem('top 2', 'T-Shirt');
       const hoodie = wardrobeItem('hoodie 1', 'Hoodie');
       const jeans2 = wardrobeItem('jeans 2', 'Jeans');
-      const allItems = [top1, jeans1, top2, hoodie, jeans2];
+      const allItems = [top1, jeans1, top2, hoodie, jeans2].map((item) =>
+        withEmbedding(item),
+      );
 
       it.each([
         ['tops' as FilterCategory, [top1, top2, hoodie]],
@@ -243,133 +273,149 @@ describe('OutfitsService', () => {
     });
 
     describe('recommendations split', () => {
-      it('puts the first 10 items in recommendations and the rest in items, preserving order', async () => {
-        const tops = makeTops(12);
+      const MAX_RECOMMENDATIONS = 5;
+
+      it('recommends the 5 most similar items (best first) and puts the rest in items', async () => {
+        const ranked = makeRankedTops(12); // ranked[0] is the best match
         mockSelectEq([{ id: PROFILE_ID }]);
-        mockSelectEq(tops);
+        mockSelectEq([...ranked].reverse()); // worst first, so the service has to sort
 
         const result = await outfitsService.getWardrobeForBuilder(
           'tops',
           AUTH_ID,
         );
 
-        expect(result.recommendations).toEqual(tops.slice(0, 10));
-        expect(result.items).toEqual(tops.slice(10));
+        expect(result.recommendations).toEqual(
+          ranked.slice(0, MAX_RECOMMENDATIONS).map(withoutEmbedding),
+        );
+        // remaining items keep their input order (worst first)
+        expect(result.items).toEqual(
+          ranked.slice(MAX_RECOMMENDATIONS).reverse().map(withoutEmbedding),
+        );
       });
 
-      it('puts everything in recommendations when there are 10 or fewer items', async () => {
-        const tops = makeTops(10);
+      it('puts everything in recommendations when there are 5 or fewer matching items', async () => {
+        const ranked = makeRankedTops(MAX_RECOMMENDATIONS);
         mockSelectEq([{ id: PROFILE_ID }]);
-        mockSelectEq(tops);
+        mockSelectEq(ranked);
 
         const result = await outfitsService.getWardrobeForBuilder(
           'tops',
           AUTH_ID,
         );
 
-        expect(result.recommendations).toEqual(tops);
+        expect(result.recommendations).toEqual(ranked.map(withoutEmbedding));
         expect(result.items).toEqual([]);
       });
+
+      describe('errors', () => {
+        const dbError = {
+          code: 'error code',
+          details: 'error details',
+          hint: 'hint',
+          message: 'error message',
+        };
+
+        it('throws a 500 when the profile lookup fails', async () => {
+          mockSelectEq(null, dbError);
+
+          await expectHttpException(
+            outfitsService.getWardrobeForBuilder('tops', AUTH_ID),
+            HttpStatus.INTERNAL_SERVER_ERROR,
+            'error message',
+          );
+          expect(supabaseClient.client.from).toHaveBeenCalledTimes(1);
+        });
+
+        it('throws a 404 when the user has no profile', async () => {
+          mockSelectEq([]);
+
+          await expectHttpException(
+            outfitsService.getWardrobeForBuilder('tops', AUTH_ID),
+            HttpStatus.NOT_FOUND,
+            'No user found',
+          );
+          // the wardrobe table is never queried
+          expect(supabaseClient.client.from).toHaveBeenCalledTimes(1);
+        });
+
+        it('throws a 500 when the wardrobe query fails', async () => {
+          mockSelectEq([{ id: PROFILE_ID }]);
+          mockSelectEq(null, dbError);
+
+          await expectHttpException(
+            outfitsService.getWardrobeForBuilder('tops', AUTH_ID),
+            HttpStatus.INTERNAL_SERVER_ERROR,
+            'error message',
+          );
+        });
+      });
     });
 
-    describe('errors', () => {
-      const dbError = {
-        code: 'error code',
-        details: 'error details',
-        hint: 'hint',
-        message: 'error message',
-      };
+    describe('Update Outfit', () => {
+      const AUTH_ID = 'auth user id';
+      const OUTFIT_ID = 'outfit id';
 
-      it('throws a 500 when the profile lookup fails', async () => {
-        mockSelectEq(null, dbError);
-
-        await expectHttpException(
-          outfitsService.getWardrobeForBuilder('tops', AUTH_ID),
-          HttpStatus.INTERNAL_SERVER_ERROR,
-          'error message',
-        );
-        expect(supabaseClient.client.from).toHaveBeenCalledTimes(1);
-      });
-
-      it('throws a 404 when the user has no profile', async () => {
-        mockSelectEq([]);
-
-        await expectHttpException(
-          outfitsService.getWardrobeForBuilder('tops', AUTH_ID),
-          HttpStatus.NOT_FOUND,
-          'No user found',
-        );
-        // the wardrobe table is never queried
-        expect(supabaseClient.client.from).toHaveBeenCalledTimes(1);
-      });
-
-      it('throws a 500 when the wardrobe query fails', async () => {
-        mockSelectEq([{ id: PROFILE_ID }]);
-        mockSelectEq(null, dbError);
-
-        await expectHttpException(
-          outfitsService.getWardrobeForBuilder('tops', AUTH_ID),
-          HttpStatus.INTERNAL_SERVER_ERROR,
-          'error message',
-        );
-      });
-    });
-  });
-
-  describe('Update Outfit', () => {
-    const AUTH_ID = 'auth user id';
-    const OUTFIT_ID = 'outfit id';
-
-    const updatedOutfit = {
-      id: OUTFIT_ID,
-      user_id: AUTH_ID,
-      name: 'New name',
-      occasion: null,
-      style: 'casual',
-      season: 'spring',
-      created_at: '2026-09-28T15:19:13.470352+00:00',
-      modified_at: '2026-09-28T15:25:13.470352+00:00',
-      outfit_items: [],
-    } as unknown as OutfitWithItems;
-
-    beforeEach(() => {
-      jest.spyOn(outfitsService, 'getOutfit').mockResolvedValue(updatedOutfit);
-    });
-
-    it('updates only the provided fields, then returns the refreshed outfit', async () => {
-      const dto = { name: 'New name', season: 'spring' } as UpdateOutfitDto;
-
-      const from = jest.spyOn(supabaseClient.client, 'from');
-
-      const secondEq = jest
-        .fn()
-        .mockResolvedValue({ data: [{ id: OUTFIT_ID }], error: null });
-      const firstEq = jest.fn().mockReturnValue({ eq: secondEq });
-      from.mockReturnValueOnce({
-        select: jest.fn().mockReturnValue({ eq: firstEq }),
-      } as any);
-
-      const updateEq = jest.fn().mockResolvedValue({ error: null });
-      const update = jest.fn().mockReturnValue({ eq: updateEq });
-      from.mockReturnValueOnce({ update } as any);
-
-      const result = await outfitsService.updateOutfit(OUTFIT_ID, dto, AUTH_ID);
-
-      expect(from).toHaveBeenCalledTimes(2);
-      expect(from).toHaveBeenNthCalledWith(1, 'outfits');
-      expect(from).toHaveBeenNthCalledWith(2, 'outfits');
-
-      expect(firstEq).toHaveBeenCalledWith('id', OUTFIT_ID);
-      expect(secondEq).toHaveBeenCalledWith('user_id', AUTH_ID);
-
-      expect(update.mock.calls[0][0]).toStrictEqual({
+      const updatedOutfit = {
+        id: OUTFIT_ID,
+        user_id: AUTH_ID,
         name: 'New name',
+        occasion: null,
+        style: 'casual',
         season: 'spring',
-      });
-      expect(updateEq).toHaveBeenCalledWith('id', OUTFIT_ID);
+        created_at: '2026-09-28T15:19:13.470352+00:00',
+        modified_at: '2026-09-28T15:25:13.470352+00:00',
+        outfit_items: [],
+      } as unknown as OutfitWithItems;
 
-      expect(outfitsService.getOutfit).toHaveBeenCalledWith(OUTFIT_ID, AUTH_ID);
-      expect(result).toBe(updatedOutfit);
+      beforeEach(() => {
+        jest
+          .spyOn(outfitsService, 'getOutfit')
+          .mockResolvedValue(updatedOutfit);
+      });
+
+      it('updates only the provided fields, then returns the refreshed outfit', async () => {
+        const dto = { name: 'New name', season: 'spring' } as UpdateOutfitDto;
+
+        const from = jest.spyOn(supabaseClient.client, 'from');
+
+        const secondEq = jest
+          .fn()
+          .mockResolvedValue({ data: [{ id: OUTFIT_ID }], error: null });
+        const firstEq = jest.fn().mockReturnValue({ eq: secondEq });
+        from.mockReturnValueOnce({
+          select: jest.fn().mockReturnValue({ eq: firstEq }),
+        } as any);
+
+        const updateEq = jest.fn().mockResolvedValue({ error: null });
+        const update = jest.fn().mockReturnValue({ eq: updateEq });
+        from.mockReturnValueOnce({ update } as any);
+
+        const result = await outfitsService.updateOutfit(
+          OUTFIT_ID,
+          dto,
+          AUTH_ID,
+        );
+
+        expect(from).toHaveBeenCalledTimes(2);
+        expect(from).toHaveBeenNthCalledWith(1, 'outfits');
+        expect(from).toHaveBeenNthCalledWith(2, 'outfits');
+
+        expect(firstEq).toHaveBeenCalledWith('id', OUTFIT_ID);
+        expect(secondEq).toHaveBeenCalledWith('user_id', AUTH_ID);
+
+        expect(update.mock.calls[0][0]).toStrictEqual({
+          name: 'New name',
+          season: 'spring',
+        });
+        expect(updateEq).toHaveBeenCalledWith('id', OUTFIT_ID);
+
+        expect(outfitsService.getOutfit).toHaveBeenCalledWith(
+          OUTFIT_ID,
+          AUTH_ID,
+        );
+        expect(result).toBe(updatedOutfit);
+      });
     });
   });
 });
