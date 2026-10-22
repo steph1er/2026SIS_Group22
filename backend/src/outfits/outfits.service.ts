@@ -349,17 +349,6 @@ export class OutfitsService {
   ): OutfitBuilderTab<Omit<T, 'embedding'>> {
     const stripEmbedding = ({ embedding, ...rest }: T) => rest;
 
-    if (profileVector) {
-      console.log(
-        items.map((item: any) => ({
-          id: item.id,
-          category: item.clothing_category ?? item.category,
-          hasEmbedding: !!item.embedding,
-          score: this.similarity(profileVector, item.embedding),
-        })),
-      );
-    }
-
     const recommended = (
       profileVector
         ? items.map((item) => ({
