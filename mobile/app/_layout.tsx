@@ -4,10 +4,10 @@ import { View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { AuthProvider } from '../src/auth/auth-provider';
-import { BottomNavBar } from './components/bottom-nav-bar';
-import { ThemePreferenceProvider } from './hooks/theme-preference';
-import { useColorScheme } from './hooks/use-color-scheme';
-import { useStyleUColors } from './hooks/use-theme';
+import { BottomNavBar } from '../src/components/bottom-nav-bar';
+import { ThemePreferenceProvider } from '../src/hooks/theme-preference';
+import { useColorScheme } from '../src/hooks/use-color-scheme';
+import { useStyleUColors } from '../src/hooks/use-theme';
 import './global.css';
 
 export default function RootLayout() {

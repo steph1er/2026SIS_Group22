@@ -1,0 +1,493 @@
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  ActivityIndicator,
+  Image,
+  type NativeScrollEvent,
+  type NativeSyntheticEvent,
+  Pressable,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
+import { router, useFocusEffect } from 'expo-router';
+
+import { ThemedView } from '../components/themed-view';
+import { ThemedText } from '../components/themed-text';
+import { ItemSearch } from '../components/item-search';
+import { useAuth } from '../auth/auth-provider';
+import { useProfile } from '../profile/use-profile';
+import { useWishlist } from '../hooks/use-wishlist';
+import { useItemSearch } from '../hooks/use-item-search';
+import { CATALOGUE_SEARCH_LIMIT, fetchAllBrands, itemDetailHref, searchCatalogue } from '../services/catalogue/catalogue-service';
+import {
+  buildSearchQuery,
+  collectOptions,
+  PRICE_OPTIONS,
+  type SearchFilters,
+  SIZE_OPTIONS,
+} from '../services/search/search-query';
+import { fetchRecommendations } from '../services/wishlist/wishlist-service';
+import type { CatalogueItem } from '../services/wishlist/wishlist-types';
+import { useStyleUColors, useThemedStyles } from '../hooks/use-theme';
+import type { StyleUColors } from '../services/styleu-theme';
+
+const PLACEHOLDER_IMAGE = 'https://placehold.co/300x360/F2EFEC/ABABAB/png?text=No+image';
+
+/** Image heights that repeat down each column, giving the staggered look from the design. */
+const LEFT_HEIGHTS = [230, 270, 210, 250];
+const RIGHT_HEIGHTS = [265, 205, 245, 225];
+
+const PAGE_SIZE = 20;
+/** Start loading the next page when the bottom of the feed is this close (in points). */
+const LOAD_MORE_THRESHOLD = 800;
+
+function greeting(date = new Date()) {
+  const hour = date.getHours();
+  if (hour < 12) return 'Good morning,';
+  if (hour < 18) return 'Good afternoon,';
+  return 'Good evening,';
+}
+
+function formatPrice(price: number | null) {
+  if (price === null) return null;
+  return Number.isInteger(price) ? `$${price}` : `$${price.toFixed(2)}`;
+}
+
+type Feed = { userId: string; items: CatalogueItem[]; error: string | null; hasMore: boolean };
+
+type PlacedItem = { item: CatalogueItem; imageHeight: number };
+
+/**
+ * Split the feed into two columns, always adding to the shorter one so a long feed stays balanced.
+ * Card heights are estimated: image, plus name (one or two lines) and the brand/price row.
+ */
+function toColumns(items: CatalogueItem[]): [PlacedItem[], PlacedItem[]] {
+  const columns: [PlacedItem[], PlacedItem[]] = [[], []];
+  const totals = [0, 0];
+  for (const item of items) {
+    const column = totals[0] <= totals[1] ? 0 : 1;
+    const heights = column === 0 ? LEFT_HEIGHTS : RIGHT_HEIGHTS;
+    const imageHeight = heights[columns[column].length % heights.length];
+    columns[column].push({ item, imageHeight });
+    totals[column] += imageHeight + (item.name.length > 22 ? 90 : 68);
+  }
+  return columns;
+}
+
+/** Append a page, skipping anything already in the feed (offsets shift when items are saved meanwhile). */
+function appendUnique(items: CatalogueItem[], page: CatalogueItem[]) {
+  const seen = new Set(items.map((item) => item.id));
+  return [...items, ...page.filter((item) => !seen.has(item.id))];
+}
+
+export default function HomeDashboardScreen() {
+  const colors = useStyleUColors();
+  const styles = useThemedStyles(createStyles);
+  const { user } = useAuth();
+  const userId = user?.id ?? null;
+  const { profile } = useProfile();
+  // Reloads on focus, so an item saved from its detail page disappears from the feed on return.
+  const wishlist = useWishlist();
+
+  const [feed, setFeed] = useState<Feed | null>(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [query, setQuery] = useState('');
+  const [filters, setFilters] = useState<SearchFilters>({});
+    const [brands, setBrands] = useState<string[]>([]);
+  const isLoadingMoreRef = useRef(false);
+
+  const loadFeed = useCallback(async (forUser: string) => {
+    try {
+      const items = await fetchRecommendations({ limit: PAGE_SIZE });
+      setFeed({ userId: forUser, items, error: null, hasMore: items.length === PAGE_SIZE });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unable to load your feed.';
+      // Keep what was already shown if a refresh fails.
+      setFeed((previous) => ({
+        userId: forUser,
+        items: previous?.userId === forUser ? previous.items : [],
+        error: message,
+        hasMore: previous?.userId === forUser ? previous.hasMore : false,
+      }));
+    }
+  }, []);
+
+  const loadMore = async () => {
+    if (!userId || !feed || feed.userId !== userId || !feed.hasMore || isLoadingMoreRef.current) return;
+    isLoadingMoreRef.current = true;
+    setIsLoadingMore(true);
+    try {
+      const page = await fetchRecommendations({ limit: PAGE_SIZE, offset: feed.items.length });
+      setFeed((previous) =>
+        previous && previous.userId === userId
+          ? { ...previous, items: appendUnique(previous.items, page), error: null, hasMore: page.length === PAGE_SIZE }
+          : previous,
+      );
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unable to load more items.';
+      setFeed((previous) => (previous && previous.userId === userId ? { ...previous, error: message } : previous));
+    } finally {
+      isLoadingMoreRef.current = false;
+      setIsLoadingMore(false);
+    }
+  };
+
+  const onScroll = ({ nativeEvent }: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const { layoutMeasurement, contentOffset, contentSize } = nativeEvent;
+    if (layoutMeasurement.height + contentOffset.y >= contentSize.height - LOAD_MORE_THRESHOLD) {
+      void loadMore();
+    }
+  };
+
+  useEffect(() => {
+    if (userId) void loadFeed(userId);
+  }, [userId, loadFeed]);
+
+  // Every brand in the catalogue, for the Brand filter. If this fails, the filter falls back to brands on loaded items.
+  useEffect(() => {
+    if (!userId) return;
+    fetchAllBrands()
+      .then(setBrands)
+      .catch((error) => {
+        console.warn('Could not load brands', error);
+        setBrands([]);
+      });
+  }, [userId]);
+
+  // If the first load failed (e.g. the backend was restarting), try again when the user comes back to Home.
+  const failedWithNothingShown = Boolean(feed?.userId === userId && feed?.error && feed.items.length === 0);
+  useFocusEffect(
+    useCallback(() => {
+      if (userId && failedWithNothingShown) void loadFeed(userId);
+    }, [userId, failedWithNothingShown, loadFeed]),
+  );
+
+  const refresh = async () => {
+    if (!userId) return;
+    setIsRefreshing(true);
+    await loadFeed(userId);
+    setIsRefreshing(false);
+  };
+
+  // Never show one account's feed to another.
+  const current = feed?.userId === userId ? feed : null;
+  const items = (current?.items ?? []).filter((item) => !wishlist.isSaved(item.id));
+  const name = profile?.display_name?.trim() || null;
+
+  // Searching swaps the feed for GET /catalogue/search, which covers the whole catalogue.
+  const searchQuery = buildSearchQuery(filters, query);
+  const isSearching = searchQuery !== null;
+  const search = useItemSearch(searchCatalogue, searchQuery);
+  const searchResults = useMemo(() => search.results ?? [], [search.results]);
+  const visibleItems = isSearching ? searchResults : items;
+
+  // Filter options come from the feed plus any search results, so they grow as more is loaded.
+  const filterOptions = useMemo(() => {
+    const known = [...items, ...searchResults];
+    return {
+      price: PRICE_OPTIONS,
+      category: collectOptions(known.map((item) => item.category)),
+      colour: collectOptions(known.flatMap((item) => item.colours)),
+      style: collectOptions(known.flatMap((item) => item.styles)),
+      size: SIZE_OPTIONS,
+      brand: collectOptions(brands.length > 0 ? brands : known.map((item) => item.brand), { keepCase: true },),
+      material: collectOptions(known.flatMap((item) => item.materials)),
+    };
+  }, [items, searchResults, brands]);
+
+  // A feed too short to scroll never triggers onScroll, so top it up directly.
+  const hasMore = current?.hasMore ?? false;
+  const hasLoadError = Boolean(current?.error);
+  useEffect(() => {
+    if (!isSearching && hasMore && !hasLoadError && items.length < 6) void loadMore();
+    // loadMore reads the latest feed each render; re-run only when the item count changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isSearching, hasMore, hasLoadError, items.length]);
+  const columns = toColumns(visibleItems);
+  const grid = (
+    <View style={styles.masonry}>
+      {columns.map((column, columnIndex) => (
+        <View key={columnIndex} style={styles.column}>
+          {column.map(({ item, imageHeight }) => (
+            <FeedCard
+              key={item.id}
+              item={item}
+              imageHeight={imageHeight}
+              onPress={() => router.push(itemDetailHref(item.id))}
+            />
+          ))}
+        </View>
+      ))}
+    </View>
+  );
+
+  return (
+    <ThemedView style={{ flex: 1 }}>
+      <SafeAreaView style={{ flex: 1 }} edges={['top']}>
+        <ScrollView
+          contentContainerStyle={styles.content}
+          onScroll={isSearching ? undefined : onScroll}
+          scrollEventThrottle={200}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
+          refreshControl={<RefreshControl refreshing={isRefreshing} onRefresh={() => void refresh()} />}
+        >
+          <View style={styles.header}>
+            <View style={{ flex: 1 }}>
+              <ThemedText style={styles.greeting}>{greeting()}</ThemedText>
+              <ThemedText style={styles.name} numberOfLines={1}>
+                {name ?? 'Welcome back'}
+              </ThemedText>
+            </View>
+            <TouchableOpacity
+              style={styles.avatar}
+              onPress={() => router.push('/profile' as never)}
+              accessibilityLabel="Open your profile"
+            >
+              {name ? (
+                <ThemedText style={styles.avatarInitial}>{name[0].toUpperCase()}</ThemedText>
+              ) : (
+                <Ionicons name="person-outline" size={22} color={colors.text} />
+              )}
+            </TouchableOpacity>
+          </View>
+
+          <ItemSearch
+            query={query}
+            onQueryChange={setQuery}
+            filters={filters}
+            onFiltersChange={setFilters}
+            options={filterOptions}
+            placeholder="Search the catalogue by name..."
+          />
+
+          <ThemedText style={styles.sectionTitle}>{isSearching ? 'Search Results' : 'Personalised Feed'}</ThemedText>
+
+          {isSearching ? (
+            search.error ? (
+              <StateMessage
+                icon="cloud-offline-outline"
+                title="Couldn't search the catalogue"
+                message={search.error}
+                actionLabel="Try again"
+                onAction={search.retry}
+              />
+            ) : search.results === null ? (
+              <ActivityIndicator style={{ paddingVertical: 40 }} />
+            ) : searchResults.length === 0 ? (
+              <StateMessage
+                icon="search-outline"
+                title="No matching items"
+                message="Try a different search or filter."
+                actionLabel="Clear search"
+                onAction={() => {
+                  setQuery(''); 
+                  setFilters({});
+                }}
+              />
+            ) : (
+              grid
+            )
+          ) : current?.error && items.length === 0 ? (
+            <StateMessage
+              icon="cloud-offline-outline"
+              title="Couldn't load your feed"
+              message={current.error}
+              actionLabel="Try again"
+              onAction={() => void refresh()}
+            />
+          ) : !current ? (
+            <ActivityIndicator style={{ paddingVertical: 40 }} />
+          ) : items.length === 0 && !current.hasMore ? (
+            <StateMessage
+              icon="sparkles-outline"
+              title="No new recommendations"
+              message="You've saved everything we have for you. Pull down to check again soon."
+            />
+          ) : (
+            grid
+          )}
+
+          {isSearching ? (
+            searchResults.length >= CATALOGUE_SEARCH_LIMIT ? (
+              <ThemedText style={[styles.stateBody, styles.footer]}>
+                Showing the first {CATALOGUE_SEARCH_LIMIT} matches. Add filters to narrow it down.
+              </ThemedText>
+            ) : null
+          ) : isLoadingMore ? <ActivityIndicator style={{ paddingVertical: 16 }} /> : null}
+          {!isSearching && current?.error && items.length > 0 ? (
+            <TouchableOpacity onPress={() => void loadMore()} style={styles.footer}>
+              <ThemedText style={styles.stateAction}>Couldn't load more. Tap to retry.</ThemedText>
+            </TouchableOpacity>
+          ) : null}
+          {!isSearching && current && !current.hasMore && visibleItems.length > 0 ? (
+            <ThemedText style={[styles.stateBody, styles.footer]}>You're all caught up</ThemedText>
+          ) : null}
+        </ScrollView>
+      </SafeAreaView>
+    </ThemedView>
+  );
+}
+
+type FeedCardProps = {
+  item: CatalogueItem;
+  imageHeight: number;
+  onPress: () => void;
+};
+
+function FeedCard({ item, imageHeight, onPress }: FeedCardProps) {
+  const styles = useThemedStyles(createStyles);
+  const price = formatPrice(item.price);
+
+  return (
+    <Pressable style={styles.card} onPress={onPress} accessibilityLabel={item.name}>
+      <Image source={{ uri: item.imageUrl ?? PLACEHOLDER_IMAGE }} style={[styles.cardImage, { height: imageHeight }]} />
+      <ThemedText style={styles.cardName} numberOfLines={2}>
+        {item.name}
+      </ThemedText>
+      <View style={styles.cardMetaRow}>
+        <ThemedText style={styles.cardBrand} numberOfLines={1}>
+          {item.brand ?? ''}
+        </ThemedText>
+        {price ? <ThemedText style={styles.cardPrice}>{price}</ThemedText> : null}
+      </View>
+    </Pressable>
+  );
+}
+
+type StateMessageProps = {
+  icon: keyof typeof Ionicons.glyphMap;
+  title: string;
+  message: string;
+  actionLabel?: string;
+  onAction?: () => void;
+};
+
+function StateMessage({ icon, title, message, actionLabel, onAction }: StateMessageProps) {
+  const colors = useStyleUColors();
+  const styles = useThemedStyles(createStyles);
+  return (
+    <View style={styles.stateMessage}>
+      <Ionicons name={icon} size={28} color={colors.accentStrong} />
+      <ThemedText style={styles.stateTitle}>{title}</ThemedText>
+      <ThemedText style={styles.stateBody}>{message}</ThemedText>
+      {actionLabel && onAction ? (
+        <TouchableOpacity onPress={onAction}>
+          <ThemedText style={styles.stateAction}>{actionLabel}</ThemedText>
+        </TouchableOpacity>
+      ) : null}
+    </View>
+  );
+}
+
+const createStyles = (colors: StyleUColors) =>
+  StyleSheet.create({
+  content: {
+    padding: 20,
+    gap: 18,
+    paddingBottom: 110,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginTop: 12,
+  },
+  greeting: {
+    fontSize: 16,
+    color: colors.subtleText,
+  },
+  name: {
+    fontSize: 26,
+    lineHeight: 32,
+    fontWeight: '600',
+  },
+  avatar: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    borderWidth: 2,
+    borderColor: colors.accent,
+    backgroundColor: colors.accentSoft,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  avatarInitial: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: colors.text,
+  },
+  sectionTitle: {
+    fontSize: 19,
+    fontWeight: '500',
+  },
+  masonry: {
+    flexDirection: 'row',
+    gap: 16,
+    alignItems: 'flex-start',
+  },
+  column: {
+    flex: 1,
+    gap: 20,
+  },
+  card: {
+    gap: 2,
+  },
+  cardImage: {
+    width: '100%',
+    borderRadius: 18,
+    backgroundColor: colors.imageBackdrop,
+  },
+  cardName: {
+    fontSize: 15,
+    fontWeight: '600',
+    marginTop: 8,
+  },
+  cardMetaRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: 8,
+  },
+  cardBrand: {
+    flex: 1,
+    fontSize: 13,
+    color: colors.subtleText,
+  },
+  cardPrice: {
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  footer: {
+    alignSelf: 'center',
+    paddingVertical: 12,
+  },
+  stateMessage: {
+    alignItems: 'center',
+    gap: 6,
+    paddingVertical: 24,
+    paddingHorizontal: 16,
+    borderRadius: 16,
+    backgroundColor: colors.surface,
+  },
+  stateTitle: {
+    fontWeight: '600',
+    fontSize: 15,
+  },
+  stateBody: {
+    fontSize: 13,
+    lineHeight: 18,
+    color: colors.subtleText,
+    textAlign: 'center',
+  },
+  stateAction: {
+    color: colors.accentStrong,
+    fontWeight: '600',
+    marginTop: 4,
+  },
+});

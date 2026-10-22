@@ -1,0 +1,105 @@
+import { router, useLocalSearchParams } from 'expo-router';
+import { useState } from 'react';
+import { KeyboardAvoidingView, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+
+import { useAuth } from '../auth/auth-provider';
+import { getPostAuthRoute, resetPassword, signIn } from '../auth/auth-service';
+import { BackButton } from '../components/back-button';
+import { OnboardingFormField } from '../components/onboarding-form-field';
+import { PrimaryButton } from '../components/primary-button';
+import { useThemedStyles } from '../hooks/use-theme';
+import type { StyleUColors } from '../services/styleu-theme';
+
+export default function LoginScreen() {
+  const styles = useThemedStyles(createStyles);
+  const { created } = useLocalSearchParams<{ created?: string }>();
+  const { configurationError } = useAuth();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState('');
+
+  async function handleLogin() {
+    if (!email.trim() || !password) {
+      setMessage('Please enter your email and password.');
+      return;
+    }
+    setBusy(true);
+    setMessage('');
+
+    const { data, error } = await signIn(email, password);
+
+    if (error) {
+      setBusy(false);
+      setMessage(error.message);
+      return;
+    }
+
+    if (!data.user) {
+      setBusy(false);
+      setMessage('No user found. Please check your email and password.');
+      return;
+    }
+
+    // Home for users who finished onboarding, onboarding for those who did not.
+    // The button stays busy until this resolves, and nothing navigates if the check fails.
+    const result = await getPostAuthRoute(data.user.id);
+    setBusy(false);
+
+    if (result.error) {
+      setMessage("You're signed in, but we couldn't check your account. Please check your connection and try again.");
+      return;
+    }
+
+    router.replace(result.route);
+  }
+
+  async function handleResetPassword() {
+    if (!email.trim()) {
+      setMessage('Enter your email address first.');
+      return;
+    }
+    setBusy(true);
+    const { error } = await resetPassword(email);
+    setBusy(false);
+    setMessage(error ? error.message : 'Password reset email sent.');
+  }
+
+  return (
+    <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.content}>
+        <BackButton fallback="/" />
+        <Text accessibilityRole="header" style={styles.title}>Welcome back</Text>
+
+        <View style={styles.form}>
+          <OnboardingFormField label="Email Address" placeholder="e.g. amanda@domain.com" keyboardType="email-address" textContentType="emailAddress" autoCapitalize="none" autoCorrect={false} value={email} onChangeText={setEmail} editable={!busy} />
+          <OnboardingFormField label="Password" placeholder="••••••••" secureTextEntry autoCapitalize="none" textContentType="password" value={password} onChangeText={setPassword} editable={!busy} />
+          <Pressable onPress={handleResetPassword} disabled={busy}>
+            <Text style={styles.forgotPassword}>Forgot password?</Text>
+          </Pressable>
+          {(configurationError || message || created === '1') ? (
+            <Text accessibilityRole="alert" style={styles.status}>
+              {configurationError || message || 'Account created. Log in with your email and password.'}
+            </Text>
+          ) : null}
+        </View>
+
+        <View style={styles.footer}>
+          <PrimaryButton label={busy ? 'Please wait…' : 'Log In'} onPress={handleLogin} disabled={busy || Boolean(configurationError)} />
+        </View>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
+  );
+}
+
+const createStyles = (colors: StyleUColors) =>
+  StyleSheet.create({
+  safeArea: { backgroundColor: colors.background, flex: 1 },
+  content: { flex: 1, paddingHorizontal: 28, paddingTop: 60, paddingBottom: 28 },
+  title: { color: colors.text, fontSize: 32, fontWeight: '800', marginBottom: 40 },
+  form: { gap: 16 },
+  forgotPassword: { color: colors.accent, fontSize: 14, textAlign: 'right' },
+  status: { color: colors.text, fontSize: 14, textAlign: 'center' },
+  footer: { gap: 24, marginTop: 'auto', paddingTop: 60 },
+});

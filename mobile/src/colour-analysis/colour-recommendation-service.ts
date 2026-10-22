@@ -1,5 +1,5 @@
-import { normaliseCatalogueItem } from '../../app/services/wishlist/wishlist-service';
-import type { CatalogueItem } from '../../app/services/wishlist/wishlist-types';
+import { normaliseCatalogueItem } from '../services/wishlist/wishlist-service';
+import type { CatalogueItem } from '../services/wishlist/wishlist-types';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { requireSupabase } from '../auth/supabase-client';
 import type { ColourAnalysisResult } from './types';

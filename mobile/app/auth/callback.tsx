@@ -5,8 +5,8 @@ import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { completeAuthCallback } from '../../src/auth/auth-service';
-import { useStyleUColors, useThemedStyles } from '../hooks/use-theme';
-import type { StyleUColors } from '../services/styleu-theme';
+import { useStyleUColors, useThemedStyles } from '../../src/hooks/use-theme';
+import type { StyleUColors } from '../../src/services/styleu-theme';
 
 export default function AuthCallbackScreen() {
   const colors = useStyleUColors();
