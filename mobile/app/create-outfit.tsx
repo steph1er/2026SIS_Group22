@@ -1,2 +1,2 @@
-export { default } from './screens/create-outfit/create-outfit';
+export { default } from '../src/screens/create-outfit/create-outfit';
 

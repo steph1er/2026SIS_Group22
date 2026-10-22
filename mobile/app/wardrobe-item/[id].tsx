@@ -1,1 +1,1 @@
-export { default } from '../screens/saved/wardrobe-item';
+export { default } from '../../src/screens/saved/wardrobe-item';

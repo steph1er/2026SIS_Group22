@@ -1,2 +1,2 @@
-export { default } from './screens/onboarding/onboarding-quiz';
+export { default } from '../src/screens/onboarding/onboarding-quiz';
 

@@ -1,1 +1,1 @@
-export { default } from './screens/saved/saved';
+export { default } from '../src/screens/saved/saved';

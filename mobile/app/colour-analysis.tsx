@@ -1,1 +1,1 @@
-export { default } from './screens/colour-analysis';
+export { default } from '../src/screens/colour-analysis';
