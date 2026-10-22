@@ -7,7 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useStyleUColors, useThemedStyles } from '../../hooks/use-theme';
 import { OUTFIT_SEASONS, OUTFIT_STYLES } from '../../services/create-outfit/create-outfit-service';
 import { OutfitItem, OutfitSaveDetails } from '../../services/create-outfit/create-outfit-types';
-import { createStyles } from './create-outfit';
+import { createStyles } from '../../services/create-outfit/style/create-outfit-styles';
 
 const getItemLabel = (outfitItem: OutfitItem) =>
   'name' in outfitItem.item ? outfitItem.item.name : outfitItem.item.clothing_category;

@@ -6,7 +6,7 @@ import Animated, { useAnimatedStyle, useSharedValue, type SharedValue } from 're
 
 import { useStyleUColors, useThemedStyles } from '../../hooks/use-theme';
 import { OutfitItem } from '../../services/create-outfit/create-outfit-types';
-import { createStyles } from './create-outfit';
+import { createStyles } from '../../services/create-outfit/style/create-outfit-styles';
 
 // starting size matches width/height of `visualiserItem` in the stylesheet
 const DEFAULT_SIZE = 100;

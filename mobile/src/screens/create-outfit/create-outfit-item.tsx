@@ -6,7 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useThemedStyles } from '../../hooks/use-theme';
 import { getCategoryIcon, getItemDetails, SOURCE_ICONS } from '../../services/create-outfit/create-outfit-service';
 import { RecommendedItem, WardrobeItem } from '../../services/create-outfit/create-outfit-types';
-import { createStyles } from './create-outfit';
+import { createStyles } from '../../services/create-outfit/style/create-outfit-styles';
 
 type Props = {
   item: WardrobeItem | RecommendedItem;

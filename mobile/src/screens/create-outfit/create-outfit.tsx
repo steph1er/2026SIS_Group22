@@ -15,24 +15,11 @@ import CreateOutfitItem from './create-outfit-item';
 import CreateOutfitSave from './create-outfit-save';
 import CreateOutfitVisualiserItem from './create-outfit-visualiser';
 
-import { createSaveStyles } from '@/services/create-outfit/style/create-outfit-save';
-import { createCatalogueStyles } from '../../services/create-outfit/style/create-outfit-catalogue';
-import { createItemStyles } from '../../services/create-outfit/style/create-outfit-item';
-import { createThemeStyles } from '../../services/create-outfit/style/create-outfit-theme';
-import { createVisualiserStyles } from '../../services/create-outfit/style/create-outfit-visualiser';
+import { createStyles } from '../../services/create-outfit/style/create-outfit-styles';
 
 import { BackButton, goBackOr } from '../../components/back-button';
 import { useStyleUColors, useThemedStyles } from '../../hooks/use-theme';
 import { createStyles as createSavedOutfitStyles } from '../../services/saved-outfits/saved-outfit-theme';
-import type { StyleUColors } from '../../services/styleu-theme';
-
-export const createStyles = (colors: StyleUColors) => ({
-  ...createThemeStyles(colors),
-  ...createVisualiserStyles(colors),
-  ...createItemStyles(colors),
-  ...createCatalogueStyles(colors),
-  ...createSaveStyles(colors),
-});
 
 export default function CreateOutfits() {
   const styles = useThemedStyles(createStyles);
